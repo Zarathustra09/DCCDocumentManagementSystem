@@ -16,4 +16,5 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 
 Route::resource('documents', DocumentController::class);
+Route::get('/download/{document}', [DocumentController::class, 'download'])->name('documents.download');
 Route::resource('folders', FolderController::class);
