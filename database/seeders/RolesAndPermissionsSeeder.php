@@ -87,7 +87,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $viewerRole = Role::create(['name' => 'viewer']);
         $viewerRole->givePermissionTo([
             'view documents',
-            'download documents',
+//            'download documents',
             'view folders',
         ]);
 

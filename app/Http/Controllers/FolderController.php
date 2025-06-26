@@ -18,9 +18,9 @@ class FolderController extends Controller
 
     public function index()
     {
-        $folders = Folder::with('children')
-            ->where('user_id', Auth::id())
+        $folders = Folder::with(['children', 'user'])
             ->whereNull('parent_id')
+            ->latest()
             ->get();
 
         return view('folder.index', compact('folders'));
@@ -53,9 +53,9 @@ class FolderController extends Controller
     public function show(Folder $folder)
     {
         // Check if the user owns this folder or has admin role
-        if ($folder->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
-            abort(403);
-        }
+//        if ($folder->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+//            abort(403);
+//        }
 
         $documents = $folder->documents;
         $subfolders = $folder->children;

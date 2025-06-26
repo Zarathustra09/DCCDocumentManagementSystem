@@ -53,7 +53,7 @@ class DocumentController extends Controller
         $filename = time() . '_' . Str::slug(pathinfo($originalFilename, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs('documents', $filename, 'public');
 
-        Document::create([
+        $document = Document::create([
             'user_id' => Auth::id(),
             'folder_id' => $request->folder_id,
             'filename' => $filename,
@@ -69,15 +69,21 @@ class DocumentController extends Controller
             ],
         ]);
 
+        // Redirect to the folder if it exists, otherwise to documents index
+        if ($request->folder_id) {
+            return redirect()->route('folders.show', $request->folder_id)
+                ->with('success', 'Document uploaded successfully');
+        }
+
         return redirect()->route('documents.index')->with('success', 'Document uploaded successfully');
     }
 
     public function show(Document $document)
     {
         // Check if the user owns this document or has admin role
-        if ($document->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
-            abort(403);
-        }
+//        if ($document->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+//            abort(403);
+//        }
 
         return view('document.show', compact('document'));
     }
