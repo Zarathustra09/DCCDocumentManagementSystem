@@ -26,14 +26,14 @@
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Document Management</span>
         </li>
-        <li class="menu-item">
+        <li class="menu-item {{Route::is('folders.index') ? 'active' : ''}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-folder"></i>
                 <div data-i18n="Account Settings">My Documents</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
+                <li class="menu-item {{Route::is('folders.index') ? 'active' : ''}}">
+                    <a href="{{route('folders.index')}}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-file"></i>
                         <div data-i18n="Account">All Documents</div>
                     </a>

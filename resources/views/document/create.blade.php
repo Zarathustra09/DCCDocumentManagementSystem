@@ -8,7 +8,7 @@
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Upload Document</h5>
-                        <a href="{{ route('documents.index') }}" class="btn btn-sm btn-secondary">
+                        <a href="javascript:history.back()" class="btn btn-sm btn-secondary">
                             <i class="bx bx-arrow-back"></i> Back to Documents
                         </a>
                     </div>
