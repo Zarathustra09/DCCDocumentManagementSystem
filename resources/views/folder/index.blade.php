@@ -6,7 +6,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Folders</h5>
+                        <h5 class="mb-0">Root Folder</h5>
                         @can('create folders')
                             <a href="{{ route('folders.create') }}" class="btn btn-primary">
                                 <i class="bx bx-folder-plus"></i> Create New Folder
