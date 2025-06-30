@@ -12,7 +12,7 @@
                             <a href="{{ route('folders.show', $folder) }}" class="btn btn-sm btn-info me-1">
                                 <i class="bx bx-show"></i> View
                             </a>
-                            <a href="{{ route('folders.index') }}" class="btn btn-sm btn-secondary">
+                            <a href="javascript:history.back()" class="btn btn-sm btn-secondary">
                                 <i class="bx bx-arrow-back"></i> Back to Folders
                             </a>
                         </div>

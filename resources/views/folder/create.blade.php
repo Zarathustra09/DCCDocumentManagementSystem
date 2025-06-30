@@ -8,7 +8,7 @@
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Create New Folder</h5>
-                        <a href="{{ route('folders.index') }}" class="btn btn-sm btn-secondary">
+                        <a href="javascript:history.back()" class="btn btn-sm btn-secondary">
                             <i class="bx bx-arrow-back"></i> Back to Folders
                         </a>
                     </div>
