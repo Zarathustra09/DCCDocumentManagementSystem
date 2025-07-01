@@ -40,14 +40,14 @@ class FolderController extends Controller
             'description' => 'nullable|string|max:500',
         ]);
 
-        Folder::create([
+        $folder = Folder::create([
             'user_id' => Auth::id(),
             'parent_id' => $request->parent_id,
             'name' => $request->name,
             'description' => $request->description,
         ]);
 
-        return redirect()->route('folders.index')->with('success', 'Folder created successfully');
+        return redirect()->route('folders.show', $folder)->with('success', 'Folder created successfully');
     }
 
     public function show(Folder $folder)
@@ -107,6 +107,10 @@ class FolderController extends Controller
             'description' => $request->description,
         ]);
 
+        if ($folder->parent_id) {
+            return redirect()->route('folders.show', $folder->parent)->with('success', 'Folder updated successfully');
+        }
+
         return redirect()->route('folders.index')->with('success', 'Folder updated successfully');
     }
 
@@ -120,6 +124,10 @@ class FolderController extends Controller
         // This will cascade delete subfolders and documents due to foreign key constraints
         $folder->delete();
 
-        return redirect()->route('folders.index')->with('success', 'Folder and all its contents deleted successfully');
+        if ($folder->parent_id) {
+            return redirect()->route('folders.show', $folder->parent)->with('success', 'Folder updated successfully');
+        }
+
+        return redirect()->route('folders.index')->with('success', 'Folder updated successfully');
     }
 }
