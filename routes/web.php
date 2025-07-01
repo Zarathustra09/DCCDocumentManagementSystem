@@ -17,4 +17,6 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 Route::resource('documents', DocumentController::class);
 Route::get('/download/{document}', [DocumentController::class, 'download'])->name('documents.download');
+Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
+Route::post('/documents/{document}/update-content', [DocumentController::class, 'updateContent'])->name('documents.update-content');
 Route::resource('folders', FolderController::class);

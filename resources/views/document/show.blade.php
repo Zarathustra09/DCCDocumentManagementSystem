@@ -1,3 +1,40 @@
+@push('styles')
+    <style>
+        .word-document {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .word-document p {
+            margin-bottom: 1rem;
+        }
+
+        .word-document table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .word-document table td,
+        .word-document table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .word-document h1,
+        .word-document h2,
+        .word-document h3,
+        .word-document h4,
+        .word-document h5,
+        .word-document h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+    </style>
+@endpush
+
 @extends('layouts.app')
 
 @section('content')
@@ -139,6 +176,27 @@
                             <p>Your browser does not support PDFs. <a href="{{ route('documents.download', $document) }}">Download the PDF</a> instead.</p>
                         </object>
                     </div>
+                @elseif(in_array($document->file_type, ['doc', 'docx']))
+                    <div class="word-preview-container">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Document Preview</h6>
+                            <button id="refresh-preview" class="btn btn-sm btn-outline-primary d-none">
+                                <i class="bx bx-refresh me-1"></i> Refresh
+                            </button>
+                        </div>
+                        <div id="word-preview-loading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-2">Loading document preview...</p>
+                        </div>
+                        <div id="word-preview-content" class="bg-light p-3 rounded d-none" style="min-height: 400px; max-height: 600px; overflow-y: auto;">
+                        </div>
+                        <div id="word-preview-error" class="alert alert-danger d-none" role="alert">
+                            <i class="bx bx-error me-1"></i>
+                            <span id="error-message">Error loading document preview</span>
+                        </div>
+                    </div>
                 @elseif(in_array($document->file_type, ['txt', 'md', 'html', 'css', 'js', 'php']))
                     <div class="bg-light p-3 rounded text-break" style="max-height: 500px; overflow-y: auto;">
                         <pre class="mb-0" style="white-space: pre-wrap;">{{ Storage::disk('public')->get($document->file_path) }}</pre>
@@ -147,8 +205,7 @@
                     <div class="text-center py-5">
                         <div class="mb-3">
                             <i class="bx
-                                @if(in_array($document->file_type, ['doc', 'docx'])) bxs-file-doc text-primary
-                                @elseif(in_array($document->file_type, ['xls', 'xlsx'])) bxs-file-txt text-success
+                                @if(in_array($document->file_type, ['xls', 'xlsx'])) bxs-file-txt text-success
                                 @elseif(in_array($document->file_type, ['ppt', 'pptx'])) bxs-file text-warning
                                 @else bxs-file text-secondary
                                 @endif
@@ -223,15 +280,152 @@
 
 @push('scripts')
 <script>
+    // Enhanced logging function
+    function logToConsole(level, message, data = {}) {
+        const timestamp = new Date().toISOString();
+        const logData = {
+            timestamp,
+            level,
+            message,
+            user_id: '{{ Auth::id() }}',
+            document_id: '{{ $document->id }}',
+            ...data
+        };
+
+        console[level](`[${timestamp}] ${message}`, logData);
+    }
+
+    function loadWordPreview() {
+        const previewContent = document.getElementById('word-preview-content');
+        const loadingDiv = document.getElementById('word-preview-loading');
+        const errorDiv = document.getElementById('word-preview-error');
+        const refreshBtn = document.getElementById('refresh-preview');
+
+        logToConsole('info', 'Auto-loading Word document preview');
+
+        const startTime = performance.now();
+
+        fetch(`/documents/{{ $document->id }}/preview`)
+            .then(response => {
+                const responseTime = performance.now() - startTime;
+
+                logToConsole('info', 'Preview API response received', {
+                    status: response.status,
+                    ok: response.ok,
+                    response_time_ms: Math.round(responseTime)
+                });
+
+                return response.json();
+            })
+            .then(data => {
+                const totalTime = performance.now() - startTime;
+                loadingDiv.classList.add('d-none');
+
+                if (data.success) {
+                    logToConsole('info', 'Word preview loaded successfully', {
+                        content_length: data.content ? data.content.length : 0,
+                        total_time_ms: Math.round(totalTime)
+                    });
+
+                    previewContent.innerHTML = data.content;
+                    previewContent.classList.remove('d-none');
+                    refreshBtn.classList.remove('d-none');
+                } else {
+                    logToConsole('error', 'Word preview failed', {
+                        error_message: data.message,
+                        total_time_ms: Math.round(totalTime)
+                    });
+
+                    document.getElementById('error-message').textContent = data.message || 'Error loading document preview';
+                    errorDiv.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                const totalTime = performance.now() - startTime;
+
+                logToConsole('error', 'Preview network error', {
+                    error: error.message,
+                    total_time_ms: Math.round(totalTime)
+                });
+
+                loadingDiv.classList.add('d-none');
+                document.getElementById('error-message').textContent = 'Network error occurred while loading preview';
+                errorDiv.classList.remove('d-none');
+            });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        logToConsole('info', 'Document show page loaded');
+
+        // Auto-load Word document preview if it's a Word document
+        @if(in_array($document->file_type, ['doc', 'docx']))
+        loadWordPreview();
+        @endif
+
+        // Refresh preview functionality
+        const refreshBtn = document.getElementById('refresh-preview');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                // Reset UI state
+                document.getElementById('word-preview-content').classList.add('d-none');
+                document.getElementById('word-preview-error').classList.add('d-none');
+                document.getElementById('word-preview-loading').classList.remove('d-none');
+                this.classList.add('d-none');
+
+                // Reload preview
+                loadWordPreview();
+            });
+        }
+
         // Delete document modal functionality
         const docModal = new bootstrap.Modal(document.getElementById('deleteDocModal'));
         document.querySelectorAll('.delete-doc-btn').forEach(btn => {
             btn.addEventListener('click', function() {
+                logToConsole('info', 'Delete document modal opened', {
+                    document_name: this.dataset.name
+                });
+
                 document.getElementById('doc-name').textContent = this.dataset.name;
                 document.getElementById('delete-doc-form').action = `/documents/${this.dataset.id}`;
                 docModal.show();
             });
+        });
+
+        // Log download button clicks
+        document.querySelectorAll('a[href*="download"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                logToConsole('info', 'Document download initiated', {
+                    download_url: this.href
+                });
+            });
+        });
+
+        // Log edit button clicks
+        document.querySelectorAll('a[href*="edit"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                logToConsole('info', 'Document edit page accessed', {
+                    edit_url: this.href
+                });
+            });
+        });
+    });
+
+    // Global error handler
+    window.addEventListener('error', function(e) {
+        logToConsole('error', 'JavaScript error occurred', {
+            message: e.message,
+            filename: e.filename,
+            line: e.lineno,
+            column: e.colno,
+            stack: e.error ? e.error.stack : 'No stack trace'
+        });
+    });
+
+    // Unhandled promise rejection handler
+    window.addEventListener('unhandledrejection', function(e) {
+        logToConsole('error', 'Unhandled promise rejection', {
+            reason: e.reason,
+            promise: e.promise
         });
     });
 </script>
