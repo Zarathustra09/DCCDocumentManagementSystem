@@ -15,8 +15,8 @@
     </li>
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
-        <li class="menu-item">
-            <a href="#" class="menu-link">
+        <li class="menu-item {{Route::is('home*') ? 'active' : ''}}">
+            <a href="{{route('home')}}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-alt"></i>
                 <div data-i18n="Analytics">Overview</div>
             </a>
