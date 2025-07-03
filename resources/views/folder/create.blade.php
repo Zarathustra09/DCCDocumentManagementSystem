@@ -41,7 +41,8 @@
                             <select class="form-select @error('parent_id') is-invalid @enderror" id="parent_id" name="parent_id">
                                 <option value="">No Parent (Root Level)</option>
                                 @foreach($folders as $folder)
-                                    <option value="{{ $folder->id }}" {{ old('parent_id') == $folder->id ? 'selected' : '' }}>
+                                    <option value="{{ $folder->id }}"
+                                        {{ old('parent_id', $currentFolderId ?? '') == $folder->id ? 'selected' : '' }}>
                                         {{ $folder->name }}
                                     </option>
                                 @endforeach

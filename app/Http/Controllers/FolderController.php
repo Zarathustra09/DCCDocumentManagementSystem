@@ -26,11 +26,13 @@ class FolderController extends Controller
         return view('folder.index', compact('folders'));
     }
 
-    public function create()
-    {
-        $folders = Folder::where('user_id', Auth::id())->get();
-        return view('folder.create', compact('folders'));
-    }
+   public function create(Request $request)
+   {
+       $folders = Folder::where('user_id', Auth::id())->get();
+       $currentFolderId = $request->get('parent_id'); // Get parent_id from query parameter
+
+       return view('folder.create', compact('folders', 'currentFolderId'));
+   }
 
     public function store(Request $request)
     {
