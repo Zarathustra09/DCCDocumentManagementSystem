@@ -50,7 +50,7 @@
 
     <!-- Template customizer & Theme config files -->
     <script src="{{ asset('dashboard/assets/js/config.js') }}"></script>
-
+    @stack('styles')
     <style>
         .navbar-nav-right {
             z-index: 1000;

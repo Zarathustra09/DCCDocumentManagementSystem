@@ -8,7 +8,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Edit Document</h5>
                     <div>
-                        <a href="{{ route('documents.show', $document) }}" class="btn btn-sm btn-outline-secondary me-2">
+                        <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary me-2">
                             <i class="bx bx-arrow-back"></i> Back
                         </a>
                         @can('delete documents')

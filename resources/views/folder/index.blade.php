@@ -33,7 +33,7 @@
                             </div>
                         @else
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover" id="folder-table">
                                     <thead>
                                     <tr>
                                         <th>Name</th>
@@ -89,3 +89,11 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#folder-table').DataTable();
+        });
+    </script>
+@endpush

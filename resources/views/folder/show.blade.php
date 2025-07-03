@@ -215,7 +215,7 @@
             <!-- List View -->
             <div class="list-view d-none" id="list-view">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" id="folder-table">
                         <thead class="table-light">
                             <tr>
                                 <th>Name</th>
@@ -454,6 +454,10 @@
 
 @push('scripts')
 <script>
+    $(document).ready(function() {
+        $('#folder-table').DataTable();
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         // View toggle functionality
         const iconViewBtn = document.getElementById('icon-view-btn');
