@@ -132,4 +132,42 @@ class FolderController extends Controller
 
         return redirect()->route('folders.index')->with('success', 'Folder updated successfully');
     }
+
+    public function move(Request $request, Folder $folder)
+    {
+        // Check if the user owns this folder or has admin role
+        if ($folder->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            abort(403);
+        }
+
+        $request->validate([
+            'parent_id' => 'nullable|exists:folders,id',
+        ]);
+
+        // Prevent moving folder into itself or its descendants
+        if ($request->parent_id) {
+            $parent = Folder::find($request->parent_id);
+
+            // Check if target folder belongs to the same user
+            if ($parent->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+                return response()->json(['success' => false, 'message' => 'Cannot move to this folder'], 403);
+            }
+
+            // Check for circular reference
+            $current = $parent;
+            while ($current) {
+                if ($current->id == $folder->id) {
+                    return response()->json(['success' => false, 'message' => 'Cannot move folder into itself or its subfolder'], 400);
+                }
+                $current = $current->parent;
+            }
+        }
+
+        $folder->update(['parent_id' => $request->parent_id]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Folder moved successfully'
+        ]);
+    }
 }

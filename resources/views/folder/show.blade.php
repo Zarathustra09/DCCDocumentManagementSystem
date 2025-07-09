@@ -13,14 +13,16 @@
 
                 <ul class="nav flex-column mb-4">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {{ !$folder->parent_id ? 'active text-primary' : 'text-dark' }}" href="{{ route('folders.index') }}">
+                        <a class="nav-link d-flex align-items-center {{ !$folder->parent_id ? 'active text-primary' : 'text-dark' }} drop-zone"
+                           href="{{ route('folders.index') }}" data-folder-id="">
                             <i class="bx bxs-home me-2"></i> Home
                         </a>
                     </li>
                     @if($folder->parent)
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center text-dark" href="{{ route('folders.show', $folder->parent) }}">
-                            <i class="bx bx-arrow-back me-2"></i> Back
+                        <a class="nav-link d-flex align-items-center text-dark drop-zone"
+                           href="{{ route('folders.show', $folder->parent) }}" data-folder-id="{{ $folder->parent->id }}">
+                            <i class="bx bx-arrow-back me-2"></i> Back to {{ $folder->parent->name }}
                         </a>
                     </li>
                     @endif
@@ -51,7 +53,9 @@
                     <nav aria-label="breadcrumb" class="d-none d-md-block me-3">
                         <ol class="breadcrumb m-0">
                             <li class="breadcrumb-item">
-                                <a href="{{ route('folders.index') }}" class="text-decoration-none"><i class="bx bxs-home"></i></a>
+                                <a href="{{ route('folders.index') }}" class="text-decoration-none drop-zone" data-folder-id="">
+                                    <i class="bx bxs-home"></i>
+                                </a>
                             </li>
                             @if($folder->parent)
                                 <?php $parents = collect([]); $parent = $folder->parent; ?>
@@ -61,7 +65,9 @@
 
                                 @foreach($parents as $parent)
                                     <li class="breadcrumb-item">
-                                        <a href="{{ route('folders.show', $parent) }}" class="text-decoration-none">{{ $parent->name }}</a>
+                                        <a href="{{ route('folders.show', $parent) }}" class="text-decoration-none drop-zone" data-folder-id="{{ $parent->id }}">
+                                            {{ $parent->name }}
+                                        </a>
                                     </li>
                                 @endforeach
                             @endif
@@ -122,7 +128,12 @@
                 <div class="row g-3">
                     @foreach($subfolders as $subfolder)
                         <div class="col-6 col-sm-4 col-md-3 col-xl-2">
-                            <div class="folder-item position-relative rounded shadow-sm">
+                            <div class="folder-item position-relative rounded shadow-sm drop-zone"
+                                 data-folder-id="{{ $subfolder->id }}"
+                                 draggable="true"
+                                 data-type="folder"
+                                 data-id="{{ $subfolder->id }}"
+                                 data-name="{{ $subfolder->name }}">
                                 <a href="{{ route('folders.show', $subfolder) }}" class="text-decoration-none">
                                     <div class="p-3 d-flex flex-column align-items-center" style="background-color: rgba(255, 193, 7, 0.05); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 0.375rem;">
                                         <i class="bx bxs-folder text-warning" style="font-size: 2.5rem;"></i>
@@ -150,7 +161,11 @@
 
                     @foreach($documents as $document)
                         <div class="col-6 col-sm-4 col-md-3 col-xl-2">
-                            <div class="file-item position-relative rounded shadow-sm">
+                            <div class="file-item position-relative rounded shadow-sm"
+                                 draggable="true"
+                                 data-type="document"
+                                 data-id="{{ $document->id }}"
+                                 data-name="{{ $document->original_filename }}">
                                 <a href="{{ route('documents.show', $document) }}" class="text-decoration-none">
                                     <div class="p-3 d-flex flex-column align-items-center" style="background-color: #fff; border: 1px solid #dee2e6; border-radius: 0.375rem;">
                                         <i class="bx
@@ -190,10 +205,10 @@
 
                     @if($subfolders->isEmpty() && $documents->isEmpty())
                         <div class="col-12 text-center py-5">
-                            <div class="empty-state p-4 rounded" style="background-color: #f8f9fa;">
+                            <div class="empty-state p-4 rounded drop-zone" style="background-color: #f8f9fa;" data-folder-id="{{ $folder->id }}">
                                 <i class="bx bx-folder-open text-muted" style="font-size: 3rem;"></i>
                                 <p class="mt-3 mb-3 text-muted">This folder is empty</p>
-                                <p class="small text-muted mb-3">Drag files here to upload them to this folder</p>
+                                <p class="small text-muted mb-3">Drag files here to upload them or move items here</p>
                                 <div>
                                     @can('create folders')
                                     <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}" class="btn btn-sm btn-outline-primary me-2">
@@ -227,7 +242,12 @@
                         </thead>
                         <tbody>
                             @foreach($subfolders as $subfolder)
-                                <tr>
+                                <tr class="drop-zone"
+                                    data-folder-id="{{ $subfolder->id }}"
+                                    draggable="true"
+                                    data-type="folder"
+                                    data-id="{{ $subfolder->id }}"
+                                    data-name="{{ $subfolder->name }}">
                                     <td style="width: 40%">
                                         <a href="{{ route('folders.show', $subfolder) }}" class="d-flex align-items-center text-decoration-none text-dark">
                                             <i class="bx bxs-folder text-warning me-2" style="font-size: 1.25rem;"></i>
@@ -256,7 +276,10 @@
                             @endforeach
 
                             @foreach($documents as $document)
-                                <tr>
+                                <tr draggable="true"
+                                    data-type="document"
+                                    data-id="{{ $document->id }}"
+                                    data-name="{{ $document->original_filename }}">
                                     <td style="width: 40%">
                                         <a href="{{ route('documents.show', $document) }}" class="d-flex align-items-center text-decoration-none text-dark">
                                             <i class="bx
@@ -298,10 +321,10 @@
 
                             @if($subfolders->isEmpty() && $documents->isEmpty())
                                 <tr>
-                                    <td colspan="5" class="text-center py-4">
+                                    <td colspan="5" class="text-center py-4 drop-zone" data-folder-id="{{ $folder->id }}">
                                         <i class="bx bx-folder-open text-muted" style="font-size: 2rem;"></i>
                                         <p class="mt-2 mb-0 text-muted">This folder is empty</p>
-                                        <p class="small text-muted">Drag files here to upload them to this folder</p>
+                                        <p class="small text-muted">Drag files here to upload them or move items here</p>
                                     </td>
                                 </tr>
                             @endif
@@ -317,7 +340,7 @@
 <div id="global-drop-overlay" class="global-drop-overlay d-none">
     <div class="drop-message">
         <i class="bx bx-cloud-upload" style="font-size: 4rem;"></i>
-        <h3>Drop files to upload to "{{ $folder->name }}"</h3>
+        <h3 id="drop-message-text">Drop files to upload to "{{ $folder->name }}"</h3>
         <p class="mb-0">Multiple files supported</p>
     </div>
 </div>
@@ -393,62 +416,72 @@
 
 @push('styles')
 <style>
-.global-drop-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(13, 110, 253, 0.9);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.drop-message {
-    text-align: center;
-    color: white;
-}
-
-.drop-message i {
-    animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
+    /* Drag and drop styles */
+    .dragging {
+        opacity: 0.6;
+        transform: rotate(3deg) scale(0.95);
+        z-index: 1000;
+        position: relative;
+        transition: none;
+        cursor: grabbing;
     }
-    40% {
-        transform: translateY(-10px);
+
+    .drop-zone {
+        transition: all 0.2s ease;
+        position: relative;
     }
-    60% {
-        transform: translateY(-5px);
+
+    .drop-zone.drag-over {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+        border: 2px dashed #198754 !important;
+        transform: scale(1.02);
     }
-}
 
-.main-content.drag-over {
-    background-color: rgba(13, 110, 253, 0.05);
-    transition: background-color 0.3s ease;
-}
+    .drag-move-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(25, 135, 84, 0.2);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        border-radius: 0.375rem;
+    }
 
-.upload-progress-item {
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    background-color: #f8f9fa;
-}
+    .move-message {
+        text-align: center;
+        color: #198754;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-.upload-progress-item.success {
-    border-color: #198754;
-    background-color: rgba(25, 135, 84, 0.05);
-}
+    .move-message i {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
 
-.upload-progress-item.error {
-    border-color: #dc3545;
-    background-color: rgba(220, 53, 69, 0.05);
-}
+    /* Drag preview */
+    .drag-preview {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.8;
+        transform: rotate(5deg);
+        background: white;
+        border: 2px solid #007bff;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        max-width: 200px;
+    }
 </style>
 @endpush
 
@@ -469,6 +502,8 @@
         const uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
 
         let dragCounter = 0;
+        let isDraggingItem = false;
+        let draggedItem = null;
 
         // File type validation
         const allowedTypes = ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'xls', 'xlsx'];
@@ -498,7 +533,9 @@
         // Hover effects for items
         document.querySelectorAll('.folder-item, .file-item').forEach(item => {
             item.addEventListener('mouseenter', function() {
-                this.querySelector('.item-actions').classList.remove('d-none');
+                if (!isDraggingItem) {
+                    this.querySelector('.item-actions').classList.remove('d-none');
+                }
             });
 
             item.addEventListener('mouseleave', function() {
@@ -506,22 +543,199 @@
             });
         });
 
-        // Global drag events for file upload
+        // Drag and drop for moving items
+        // Drag and drop for moving items
+        document.querySelectorAll('[draggable="true"]').forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                isDraggingItem = true;
+                draggedItem = {
+                    id: this.dataset.id,
+                    type: this.dataset.type,
+                    name: this.dataset.name || this.querySelector('.item-name')?.textContent || 'Unknown'
+                };
+
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('application/json', JSON.stringify(draggedItem));
+
+                // Create custom drag preview
+                const dragPreview = document.createElement('div');
+                dragPreview.className = 'drag-preview';
+                dragPreview.innerHTML = `
+            <i class="bx ${draggedItem.type === 'folder' ? 'bx-folder' : 'bx-file'}" style="margin-right: 0.5rem; color: ${draggedItem.type === 'folder' ? '#ffc107' : '#6c757d'};"></i>
+            <span>${draggedItem.name}</span>
+        `;
+                document.body.appendChild(dragPreview);
+
+                // Set custom drag image
+                e.dataTransfer.setDragImage(dragPreview, 20, 20);
+
+                // Remove preview after drag starts
+                setTimeout(() => {
+                    if (document.body.contains(dragPreview)) {
+                        document.body.removeChild(dragPreview);
+                    }
+                }, 0);
+
+                // Add overlay to potential drop zones
+                setTimeout(() => {
+                    document.querySelectorAll('.drop-zone').forEach(zone => {
+                        if (zone.dataset.id !== draggedItem.id) {
+                            const overlay = document.createElement('div');
+                            overlay.className = 'drag-move-overlay d-none';
+                            overlay.innerHTML = `
+                        <div class="move-message">
+                            <i class="bx bx-move"></i>
+                            Drop to move here
+                        </div>
+                    `;
+                            zone.style.position = 'relative';
+                            zone.appendChild(overlay);
+                        }
+                    });
+                }, 50);
+            });
+
+            item.addEventListener('dragend', function() {
+                isDraggingItem = false;
+                this.classList.remove('dragging');
+                draggedItem = null;
+
+                // Remove all overlays
+                document.querySelectorAll('.drag-move-overlay').forEach(overlay => {
+                    overlay.remove();
+                });
+
+                // Remove drag-over class from all drop zones
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    zone.classList.remove('drag-over');
+                });
+            });
+        });
+
+// Drop zone events for moving items
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+            zone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+
+                if (isDraggingItem && this.dataset.id !== draggedItem.id) {
+                    e.dataTransfer.dropEffect = 'move';
+                    this.classList.add('drag-over');
+
+                    const overlay = this.querySelector('.drag-move-overlay');
+                    if (overlay) {
+                        overlay.classList.remove('d-none');
+                    }
+                } else if (!isDraggingItem) {
+                    e.dataTransfer.dropEffect = 'copy';
+                    this.classList.add('drag-over');
+                }
+            });
+
+            zone.addEventListener('dragleave', function(e) {
+                if (!this.contains(e.relatedTarget)) {
+                    this.classList.remove('drag-over');
+
+                    const overlay = this.querySelector('.drag-move-overlay');
+                    if (overlay) {
+                        overlay.classList.add('d-none');
+                    }
+                }
+            });
+
+            zone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+
+                const overlay = this.querySelector('.drag-move-overlay');
+                if (overlay) {
+                    overlay.remove();
+                }
+
+                if (isDraggingItem && this.dataset.id !== draggedItem.id) {
+                    const targetFolderId = this.dataset.id;
+
+                    // Prevent dropping folder into itself or its children
+                    if (draggedItem.type === 'folder' && targetFolderId === draggedItem.id) {
+                        alert('Cannot move folder into itself');
+                        return;
+                    }
+
+                    moveItem(draggedItem, targetFolderId);
+                } else if (!isDraggingItem) {
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        handleFileUploads(files);
+                    }
+                }
+            });
+        });
+
+        // Drop zone events for moving items
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+            zone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+
+                if (isDraggingItem) {
+                    e.dataTransfer.dropEffect = 'move';
+                    this.classList.add('drag-over');
+                } else {
+                    e.dataTransfer.dropEffect = 'copy';
+                }
+            });
+
+            zone.addEventListener('dragleave', function(e) {
+                // Only remove drag-over if we're leaving the element and not entering a child
+                if (!this.contains(e.relatedTarget)) {
+                    this.classList.remove('drag-over');
+                }
+            });
+
+            zone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+
+                if (isDraggingItem) {
+                    // Handle moving items
+                    const targetFolderId = this.dataset.folderId || null;
+                    const item = JSON.parse(e.dataTransfer.getData('application/json'));
+
+                    // Don't allow dropping on self
+                    if (item.type === 'folder' && item.id == targetFolderId) {
+                        return;
+                    }
+
+                    moveItem(item, targetFolderId);
+                } else {
+                    // Handle file uploads
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        handleFileUploads(files);
+                    }
+                }
+            });
+        });
+
+        // Global drag events for file upload (when not dragging items)
         document.addEventListener('dragenter', (e) => {
-            e.preventDefault();
-            dragCounter++;
-            if (dragCounter === 1) {
-                globalOverlay.classList.remove('d-none');
-                mainContent.classList.add('drag-over');
+            if (!isDraggingItem) {
+                e.preventDefault();
+                dragCounter++;
+                if (dragCounter === 1) {
+                    globalOverlay.classList.remove('d-none');
+                    mainContent.classList.add('drag-over');
+                }
             }
         });
 
         document.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dragCounter--;
-            if (dragCounter === 0) {
-                globalOverlay.classList.add('d-none');
-                mainContent.classList.remove('drag-over');
+            if (!isDraggingItem) {
+                e.preventDefault();
+                dragCounter--;
+                if (dragCounter === 0) {
+                    globalOverlay.classList.add('d-none');
+                    mainContent.classList.remove('drag-over');
+                }
             }
         });
 
@@ -530,16 +744,63 @@
         });
 
         document.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dragCounter = 0;
-            globalOverlay.classList.add('d-none');
-            mainContent.classList.remove('drag-over');
+            if (!isDraggingItem) {
+                e.preventDefault();
+                dragCounter = 0;
+                globalOverlay.classList.add('d-none');
+                mainContent.classList.remove('drag-over');
 
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileUploads(files);
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUploads(files);
+                }
             }
         });
+
+        function moveItem(item, targetFolderId) {
+            const url = item.type === 'folder'
+                ? `/folders/${item.id}/move`
+                : `/documents/${item.id}/move`;
+
+            const data = item.type === 'folder'
+                ? { parent_id: targetFolderId }
+                : { folder_id: targetFolderId };
+
+            fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+                    alert.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+
+                    const container = document.querySelector('.my-3');
+                    container.parentNode.insertBefore(alert, container.nextSibling);
+
+                    // Reload page after short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Move error:', error);
+                alert('An error occurred while moving the item.');
+            });
+        }
 
         function handleFileUploads(files) {
             const validFiles = [];

@@ -773,4 +773,31 @@ class DocumentController extends Controller
             }
         }
     }
+
+    public function move(Request $request, Document $document)
+    {
+        // Check if the user owns this document or has admin role
+        if ($document->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+            abort(403);
+        }
+
+        $request->validate([
+            'folder_id' => 'nullable|exists:folders,id',
+        ]);
+
+        // Check if target folder belongs to the same user
+        if ($request->folder_id) {
+            $folder = Folder::find($request->folder_id);
+            if ($folder->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+                return response()->json(['success' => false, 'message' => 'Cannot move to this folder'], 403);
+            }
+        }
+
+        $document->update(['folder_id' => $request->folder_id]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Document moved successfully'
+        ]);
+    }
 }
