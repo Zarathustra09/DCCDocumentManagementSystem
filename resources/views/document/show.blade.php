@@ -1,40 +1,3 @@
-@push('styles')
-    <style>
-        .word-document {
-            font-family: 'Times New Roman', serif;
-            line-height: 1.5;
-            color: #333;
-        }
-
-        .word-document p {
-            margin-bottom: 1rem;
-        }
-
-        .word-document table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-
-        .word-document table td,
-        .word-document table th {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        .word-document h1,
-        .word-document h2,
-        .word-document h3,
-        .word-document h4,
-        .word-document h5,
-        .word-document h6 {
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-    </style>
-@endpush
-
 @extends('layouts.app')
 
 @section('content')
@@ -57,7 +20,7 @@
                     @if($document->folder)
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-center text-dark" href="{{ route('folders.show', $document->folder) }}">
-                            <i class="bx bx-arrow-back me-2"></i> Back
+                            <i class="bx bx-arrow-back me-2"></i> Back to {{ $document->folder->name }}
                         </a>
                     </li>
                     @endif
@@ -68,6 +31,10 @@
                     <div class="card border-0 bg-light">
                         <div class="card-body py-2 px-3">
                             <div class="mb-2">
+                                <span class="small d-block text-muted">Department</span>
+                                <span class="badge bg-primary">{{ $document->department_name }}</span>
+                            </div>
+                            <div class="mb-2">
                                 <span class="small d-block text-muted">Type</span>
                                 <span class="badge bg-secondary">{{ strtoupper($document->file_type) }}</span>
                             </div>
@@ -76,12 +43,16 @@
                                 <span>{{ number_format($document->file_size / 1024, 1) }} KB</span>
                             </div>
                             <div class="mb-2">
+                                <span class="small d-block text-muted">Uploaded by</span>
+                                <span>{{ $document->user->name }}</span>
+                            </div>
+                            <div class="mb-2">
                                 <span class="small d-block text-muted">Created</span>
-                                <span>{{ $document->created_at->format('M d, Y') }}</span>
+                                <span>{{ $document->created_at->format('M d, Y H:i') }}</span>
                             </div>
                             <div class="mb-0">
                                 <span class="small d-block text-muted">Modified</span>
-                                <span>{{ $document->updated_at->format('M d, Y') }}</span>
+                                <span>{{ $document->updated_at->format('M d, Y H:i') }}</span>
                             </div>
                         </div>
                     </div>
@@ -96,23 +67,29 @@
                     <nav aria-label="breadcrumb" class="d-none d-md-block me-3">
                         <ol class="breadcrumb m-0">
                             <li class="breadcrumb-item">
-                                <a href="{{ route('folders.index') }}" class="text-decoration-none"><i class="bx bxs-home"></i></a>
+                                <a href="{{ route('folders.index') }}" class="text-decoration-none">
+                                    <i class="bx bxs-home"></i>
+                                </a>
                             </li>
                             @if($document->folder)
-                                @php
-                                    $parents = collect([]);
-                                    $parent = $document->folder;
-                                    while($parent) {
-                                        $parents->prepend($parent);
-                                        $parent = $parent->parent;
-                                    }
-                                @endphp
+                                <?php $parents = collect([]); $parent = $document->folder->parent; ?>
+                                @while($parent)
+                                    <?php $parents->prepend($parent); $parent = $parent->parent; ?>
+                                @endwhile
 
                                 @foreach($parents as $parent)
                                     <li class="breadcrumb-item">
-                                        <a href="{{ route('folders.show', $parent) }}" class="text-decoration-none">{{ $parent->name }}</a>
+                                        <a href="{{ route('folders.show', $parent) }}" class="text-decoration-none">
+                                            {{ $parent->name }}
+                                        </a>
                                     </li>
                                 @endforeach
+
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('folders.show', $document->folder) }}" class="text-decoration-none">
+                                        {{ $document->folder->name }}
+                                    </a>
+                                </li>
                             @endif
                             <li class="breadcrumb-item active" aria-current="page">{{ $document->original_filename }}</li>
                         </ol>
@@ -130,30 +107,34 @@
             <div class="my-3 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <i class="bx
-                        @if(in_array($document->file_type, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) bxs-file-image text-success
-                        @elseif(in_array($document->file_type, ['pdf'])) bxs-file-pdf text-danger
+                        @if(in_array($document->file_type, ['pdf'])) bxs-file-pdf text-danger
                         @elseif(in_array($document->file_type, ['doc', 'docx'])) bxs-file-doc text-primary
-                        @elseif(in_array($document->file_type, ['xls', 'xlsx'])) bxs-file-txt text-success
-                        @elseif(in_array($document->file_type, ['ppt', 'pptx'])) bxs-file text-warning
+                        @elseif(in_array($document->file_type, ['xls', 'xlsx'])) bxs-file-spreadsheet text-success
+                        @elseif(in_array($document->file_type, ['jpg', 'jpeg', 'png', 'gif'])) bxs-file-image text-info
                         @else bxs-file text-secondary
                         @endif
-                    " style="font-size: 1.5rem;"></i>
-                    <h5 class="mb-0 ms-2">{{ $document->original_filename }}</h5>
+                    me-2" style="font-size: 1.5rem;"></i>
+                    <h5 class="mb-0">{{ $document->original_filename }}</h5>
                 </div>
 
                 <div class="action-buttons">
-                    @can('download documents')
-                    <a href="{{ route('documents.download', $document) }}" class="btn btn-sm btn-outline-primary">
+                    @can('download ' . $document->department . ' documents')
+                    <a href="{{ route('documents.download', $document) }}" class="btn btn-sm btn-outline-success">
                         <i class="bx bx-download"></i> Download
                     </a>
                     @endcan
-                    @can('edit documents')
+                    @can('share ' . $document->department . ' documents')
+                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#shareModal">
+                        <i class="bx bx-share"></i> Share
+                    </button>
+                    @endcan
+                    @can('edit ' . $document->department . ' documents')
                     <a href="{{ route('documents.edit', $document) }}" class="btn btn-sm btn-outline-secondary">
                         <i class="bx bx-edit"></i> Edit
                     </a>
                     @endcan
-                    @can('delete documents')
-                    <button type="button" class="btn btn-sm btn-outline-danger delete-doc-btn" data-id="{{ $document->id }}" data-name="{{ $document->original_filename }}">
+                    @can('delete ' . $document->department . ' documents')
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                         <i class="bx bx-trash"></i> Delete
                     </button>
                     @endcan
@@ -161,116 +142,132 @@
             </div>
 
             @if($document->description)
-                <p class="text-muted small mb-4">{{ $document->description }}</p>
+                <div class="mb-4">
+                    <h6>Description</h6>
+                    <p class="text-muted">{{ $document->description }}</p>
+                </div>
             @endif
 
             <!-- Document Preview Area -->
-            <div class="document-preview border rounded p-3 mb-4">
-                @if(in_array($document->file_type, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+            <div class="document-preview">
+                @if(in_array($document->file_type, ['jpg', 'jpeg', 'png', 'gif']))
+                    <!-- Image Preview -->
                     <div class="text-center">
-                        <img src="{{ Storage::url($document->file_path) }}" alt="{{ $document->original_filename }}" class="img-fluid" style="max-height: 500px;">
+                        <img src="{{ route('documents.download', $document) }}"
+                             alt="{{ $document->original_filename }}"
+                             class="img-fluid rounded shadow"
+                             style="max-height: 70vh;">
                     </div>
-                @elseif($document->file_type == 'pdf')
-                    <div class="ratio ratio-16x9" style="min-height: 500px;">
-                        <object data="{{ Storage::url($document->file_path) }}" type="application/pdf" class="w-100 h-100">
-                            <p>Your browser does not support PDFs. <a href="{{ route('documents.download', $document) }}">Download the PDF</a> instead.</p>
-                        </object>
-                    </div>
-                @elseif(in_array($document->file_type, ['doc', 'docx']))
-                    <div class="word-preview-container">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0">Document Preview</h6>
-                            <button id="refresh-preview" class="btn btn-sm btn-outline-primary d-none">
-                                <i class="bx bx-refresh me-1"></i> Refresh
-                            </button>
+                @elseif($document->file_type === 'pdf')
+                    <!-- PDF Preview -->
+                    <div class="pdf-preview">
+                        <div class="embed-responsive" style="height: 70vh;">
+                            <iframe src="{{ route('documents.download', $document) }}#toolbar=1&navpanes=1&scrollbar=1"
+                                    class="w-100 h-100 border rounded"
+                                    style="min-height: 500px;">
+                                <p>Your browser does not support PDFs.
+                                   <a href="{{ route('documents.download', $document) }}">Download the PDF</a>.
+                                </p>
+                            </iframe>
                         </div>
-                        <div id="word-preview-loading" class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                    </div>
+                @elseif(in_array($document->file_type, ['txt']))
+                    <!-- Text File Preview -->
+                    <div class="text-preview">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">File Contents</h6>
                             </div>
-                            <p class="text-muted mt-2">Loading document preview...</p>
+                            <div class="card-body">
+                                <pre class="mb-0" style="white-space: pre-wrap; max-height: 60vh; overflow-y: auto;">{{ Storage::get(str_replace('storage/', '', $document->file_path)) }}</pre>
+                            </div>
                         </div>
-                        <div id="word-preview-content" class="bg-light p-3 rounded d-none" style="min-height: 400px; max-height: 600px; overflow-y: auto;">
-                        </div>
-                        <div id="word-preview-error" class="alert alert-danger d-none" role="alert">
-                            <i class="bx bx-error me-1"></i>
-                            <span id="error-message">Error loading document preview</span>
-                        </div>
-                    </div>
-                @elseif(in_array($document->file_type, ['txt', 'md', 'html', 'css', 'js', 'php']))
-                    <div class="bg-light p-3 rounded text-break" style="max-height: 500px; overflow-y: auto;">
-                        <pre class="mb-0" style="white-space: pre-wrap;">{{ Storage::disk('public')->get($document->file_path) }}</pre>
                     </div>
                 @else
+                    <!-- Generic File Preview -->
                     <div class="text-center py-5">
-                        <div class="mb-3">
-                            <i class="bx
-                                @if(in_array($document->file_type, ['xls', 'xlsx'])) bxs-file-txt text-success
-                                @elseif(in_array($document->file_type, ['ppt', 'pptx'])) bxs-file text-warning
-                                @else bxs-file text-secondary
-                                @endif
-                            " style="font-size: 5rem;"></i>
-                        </div>
-                        <h5>{{ strtoupper($document->file_type) }} File</h5>
-                        <p class="text-muted mb-3">Preview not available for this file type</p>
-                        @can('download documents')
+                        <i class="bx
+                            @if(in_array($document->file_type, ['doc', 'docx'])) bxs-file-doc text-primary
+                            @elseif(in_array($document->file_type, ['xls', 'xlsx'])) bxs-file-spreadsheet text-success
+                            @else bxs-file text-secondary
+                            @endif
+                        " style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">{{ $document->original_filename }}</h4>
+                        <p class="text-muted">Preview not available for this file type</p>
+                        @can('download ' . $document->department . ' documents')
                         <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
-                            <i class="bx bx-download me-1"></i> Download File
+                            <i class="bx bx-download"></i> Download to View
                         </a>
                         @endcan
                     </div>
                 @endif
             </div>
 
-            <!-- Technical Info -->
-            <div class="card mb-4">
-                <div class="card-header bg-light py-2">
-                    <span class="small text-muted">Technical Information</span>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm m-0">
+            <!-- Document Metadata -->
+            @if($document->meta_data && count($document->meta_data) > 0)
+            <div class="mt-4">
+                <h6>Metadata</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
                         <tbody>
+                            @foreach($document->meta_data as $key => $value)
                             <tr>
-                                <th scope="row" style="width: 140px;" class="ps-3">File Name</th>
-                                <td>{{ $document->filename }}</td>
+                                <td class="fw-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}</td>
+                                <td>{{ is_array($value) ? implode(', ', $value) : $value }}</td>
                             </tr>
-                            <tr>
-                                <th scope="row" class="ps-3">MIME Type</th>
-                                <td>{{ $document->mime_type }}</td>
-                            </tr>
-                            @if(!empty($document->meta_data))
-                                <tr>
-                                    <th scope="row" class="ps-3">Uploaded</th>
-                                    <td>{{ \Carbon\Carbon::parse($document->meta_data['uploaded_at'])->format('F d, Y \a\t h:i A') }}</td>
-                                </tr>
-                            @endif
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="share-link" class="form-label">Share Link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="share-link" value="{{ route('documents.show', $document) }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyShareLink()">
+                            <i class="bx bx-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                <p class="small text-muted">Anyone with access to {{ $document->department_name }} documents can view this file.</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Document Modal -->
-<div class="modal fade" id="deleteDocModal" tabindex="-1" aria-hidden="true">
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Delete</h5>
+                <h5 class="modal-title">Delete Document</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-1">Delete file "<span id="doc-name" class="fw-medium"></span>"?</p>
-                <p class="mb-0 small text-danger">This cannot be undone.</p>
+                <p class="mb-1">Delete "<span class="fw-medium">{{ $document->original_filename }}</span>"?</p>
+                <p class="mb-0 small text-danger">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="delete-doc-form" action="" method="POST">
+                <form action="{{ route('documents.destroy', $document) }}" method="POST" class="d-inline">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-danger">
-                        Delete
+                        <i class="bx bx-trash"></i> Delete
                     </button>
                 </form>
             </div>
@@ -278,156 +275,104 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-    // Enhanced logging function
-    function logToConsole(level, message, data = {}) {
-        const timestamp = new Date().toISOString();
-        const logData = {
-            timestamp,
-            level,
-            message,
-            user_id: '{{ Auth::id() }}',
-            document_id: '{{ $document->id }}',
-            ...data
-        };
-
-        console[level](`[${timestamp}] ${message}`, logData);
+@push('styles')
+<style>
+    .document-preview {
+        background: white;
+        border-radius: 0.375rem;
+        border: 1px solid #dee2e6;
+        overflow: hidden;
     }
 
-    function loadWordPreview() {
-        const previewContent = document.getElementById('word-preview-content');
-        const loadingDiv = document.getElementById('word-preview-loading');
-        const errorDiv = document.getElementById('word-preview-error');
-        const refreshBtn = document.getElementById('refresh-preview');
-
-        logToConsole('info', 'Auto-loading Word document preview');
-
-        const startTime = performance.now();
-
-        fetch(`/documents/{{ $document->id }}/preview`)
-            .then(response => {
-                const responseTime = performance.now() - startTime;
-
-                logToConsole('info', 'Preview API response received', {
-                    status: response.status,
-                    ok: response.ok,
-                    response_time_ms: Math.round(responseTime)
-                });
-
-                return response.json();
-            })
-            .then(data => {
-                const totalTime = performance.now() - startTime;
-                loadingDiv.classList.add('d-none');
-
-                if (data.success) {
-                    logToConsole('info', 'Word preview loaded successfully', {
-                        content_length: data.content ? data.content.length : 0,
-                        total_time_ms: Math.round(totalTime)
-                    });
-
-                    previewContent.innerHTML = data.content;
-                    previewContent.classList.remove('d-none');
-                    refreshBtn.classList.remove('d-none');
-                } else {
-                    logToConsole('error', 'Word preview failed', {
-                        error_message: data.message,
-                        total_time_ms: Math.round(totalTime)
-                    });
-
-                    document.getElementById('error-message').textContent = data.message || 'Error loading document preview';
-                    errorDiv.classList.remove('d-none');
-                }
-            })
-            .catch(error => {
-                const totalTime = performance.now() - startTime;
-
-                logToConsole('error', 'Preview network error', {
-                    error: error.message,
-                    total_time_ms: Math.round(totalTime)
-                });
-
-                loadingDiv.classList.add('d-none');
-                document.getElementById('error-message').textContent = 'Network error occurred while loading preview';
-                errorDiv.classList.remove('d-none');
-            });
+    .text-preview pre {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        logToConsole('info', 'Document show page loaded');
+    .pdf-preview iframe {
+        border: none;
+    }
 
-        // Auto-load Word document preview if it's a Word document
-        @if(in_array($document->file_type, ['doc', 'docx']))
-        loadWordPreview();
-        @endif
-
-        // Refresh preview functionality
-        const refreshBtn = document.getElementById('refresh-preview');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
-                // Reset UI state
-                document.getElementById('word-preview-content').classList.add('d-none');
-                document.getElementById('word-preview-error').classList.add('d-none');
-                document.getElementById('word-preview-loading').classList.remove('d-none');
-                this.classList.add('d-none');
-
-                // Reload preview
-                loadWordPreview();
-            });
+    @media (max-width: 768px) {
+        .document-preview {
+            margin: 0 -15px;
         }
 
-        // Delete document modal functionality
-        const docModal = new bootstrap.Modal(document.getElementById('deleteDocModal'));
-        document.querySelectorAll('.delete-doc-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                logToConsole('info', 'Delete document modal opened', {
-                    document_name: this.dataset.name
-                });
+        .pdf-preview iframe {
+            height: 50vh !important;
+            min-height: 300px !important;
+        }
+    }
+</style>
+@endpush
 
-                document.getElementById('doc-name').textContent = this.dataset.name;
-                document.getElementById('delete-doc-form').action = `/documents/${this.dataset.id}`;
-                docModal.show();
-            });
-        });
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Copy share link functionality
+    window.copyShareLink = function() {
+        const shareLinkInput = document.getElementById('share-link');
+        shareLinkInput.select();
+        shareLinkInput.setSelectionRange(0, 99999); // For mobile devices
 
-        // Log download button clicks
-        document.querySelectorAll('a[href*="download"]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                logToConsole('info', 'Document download initiated', {
-                    download_url: this.href
-                });
-            });
-        });
+        try {
+            document.execCommand('copy');
 
-        // Log edit button clicks
-        document.querySelectorAll('a[href*="edit"]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                logToConsole('info', 'Document edit page accessed', {
-                    edit_url: this.href
-                });
-            });
-        });
-    });
+            // Show success feedback
+            const copyBtn = shareLinkInput.nextElementSibling;
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="bx bx-check"></i> Copied!';
+            copyBtn.classList.remove('btn-outline-secondary');
+            copyBtn.classList.add('btn-success');
 
-    // Global error handler
-    window.addEventListener('error', function(e) {
-        logToConsole('error', 'JavaScript error occurred', {
-            message: e.message,
-            filename: e.filename,
-            line: e.lineno,
-            column: e.colno,
-            stack: e.error ? e.error.stack : 'No stack trace'
-        });
-    });
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('btn-success');
+                copyBtn.classList.add('btn-outline-secondary');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
 
-    // Unhandled promise rejection handler
-    window.addEventListener('unhandledrejection', function(e) {
-        logToConsole('error', 'Unhandled promise rejection', {
-            reason: e.reason,
-            promise: e.promise
+    // Handle PDF loading errors
+    const pdfIframe = document.querySelector('.pdf-preview iframe');
+    if (pdfIframe) {
+        pdfIframe.addEventListener('error', function() {
+            this.outerHTML = `
+                <div class="text-center py-5">
+                    <i class="bx bxs-file-pdf text-danger" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">PDF Preview Unavailable</h4>
+                    <p class="text-muted">Unable to preview this PDF file</p>
+                    <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
+                        <i class="bx bx-download"></i> Download PDF
+                    </a>
+                </div>
+            `;
         });
-    });
+    }
+
+    // Handle image loading errors
+    const previewImage = document.querySelector('.document-preview img');
+    if (previewImage) {
+        previewImage.addEventListener('error', function() {
+            this.outerHTML = `
+                <div class="text-center py-5">
+                    <i class="bx bx-image-alt text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">Image Preview Unavailable</h4>
+                    <p class="text-muted">Unable to preview this image file</p>
+                    <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
+                        <i class="bx bx-download"></i> Download Image
+                    </a>
+                </div>
+            `;
+        });
+    }
+});
 </script>
 @endpush
 @endsection
