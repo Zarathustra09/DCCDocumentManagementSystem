@@ -290,22 +290,22 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $users = [
-            ['email' => 'superadmin@dcc.com', 'name' => 'Super Admin', 'role' => 'SuperAdmin'],
-            ['email' => 'dccadmin@dcc.com', 'name' => 'DCC Admin', 'role' => 'DCCAdmin'],
-            ['email' => 'vpsales@dcc.com', 'name' => 'VP Sales Operations', 'role' => 'VP Sales and Operations'],
-            ['email' => 'comptroller@dcc.com', 'name' => 'Comptroller', 'role' => 'Comptroller'],
-            ['email' => 'ithead@dcc.com', 'name' => 'IT Head', 'role' => 'IT Head'],
-            ['email' => 'qahead@dcc.com', 'name' => 'QA Head', 'role' => 'QA Head'],
-            ['email' => 'hrhead@dcc.com', 'name' => 'HR Head', 'role' => 'HR Head'],
-            ['email' => 'purchasinghead@dcc.com', 'name' => 'Purchasing Head', 'role' => 'Purchasing Head'],
-            ['email' => 'buhead1@dcc.com', 'name' => 'Business Unit Head 1', 'role' => 'Business Unit Head 1'],
-            ['email' => 'buhead2@dcc.com', 'name' => 'Business Unit Head 2', 'role' => 'Business Unit Head 2'],
-            ['email' => 'itreader@dcc.com', 'name' => 'IT Reader', 'role' => 'IT Read Only'],
-            ['email' => 'qareader@dcc.com', 'name' => 'QA Reader', 'role' => 'QA Read Only'],
-            ['email' => 'dccreader@dcc.com', 'name' => 'DCC Reader', 'role' => 'DCC Read Only'],
-            ['email' => 'bu1reader@dcc.com', 'name' => 'Business Unit 1 Reader', 'role' => 'Business Unit 1 Read Only'],
-            ['email' => 'bu2reader@dcc.com', 'name' => 'Business Unit 2 Reader', 'role' => 'Business Unit 2 Read Only'],
-            ['email' => 'intern@dcc.com', 'name' => 'Company Intern', 'role' => 'Intern'],
+            ['email' => 'superadmin@smartprobegroup.com', 'name' => 'Super Admin', 'role' => 'SuperAdmin'],
+            ['email' => 'dccadmin@smartprobegroup.com', 'name' => 'DCC Admin', 'role' => 'DCCAdmin'],
+            ['email' => 'vpsales@smartprobegroup.com', 'name' => 'VP Sales Operations', 'role' => 'VP Sales and Operations'],
+            ['email' => 'comptroller@smartprobegroup.com', 'name' => 'Comptroller', 'role' => 'Comptroller'],
+            ['email' => 'ithead@smartprobegroup.com', 'name' => 'IT Head', 'role' => 'IT Head'],
+            ['email' => 'qahead@smartprobegroup.com', 'name' => 'QA Head', 'role' => 'QA Head'],
+            ['email' => 'hrhead@smartprobegroup.com', 'name' => 'HR Head', 'role' => 'HR Head'],
+            ['email' => 'purchasinghead@smartprobegroup.com', 'name' => 'Purchasing Head', 'role' => 'Purchasing Head'],
+            ['email' => 'buhead1@smartprobegroup.com', 'name' => 'Business Unit Head 1', 'role' => 'Business Unit Head 1'],
+            ['email' => 'buhead2@smartprobegroup.com', 'name' => 'Business Unit Head 2', 'role' => 'Business Unit Head 2'],
+            ['email' => 'itreader@smartprobegroup.com', 'name' => 'IT Reader', 'role' => 'IT Read Only'],
+            ['email' => 'qareader@smartprobegroup.com', 'name' => 'QA Reader', 'role' => 'QA Read Only'],
+            ['email' => 'dccreader@smartprobegroup.com', 'name' => 'DCC Reader', 'role' => 'DCC Read Only'],
+            ['email' => 'bu1reader@smartprobegroup.com', 'name' => 'Business Unit 1 Reader', 'role' => 'Business Unit 1 Read Only'],
+            ['email' => 'bu2reader@smartprobegroup.com', 'name' => 'Business Unit 2 Reader', 'role' => 'Business Unit 2 Read Only'],
+            ['email' => 'intern@smartprobegroup.com', 'name' => 'Company Intern', 'role' => 'Intern'],
         ];
 
         foreach ($users as $userData) {
