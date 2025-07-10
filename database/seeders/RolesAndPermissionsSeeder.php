@@ -17,14 +17,71 @@ class RolesAndPermissionsSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create document permissions
-        $documentPermissions = [
-            'view documents',
-            'create documents',
-            'edit documents',
-            'delete documents',
-            'download documents',
-            'share documents',
+        // Create department-specific document permissions
+        $departmentPermissions = [
+            // IT Department
+            'view IT documents',
+            'create IT documents',
+            'edit IT documents',
+            'delete IT documents',
+            'download IT documents',
+            'share IT documents',
+
+            // Finance/Accounting
+            'view Finance documents',
+            'create Finance documents',
+            'edit Finance documents',
+            'delete Finance documents',
+            'download Finance documents',
+            'share Finance documents',
+
+            // QA Department
+            'view QA documents',
+            'create QA documents',
+            'edit QA documents',
+            'delete QA documents',
+            'download QA documents',
+            'share QA documents',
+
+            // HR Department
+            'view HR documents',
+            'create HR documents',
+            'edit HR documents',
+            'delete HR documents',
+            'download HR documents',
+            'share HR documents',
+
+            // Purchasing Department
+            'view Purchasing documents',
+            'create Purchasing documents',
+            'edit Purchasing documents',
+            'delete Purchasing documents',
+            'download Purchasing documents',
+            'share Purchasing documents',
+
+            // Sales Department
+            'view Sales documents',
+            'create Sales documents',
+            'edit Sales documents',
+            'delete Sales documents',
+            'download Sales documents',
+            'share Sales documents',
+
+            // Operations Department
+            'view Operations documents',
+            'create Operations documents',
+            'edit Operations documents',
+            'delete Operations documents',
+            'download Operations documents',
+            'share Operations documents',
+
+            // General/Public documents
+            'view General documents',
+            'create General documents',
+            'edit General documents',
+            'delete General documents',
+            'download General documents',
+            'share General documents',
         ];
 
         // Create folder permissions
@@ -42,60 +99,109 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage roles',
             'view reports',
             'access settings',
+            'system backup',
+            'system restore',
         ];
 
         // Create all permissions
-        $allPermissions = array_merge($documentPermissions, $folderPermissions, $systemPermissions);
+        $allPermissions = array_merge($departmentPermissions, $folderPermissions, $systemPermissions);
         foreach ($allPermissions as $permission) {
             Permission::create(['name' => $permission]);
         }
 
-        // Create admin role with all permissions
-        $adminRole = Role::create(['name' => 'admin']);
-        $adminRole->givePermissionTo(Permission::all());
+        // Create SuperAdmin role with all permissions
+        $superAdminRole = Role::create(['name' => 'SuperAdmin']);
+        $superAdminRole->givePermissionTo(Permission::all());
 
-        // Create manager role with specific permissions
-        $managerRole = Role::create(['name' => 'manager']);
-        $managerRole->givePermissionTo([
-            'view documents',
-            'create documents',
-            'edit documents',
-            'delete documents',
-            'download documents',
-            'share documents',
-            'view folders',
-            'create folders',
-            'edit folders',
-            'delete folders',
-            'share folders',
+        // Create DCCAdmin role with administrative permissions
+        $dccAdminRole = Role::create(['name' => 'DCCAdmin']);
+        $dccAdminRole->givePermissionTo([
+            // All department documents
+            'view IT documents', 'create IT documents', 'edit IT documents', 'delete IT documents', 'download IT documents', 'share IT documents',
+            'view Finance documents', 'create Finance documents', 'edit Finance documents', 'delete Finance documents', 'download Finance documents', 'share Finance documents',
+            'view QA documents', 'create QA documents', 'edit QA documents', 'delete QA documents', 'download QA documents', 'share QA documents',
+            'view HR documents', 'create HR documents', 'edit HR documents', 'delete HR documents', 'download HR documents', 'share HR documents',
+            'view Purchasing documents', 'create Purchasing documents', 'edit Purchasing documents', 'delete Purchasing documents', 'download Purchasing documents', 'share Purchasing documents',
+            'view Sales documents', 'create Sales documents', 'edit Sales documents', 'delete Sales documents', 'download Sales documents', 'share Sales documents',
+            'view Operations documents', 'create Operations documents', 'edit Operations documents', 'delete Operations documents', 'download Operations documents', 'share Operations documents',
+            'view General documents', 'create General documents', 'edit General documents', 'delete General documents', 'download General documents', 'share General documents',
+            // Folders and system
+            'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
+            'manage users', 'manage roles', 'view reports', 'access settings',
+        ]);
+
+        // Create VP Sales and Operations role
+        $vpSalesOpsRole = Role::create(['name' => 'VP Sales and Operations']);
+        $vpSalesOpsRole->givePermissionTo([
+            'view Sales documents', 'create Sales documents', 'edit Sales documents', 'delete Sales documents', 'download Sales documents', 'share Sales documents',
+            'view Operations documents', 'create Operations documents', 'edit Operations documents', 'delete Operations documents', 'download Operations documents', 'share Operations documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
         ]);
 
-        // Create editor role
-        $editorRole = Role::create(['name' => 'editor']);
-        $editorRole->givePermissionTo([
-            'view documents',
-            'create documents',
-            'edit documents',
-            'download documents',
-            'view folders',
-            'create folders',
-            'edit folders',
+        // Create Comptroller role
+        $comptrollerRole = Role::create(['name' => 'Comptroller']);
+        $comptrollerRole->givePermissionTo([
+            'view Finance documents', 'create Finance documents', 'edit Finance documents', 'delete Finance documents', 'download Finance documents', 'share Finance documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
+            'view reports',
         ]);
 
-        // Create viewer role
-        $viewerRole = Role::create(['name' => 'viewer']);
-        $viewerRole->givePermissionTo([
-            'view documents',
-//            'download documents',
-            'view folders',
+        // Create IT Head role
+        $itHeadRole = Role::create(['name' => 'IT Head']);
+        $itHeadRole->givePermissionTo([
+            'view IT documents', 'create IT documents', 'edit IT documents', 'delete IT documents', 'download IT documents', 'share IT documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
+            'view reports', 'access settings',
         ]);
 
-        // Assign admin role to first user (if exists)
-        $adminUser = User::first();
-        if ($adminUser) {
-            $adminUser->assignRole('admin');
-        }
+        // Create QA Head role
+        $qaHeadRole = Role::create(['name' => 'QA Head']);
+        $qaHeadRole->givePermissionTo([
+            'view QA documents', 'create QA documents', 'edit QA documents', 'delete QA documents', 'download QA documents', 'share QA documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
+            'view reports',
+        ]);
+
+        // Create HR Head role
+        $hrHeadRole = Role::create(['name' => 'HR Head']);
+        $hrHeadRole->givePermissionTo([
+            'view HR documents', 'create HR documents', 'edit HR documents', 'delete HR documents', 'download HR documents', 'share HR documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
+            'view reports',
+        ]);
+
+        // Create Purchasing Head role
+        $purchasingHeadRole = Role::create(['name' => 'Purchasing Head']);
+        $purchasingHeadRole->givePermissionTo([
+            'view Purchasing documents', 'create Purchasing documents', 'edit Purchasing documents', 'delete Purchasing documents', 'download Purchasing documents', 'share Purchasing documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
+            'view reports',
+        ]);
+
+        // Create Business Unit Head role
+        $buHeadRole = Role::create(['name' => 'Business Unit Head']);
+        $buHeadRole->givePermissionTo([
+            'view Sales documents', 'create Sales documents', 'edit Sales documents', 'download Sales documents', 'share Sales documents',
+            'view Operations documents', 'create Operations documents', 'edit Operations documents', 'download Operations documents', 'share Operations documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'share folders',
+            'view reports',
+        ]);
+
+        // Create Intern role
+        $internRole = Role::create(['name' => 'Intern']);
+        $internRole->givePermissionTo([
+            'view General documents',
+            'download General documents',
+            'view folders',
+        ]);
 
         // Create example users for each role
         $this->createExampleUsers();
@@ -111,48 +217,29 @@ class RolesAndPermissionsSeeder extends Seeder
             return;
         }
 
-        // Create admin user if doesn't exist
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-        $admin->assignRole('admin');
+        $users = [
+            ['email' => 'superadmin@dcc.com', 'name' => 'Super Admin', 'role' => 'SuperAdmin'],
+            ['email' => 'dccadmin@dcc.com', 'name' => 'DCC Admin', 'role' => 'DCCAdmin'],
+            ['email' => 'vpsales@dcc.com', 'name' => 'VP Sales Operations', 'role' => 'VP Sales and Operations'],
+            ['email' => 'comptroller@dcc.com', 'name' => 'Comptroller', 'role' => 'Comptroller'],
+            ['email' => 'ithead@dcc.com', 'name' => 'IT Head', 'role' => 'IT Head'],
+            ['email' => 'qahead@dcc.com', 'name' => 'QA Head', 'role' => 'QA Head'],
+            ['email' => 'hrhead@dcc.com', 'name' => 'HR Head', 'role' => 'HR Head'],
+            ['email' => 'purchasinghead@dcc.com', 'name' => 'Purchasing Head', 'role' => 'Purchasing Head'],
+            ['email' => 'buhead@dcc.com', 'name' => 'Business Unit Head', 'role' => 'Business Unit Head'],
+            ['email' => 'intern@dcc.com', 'name' => 'Intern User', 'role' => 'Intern'],
+        ];
 
-        // Create manager user
-        $manager = User::firstOrCreate(
-            ['email' => 'manager@example.com'],
-            [
-                'name' => 'Manager User',
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-        $manager->assignRole('manager');
-
-        // Create editor user
-        $editor = User::firstOrCreate(
-            ['email' => 'editor@example.com'],
-            [
-                'name' => 'Editor User',
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-        $editor->assignRole('editor');
-
-        // Create viewer user
-        $viewer = User::firstOrCreate(
-            ['email' => 'viewer@example.com'],
-            [
-                'name' => 'Viewer User',
-                'password' => bcrypt('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-        $viewer->assignRole('viewer');
+        foreach ($users as $userData) {
+            $user = User::firstOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'password' => bcrypt('password'),
+                    'email_verified_at' => now(),
+                ]
+            );
+            $user->assignRole($userData['role']);
+        }
     }
 }

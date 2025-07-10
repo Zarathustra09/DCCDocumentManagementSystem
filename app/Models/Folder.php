@@ -13,7 +13,19 @@ class Folder extends Model
         'user_id',
         'parent_id',
         'name',
+        'department',
         'description',
+    ];
+
+    const DEPARTMENTS = [
+        'IT' => 'IT Department',
+        'Finance' => 'Finance Department',
+        'QA' => 'QA Department',
+        'HR' => 'HR Department',
+        'Purchasing' => 'Purchasing Department',
+        'Sales' => 'Sales Department',
+        'Operations' => 'Operations Department',
+        'General' => 'General/Public'
     ];
 
     public function user()
@@ -34,5 +46,28 @@ class Folder extends Model
     public function children()
     {
         return $this->hasMany(Folder::class, 'parent_id');
+    }
+
+    public function getDepartmentNameAttribute()
+    {
+        return self::DEPARTMENTS[$this->department] ?? $this->department;
+    }
+
+    public function scopeForDepartment($query, $department)
+    {
+        return $query->where('department', $department);
+    }
+
+    public function scopeAccessibleByUser($query, $user)
+    {
+        $accessibleDepartments = [];
+
+        foreach (self::DEPARTMENTS as $dept => $name) {
+            if ($user->can("view {$dept} documents")) {
+                $accessibleDepartments[] = $dept;
+            }
+        }
+
+        return $query->whereIn('department', $accessibleDepartments);
     }
 }

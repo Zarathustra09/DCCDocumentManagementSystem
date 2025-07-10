@@ -49,11 +49,30 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+                            <select class="form-select @error('department') is-invalid @enderror" id="department" name="department" required>
+                                @foreach($departments as $key => $name)
+                                    <option value="{{ $key }}" {{ (old('department', $folder->department) == $key) ? 'selected' : '' }}>
+                                        {{ $name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('department')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="bx bx-info-circle"></i> Changing department will affect access permissions for this folder.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label for="parent_id" class="form-label">Parent Folder</label>
                             <select class="form-select @error('parent_id') is-invalid @enderror" id="parent_id" name="parent_id">
                                 <option value="">No Parent (Root Level)</option>
                                 @foreach($folders as $parentFolder)
-                                    <option value="{{ $parentFolder->id }}" {{ (old('parent_id', $folder->parent_id) == $parentFolder->id) ? 'selected' : '' }}>
+                                    <option value="{{ $parentFolder->id }}"
+                                        {{ (old('parent_id', $folder->parent_id) == $parentFolder->id) ? 'selected' : '' }}
+                                        data-department="{{ $parentFolder->department }}">
                                         {{ $parentFolder->name }}
                                     </option>
                                 @endforeach
@@ -62,7 +81,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                             <div class="form-text">
-                                <i class="bx bx-info-circle"></i> Changing the parent folder will move this folder and all its contents to a new location.
+                                <i class="bx bx-info-circle"></i> Parent folder must be in the same department.
                             </div>
                         </div>
 
@@ -94,6 +113,12 @@
                     <h6 class="mb-0"><i class="bx bx-info-circle"></i> Additional Information</h6>
                 </div>
                 <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-4 fw-bold">Department</div>
+                        <div class="col-md-8">
+                            <span class="badge bg-primary">{{ $folder->department_name }}</span>
+                        </div>
+                    </div>
                     <div class="row mb-2">
                         <div class="col-md-4 fw-bold">Created</div>
                         <div class="col-md-8">{{ $folder->created_at->format('M d, Y \a\t h:i A') }}</div>
@@ -158,4 +183,40 @@
     </div>
 </div>
 @endcan
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const departmentSelect = document.getElementById('department');
+    const parentSelect = document.getElementById('parent_id');
+
+    departmentSelect.addEventListener('change', function() {
+        const selectedDept = this.value;
+        const parentOptions = parentSelect.querySelectorAll('option[data-department]');
+
+        // Reset parent selection if changing department
+        if (parentSelect.value && parentOptions.length > 0) {
+            const currentParentDept = parentSelect.querySelector(`option[value="${parentSelect.value}"]`)?.dataset.department;
+            if (currentParentDept && currentParentDept !== selectedDept) {
+                parentSelect.value = '';
+            }
+        }
+
+        // Show/hide parent options based on department
+        parentOptions.forEach(option => {
+            if (selectedDept && option.dataset.department !== selectedDept) {
+                option.style.display = 'none';
+                option.disabled = true;
+            } else {
+                option.style.display = 'block';
+                option.disabled = false;
+            }
+        });
+    });
+
+    // Trigger on page load
+    departmentSelect.dispatchEvent(new Event('change'));
+});
+</script>
+@endpush
 @endsection
