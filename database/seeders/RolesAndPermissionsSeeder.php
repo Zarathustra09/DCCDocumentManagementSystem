@@ -185,14 +185,86 @@ class RolesAndPermissionsSeeder extends Seeder
             'view reports',
         ]);
 
-        // Create Business Unit Head role
-        $buHeadRole = Role::create(['name' => 'Business Unit Head']);
-        $buHeadRole->givePermissionTo([
+        // Create Business Unit Head 1 role
+        $buHead1Role = Role::create(['name' => 'Business Unit Head 1']);
+        $buHead1Role->givePermissionTo([
             'view Sales documents', 'create Sales documents', 'edit Sales documents', 'download Sales documents', 'share Sales documents',
             'view Operations documents', 'create Operations documents', 'edit Operations documents', 'download Operations documents', 'share Operations documents',
             'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'share folders',
             'view reports',
+        ]);
+
+        // Create Business Unit Head 2 role
+        $buHead2Role = Role::create(['name' => 'Business Unit Head 2']);
+        $buHead2Role->givePermissionTo([
+            'view Sales documents', 'create Sales documents', 'edit Sales documents', 'download Sales documents', 'share Sales documents',
+            'view Operations documents', 'create Operations documents', 'edit Operations documents', 'download Operations documents', 'share Operations documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'share folders',
+            'view reports',
+        ]);
+
+        // Create read-only roles
+        $itReadOnlyRole = Role::create(['name' => 'IT Read Only']);
+        $itReadOnlyRole->givePermissionTo([
+            'view IT documents',
+            'download IT documents',
+            'view General documents',
+            'download General documents',
+            'view folders',
+        ]);
+
+        $qaReadOnlyRole = Role::create(['name' => 'QA Read Only']);
+        $qaReadOnlyRole->givePermissionTo([
+            'view QA documents',
+            'download QA documents',
+            'view General documents',
+            'download General documents',
+            'view folders',
+        ]);
+
+        $dccReadOnlyRole = Role::create(['name' => 'DCC Read Only']);
+        $dccReadOnlyRole->givePermissionTo([
+            // Read access to most departments (except sensitive ones like HR)
+            'view IT documents',
+            'download IT documents',
+            'view Finance documents',
+            'download Finance documents',
+            'view QA documents',
+            'download QA documents',
+            'view Purchasing documents',
+            'download Purchasing documents',
+            'view Sales documents',
+            'download Sales documents',
+            'view Operations documents',
+            'download Operations documents',
+            'view General documents',
+            'download General documents',
+            'view folders',
+            'view reports',
+        ]);
+
+        $businessUnit1ReadOnlyRole = Role::create(['name' => 'Business Unit 1 Read Only']);
+        $businessUnit1ReadOnlyRole->givePermissionTo([
+            'view Sales documents',
+            'download Sales documents',
+            'view Operations documents',
+            'download Operations documents',
+            'view General documents',
+            'download General documents',
+            'view folders',
+        ]);
+
+        $businessUnit2ReadOnlyRole = Role::create(['name' => 'Business Unit 2 Read Only']);
+        $businessUnit2ReadOnlyRole->givePermissionTo([
+            'view Sales documents',
+            'download Sales documents',
+            'view Operations documents',
+            'download Operations documents',
+            'view General documents',
+            'download General documents',
+            'view folders',
         ]);
 
         // Create Intern role
@@ -226,19 +298,24 @@ class RolesAndPermissionsSeeder extends Seeder
             ['email' => 'qahead@dcc.com', 'name' => 'QA Head', 'role' => 'QA Head'],
             ['email' => 'hrhead@dcc.com', 'name' => 'HR Head', 'role' => 'HR Head'],
             ['email' => 'purchasinghead@dcc.com', 'name' => 'Purchasing Head', 'role' => 'Purchasing Head'],
-            ['email' => 'buhead@dcc.com', 'name' => 'Business Unit Head', 'role' => 'Business Unit Head'],
-            ['email' => 'intern@dcc.com', 'name' => 'Intern User', 'role' => 'Intern'],
+            ['email' => 'buhead1@dcc.com', 'name' => 'Business Unit Head 1', 'role' => 'Business Unit Head 1'],
+            ['email' => 'buhead2@dcc.com', 'name' => 'Business Unit Head 2', 'role' => 'Business Unit Head 2'],
+            ['email' => 'itreader@dcc.com', 'name' => 'IT Reader', 'role' => 'IT Read Only'],
+            ['email' => 'qareader@dcc.com', 'name' => 'QA Reader', 'role' => 'QA Read Only'],
+            ['email' => 'dccreader@dcc.com', 'name' => 'DCC Reader', 'role' => 'DCC Read Only'],
+            ['email' => 'bu1reader@dcc.com', 'name' => 'Business Unit 1 Reader', 'role' => 'Business Unit 1 Read Only'],
+            ['email' => 'bu2reader@dcc.com', 'name' => 'Business Unit 2 Reader', 'role' => 'Business Unit 2 Read Only'],
+            ['email' => 'intern@dcc.com', 'name' => 'Company Intern', 'role' => 'Intern'],
         ];
 
         foreach ($users as $userData) {
-            $user = User::firstOrCreate(
-                ['email' => $userData['email']],
-                [
-                    'name' => $userData['name'],
-                    'password' => bcrypt('password'),
-                    'email_verified_at' => now(),
-                ]
-            );
+            $user = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => bcrypt('password123'),
+                'email_verified_at' => now(),
+            ]);
+
             $user->assignRole($userData['role']);
         }
     }
