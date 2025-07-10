@@ -27,13 +27,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'download IT documents',
             'share IT documents',
 
-            // Finance/Accounting
-            'view Finance documents',
-            'create Finance documents',
-            'edit Finance documents',
-            'delete Finance documents',
-            'download Finance documents',
-            'share Finance documents',
+            // Purchasing/Accounting
+            'view Purchasing documents',
+            'create Purchasing documents',
+            'edit Purchasing documents',
+            'delete Purchasing documents',
+            'download Purchasing documents',
+            'share Purchasing documents',
 
             // QA Department
             'view QA documents',
@@ -118,7 +118,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $dccAdminRole->givePermissionTo([
             // All department documents
             'view IT documents', 'create IT documents', 'edit IT documents', 'delete IT documents', 'download IT documents', 'share IT documents',
-            'view Finance documents', 'create Finance documents', 'edit Finance documents', 'delete Finance documents', 'download Finance documents', 'share Finance documents',
+            'view Purchasing documents', 'create Purchasing documents', 'edit Purchasing documents', 'delete Purchasing documents', 'download Purchasing documents', 'share Purchasing documents',
             'view QA documents', 'create QA documents', 'edit QA documents', 'delete QA documents', 'download QA documents', 'share QA documents',
             'view HR documents', 'create HR documents', 'edit HR documents', 'delete HR documents', 'download HR documents', 'share HR documents',
             'view Purchasing documents', 'create Purchasing documents', 'edit Purchasing documents', 'delete Purchasing documents', 'download Purchasing documents', 'share Purchasing documents',
@@ -143,7 +143,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create Comptroller role
         $comptrollerRole = Role::create(['name' => 'Comptroller']);
         $comptrollerRole->givePermissionTo([
-            'view Finance documents', 'create Finance documents', 'edit Finance documents', 'delete Finance documents', 'download Finance documents', 'share Finance documents',
+            'view Purchasing documents', 'create Purchasing documents', 'edit Purchasing documents', 'delete Purchasing documents', 'download Purchasing documents', 'share Purchasing documents',
             'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
@@ -229,8 +229,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Read access to most departments (except sensitive ones like HR)
             'view IT documents',
             'download IT documents',
-            'view Finance documents',
-            'download Finance documents',
+            'view Purchasing documents',
+            'download Purchasing documents',
             'view QA documents',
             'download QA documents',
             'view Purchasing documents',
