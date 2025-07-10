@@ -101,17 +101,17 @@
                 </div>
 
                 <div class="action-buttons">
-                    @can('create folders')
+                    @can('create ' . $folder->department . ' documents')
                     <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}" class="btn btn-sm btn-outline-primary">
                         <i class="bx bx-folder-plus"></i> Add
                     </a>
                     @endcan
-                    @can('create documents')
+                    @can('create ' . $folder->department . ' documents')
                     <a href="{{ route('documents.create') }}?folder_id={{ $folder->id }}" class="btn btn-sm btn-outline-success">
                         <i class="bx bx-upload"></i> Upload
                     </a>
                     @endcan
-                    @can('edit folders')
+                    @can('edit ' . $folder->department . ' documents')
                     <a href="{{ route('folders.edit', $folder) }}" class="btn btn-sm btn-outline-secondary">
                         <i class="bx bx-edit"></i> Edit
                     </a>
@@ -142,12 +142,12 @@
                                 </a>
                                 <div class="item-actions position-absolute top-0 end-0 p-1 d-none">
                                     <div class="btn-group btn-group-sm">
-                                        @can('edit folders')
+                                        @can('edit ' . $subfolder->department . ' documents')
                                         <a href="{{ route('folders.edit', $subfolder) }}" class="btn btn-light btn-sm rounded-circle" title="Edit">
                                             <i class="bx bx-edit"></i>
                                         </a>
                                         @endcan
-                                        @can('delete folders')
+                                        @can('delete ' . $subfolder->department . ' documents')
                                         <button type="button" class="btn btn-light btn-sm rounded-circle delete-btn"
                                                data-id="{{ $subfolder->id }}" data-name="{{ $subfolder->name }}" title="Delete">
                                             <i class="bx bx-trash"></i>
@@ -181,17 +181,17 @@
                                 </a>
                                 <div class="item-actions position-absolute top-0 end-0 p-1 d-none">
                                     <div class="btn-group btn-group-sm">
-                                        @can('download documents')
+                                        @can('download ' . $document->folder->department . ' documents')
                                         <a href="{{ route('documents.download', $document) }}" class="btn btn-light btn-sm rounded-circle" title="Download">
                                             <i class="bx bx-download"></i>
                                         </a>
                                         @endcan
-                                        @can('edit documents')
+                                        @can('edit ' . $document->folder->department . ' documents')
                                         <a href="{{ route('documents.edit', $document) }}" class="btn btn-light btn-sm rounded-circle" title="Edit">
                                             <i class="bx bx-edit"></i>
                                         </a>
                                         @endcan
-                                        @can('delete documents')
+                                        @can('delete ' . $document->folder->department . ' documents')
                                         <button type="button" class="btn btn-light btn-sm rounded-circle delete-doc-btn"
                                                data-id="{{ $document->id }}" data-name="{{ $document->original_filename }}" title="Delete">
                                             <i class="bx bx-trash"></i>
@@ -210,12 +210,12 @@
                                 <p class="mt-3 mb-3 text-muted">This folder is empty</p>
                                 <p class="small text-muted mb-3">Drag files here to upload them or move items here</p>
                                 <div>
-                                    @can('create folders')
+                                    @can('create ' . $folder->department . ' documents')
                                     <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}" class="btn btn-sm btn-outline-primary me-2">
                                         <i class="bx bx-folder-plus"></i> Add
                                     </a>
                                     @endcan
-                                    @can('create documents')
+                                    @can('create ' . $folder->department . ' documents')
                                     <a href="{{ route('documents.create') }}?folder_id={{ $folder->id }}" class="btn btn-sm btn-outline-success">
                                         <i class="bx bx-upload"></i> Upload
                                     </a>
@@ -259,12 +259,12 @@
                                     <td><small>{{ $subfolder->updated_at->format('M d, Y') }}</small></td>
                                     <td class="text-end">
                                         <div class="btn-group btn-group-sm">
-                                            @can('edit folders')
+                                            @can('edit ' . $subfolder->department . ' documents')
                                             <a href="{{ route('folders.edit', $subfolder) }}" class="btn btn-outline-secondary btn-sm" title="Edit">
                                                 <i class="bx bx-edit"></i>
                                             </a>
                                             @endcan
-                                            @can('delete folders')
+                                            @can('delete ' . $subfolder->department . ' documents')
                                             <button type="button" class="btn btn-outline-danger btn-sm delete-btn"
                                                    data-id="{{ $subfolder->id }}" data-name="{{ $subfolder->name }}" title="Delete">
                                                 <i class="bx bx-trash"></i>
@@ -298,17 +298,17 @@
                                     <td><small>{{ $document->updated_at->format('M d, Y') }}</small></td>
                                     <td class="text-end">
                                         <div class="btn-group btn-group-sm">
-                                            @can('download documents')
+                                            @can('download ' . $document->folder->department . ' documents')
                                             <a href="{{ route('documents.download', $document) }}" class="btn btn-outline-success btn-sm" title="Download">
                                                 <i class="bx bx-download"></i>
                                             </a>
                                             @endcan
-                                            @can('edit documents')
+                                            @can('edit ' . $document->folder->department . ' documents')
                                             <a href="{{ route('documents.edit', $document) }}" class="btn btn-outline-secondary btn-sm" title="Edit">
                                                 <i class="bx bx-edit"></i>
                                             </a>
                                             @endcan
-                                            @can('delete documents')
+                                            @can('delete ' . $document->folder->department . ' documents')
                                             <button type="button" class="btn btn-outline-danger btn-sm delete-doc-btn"
                                                    data-id="{{ $document->id }}" data-name="{{ $document->original_filename }}" title="Delete">
                                                 <i class="bx bx-trash"></i>
