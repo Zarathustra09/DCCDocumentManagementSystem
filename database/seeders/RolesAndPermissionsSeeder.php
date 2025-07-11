@@ -267,6 +267,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'view folders',
         ]);
 
+
+        $generalPublicRole = Role::create(['name' => 'General/Public']);
+        $generalPublicRole->givePermissionTo([
+            'view General documents',
+            'view folders',
+        ]);
+
         // Create Intern role
         $internRole = Role::create(['name' => 'Intern']);
         $internRole->givePermissionTo([
@@ -305,6 +312,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['email' => 'dccreader@smartprobegroup.com', 'name' => 'DCC Reader', 'role' => 'DCC Read Only'],
             ['email' => 'bu1reader@smartprobegroup.com', 'name' => 'Business Unit 1 Reader', 'role' => 'Business Unit 1 Read Only'],
             ['email' => 'bu2reader@smartprobegroup.com', 'name' => 'Business Unit 2 Reader', 'role' => 'Business Unit 2 Read Only'],
+            ['email' => 'general@smartprobegroup.com', 'name' => 'General Public', 'role' => 'General/Public'],
             ['email' => 'intern@smartprobegroup.com', 'name' => 'Company Intern', 'role' => 'Intern'],
         ];
 
