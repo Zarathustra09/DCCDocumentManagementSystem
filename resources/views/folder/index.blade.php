@@ -1,158 +1,359 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bx bx-folder"></i> Folders
-                        </h5>
-                        @can('create folders')
-                        <a href="{{ route('folders.create') }}" class="btn btn-primary">
-                            <i class="bx bx-folder-plus"></i> Create Folder
-                        </a>
-                        @endcan
-                    </div>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">
+                        <i class="bx bx-folder-open text-primary me-2"></i>
+                        Document Folders
+                    </h2>
+                    <p class="text-muted mb-0">Organize and manage your documents by department</p>
                 </div>
+                @can('create folders')
+                <div>
+                    <a href="{{ route('folders.create') }}" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="bx bx-plus-circle me-2"></i>
+                        Create New Folder
+                    </a>
+                </div>
+                @endcan
+            </div>
+        </div>
+    </div>
 
-                <div class="card-body">
-                    @if (session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-
-                    @if($folders->isEmpty())
-                        <div class="text-center py-5">
-                            <i class="bx bx-folder-open display-4 text-muted"></i>
-                            <h5 class="mt-3 text-muted">No Folders Found</h5>
-                            <p class="text-muted">You don't have access to any folders or no folders exist yet.</p>
-                            @can('create folders')
-                            <a href="{{ route('folders.create') }}" class="btn btn-primary">
-                                <i class="bx bx-folder-plus"></i> Create Your First Folder
-                            </a>
-                            @endcan
-                        </div>
-                    @else
-                        @foreach($folders as $department => $deptFolders)
-                            <div class="mb-4">
-                                <h6 class="border-bottom pb-2 mb-3">
-                                    <i class="bx bx-buildings"></i>
-                                    {{ \App\Models\Folder::DEPARTMENTS[$department] ?? $department }}
-                                    <span class="badge bg-secondary ms-2">{{ $deptFolders->count() }}</span>
-                                </h6>
-
-                                <div class="row">
-                                    @foreach($deptFolders as $folder)
-                                        <div class="col-md-6 col-lg-4 mb-3">
-                                            <div class="card h-100 folder-card">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <h6 class="card-title mb-0">
-                                                            <i class="bx bx-folder text-warning"></i>
-                                                            {{ $folder->name }}
-                                                        </h6>
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                <i class="bx bx-dots-vertical-rounded"></i>
-                                                            </button>
-                                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                                <li>
-                                                                    <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
-                                                                        <i class="bx bx-show"></i> View
-                                                                    </a>
-                                                                </li>
-                                                                @can('edit folders')
-                                                                @if(Auth::user()->can("edit {$folder->department} documents") || Auth::user()->hasRole('admin'))
-                                                                <li>
-                                                                    <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
-                                                                        <i class="bx bx-edit"></i> Edit
-                                                                    </a>
-                                                                </li>
-                                                                @endif
-                                                                @endcan
-                                                                @can('delete folders')
-                                                                @if(Auth::user()->can("delete {$folder->department} documents") || Auth::user()->hasRole('admin'))
-                                                                <li><hr class="dropdown-divider"></li>
-                                                                <li>
-                                                                    <button class="dropdown-item text-danger delete-folder-btn"
-                                                                            data-id="{{ $folder->id }}"
-                                                                            data-name="{{ $folder->name }}"
-                                                                            data-children="{{ $folder->children->count() }}"
-                                                                            data-documents="{{ $folder->documents->count() }}">
-                                                                        <i class="bx bx-trash"></i> Delete
-                                                                    </button>
-                                                                </li>
-                                                                @endif
-                                                                @endcan
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-
-                                                    @if($folder->description)
-                                                        <p class="card-text text-muted small mb-2">{{ Str::limit($folder->description, 100) }}</p>
-                                                    @endif
-
-                                                    <div class="d-flex justify-content-between align-items-center text-muted small">
-                                                        <div>
-                                                            <i class="bx bx-folder"></i> {{ $folder->children->count() }} subfolders
-                                                        </div>
-                                                        <div>
-                                                            <i class="bx bx-file"></i> {{ $folder->documents->count() }} documents
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mt-2 text-muted small">
-                                                        <i class="bx bx-time"></i> {{ $folder->updated_at->diffForHumans() }}
-                                                    </div>
-                                                </div>
-                                                <div class="card-footer bg-transparent">
-                                                    <a href="{{ route('folders.show', $folder) }}" class="btn btn-sm btn-outline-primary w-100">
-                                                        <i class="bx bx-folder-open"></i> Open Folder
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
+    <!-- Filters and View Toggle -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <!-- Department Filter -->
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="filter-group">
+                                <label class="form-label small text-muted mb-1">Department</label>
+                                <select class="form-select form-select-sm" id="departmentFilter">
+                                    <option value="">All Departments</option>
+                                    @foreach(\App\Models\Folder::DEPARTMENTS as $key => $name)
+                                        <option value="{{ $key }}">{{ $name }}</option>
                                     @endforeach
-                                </div>
+                                </select>
                             </div>
-                        @endforeach
-                    @endif
+                        </div>
+
+                        <!-- View Toggle -->
+                        <div class="view-toggle">
+                            <label class="form-label small text-muted mb-1">View</label>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm view-btn active" data-view="compact">
+                                    <i class="bx bx-grid-alt"></i> Compact
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm view-btn" data-view="detailed">
+                                    <i class="bx bx-list-ul"></i> Detailed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Success Alert -->
+    @if (session('success'))
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+                <i class="bx bx-check-circle me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-12">
+            @if($folders->isEmpty())
+                <!-- Empty State -->
+                <div class="empty-state text-center py-5">
+                    <div class="empty-state-icon mb-4">
+                        <i class="bx bx-folder-open display-1 text-muted"></i>
+                    </div>
+                    <h3 class="text-muted mb-3">No Folders Yet</h3>
+                    <p class="text-muted fs-5 mb-4">
+                        Start organizing your documents by creating your first folder
+                    </p>
+                    @can('create folders')
+                    <a href="{{ route('folders.create') }}" class="btn btn-primary btn-lg">
+                        <i class="bx bx-folder-plus me-2"></i>
+                        Create Your First Folder
+                    </a>
+                    @endcan
+                </div>
+            @else
+                <!-- Compact View (Default) -->
+                <div id="compactView" class="folders-container">
+                    @foreach($folders as $department => $deptFolders)
+                    <div class="department-section mb-4" data-department="{{ $department }}">
+                        <!-- Collapsible Department Header -->
+                        <div class="department-header-compact mb-3" data-bs-toggle="collapse" data-bs-target="#dept-{{ Str::slug($department) }}" aria-expanded="true">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <i class="bx bx-chevron-down collapse-icon me-2"></i>
+                                    <i class="bx bx-buildings text-primary me-2"></i>
+                                    <h5 class="mb-0 fw-bold">
+                                        {{ \App\Models\Folder::DEPARTMENTS[$department] ?? $department }}
+                                    </h5>
+                                    <span class="badge bg-primary-subtle text-primary ms-2">
+                                        {{ $deptFolders->count() }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible Folders Grid -->
+                        <div class="collapse show" id="dept-{{ Str::slug($department) }}">
+                            <div class="row g-3">
+                                @foreach($deptFolders as $folder)
+                                <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 folder-item" data-name="{{ strtolower($folder->name) }}">
+                                    <div class="folder-card-compact h-100">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div class="folder-icon-small">
+                                                    <i class="bx bx-folder text-warning fs-2"></i>
+                                                </div>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
+                                                                <i class="bx bx-show me-2"></i>View
+                                                            </a>
+                                                        </li>
+                                                        @can('edit folders')
+                                                        @if(Auth::user()->can("edit {$folder->department} documents") || Auth::user()->hasRole('admin'))
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
+                                                                <i class="bx bx-edit me-2"></i>Edit
+                                                            </a>
+                                                        </li>
+                                                        @endif
+                                                        @endcan
+                                                        @can('delete folders')
+                                                        @if(Auth::user()->can("delete {$folder->department} documents") || Auth::user()->hasRole('admin'))
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <button class="dropdown-item text-danger delete-folder-btn"
+                                                                    data-id="{{ $folder->id }}"
+                                                                    data-name="{{ $folder->name }}"
+                                                                    data-children="{{ $folder->children->count() }}"
+                                                                    data-documents="{{ $folder->documents->count() }}">
+                                                                <i class="bx bx-trash me-2"></i>Delete
+                                                            </button>
+                                                        </li>
+                                                        @endif
+                                                        @endcan
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <h6 class="folder-title-compact fw-bold mb-2" title="{{ $folder->name }}">
+                                                {{ Str::limit($folder->name, 20) }}
+                                            </h6>
+
+                                            <div class="folder-stats-compact mb-2">
+                                                <div class="d-flex justify-content-between text-muted small">
+                                                    <span><i class="bx bx-folder"></i> {{ $folder->children->count() }}</span>
+                                                    <span><i class="bx bx-file"></i> {{ $folder->documents->count() }}</span>
+                                                </div>
+                                            </div>
+
+                                            <button class="btn btn-primary btn-sm w-100" onclick="window.location.href='{{ route('folders.show', $folder) }}'">
+                                                <i class="bx bx-folder-open me-1"></i>Open
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <!-- Detailed View (Hidden by default) -->
+                <div id="detailedView" class="folders-container" style="display: none;">
+                    @foreach($folders as $department => $deptFolders)
+                    <div class="department-section mb-4" data-department="{{ $department }}">
+                        <div class="department-header mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="department-icon me-3">
+                                    <i class="bx bx-buildings fs-3 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h4 class="fw-bold mb-1">
+                                        {{ \App\Models\Folder::DEPARTMENTS[$department] ?? $department }}
+                                    </h4>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill">
+                                        {{ $deptFolders->count() }} {{ Str::plural('folder', $deptFolders->count()) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            @foreach($deptFolders as $folder)
+                            <div class="col-xl-4 col-lg-6 folder-item" data-name="{{ strtolower($folder->name) }}">
+                                <div class="folder-card h-100 position-relative">
+                                    <div class="card-body p-4">
+                                        <!-- Same detailed card content from original -->
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div class="folder-icon">
+                                                <i class="bx bx-folder fs-1 text-warning"></i>
+                                            </div>
+                                            <div class="dropdown">
+                                                <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
+                                                    <i class="bx bx-dots-vertical-rounded fs-5"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
+                                                            <i class="bx bx-show me-2"></i>View Folder
+                                                        </a>
+                                                    </li>
+                                                    @can('edit folders')
+                                                    @if(Auth::user()->can("edit {$folder->department} documents") || Auth::user()->hasRole('admin'))
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
+                                                            <i class="bx bx-edit me-2"></i>Edit Folder
+                                                        </a>
+                                                    </li>
+                                                    @endif
+                                                    @endcan
+                                                    @can('delete folders')
+                                                    @if(Auth::user()->can("delete {$folder->department} documents") || Auth::user()->hasRole('admin'))
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button class="dropdown-item text-danger delete-folder-btn"
+                                                                data-id="{{ $folder->id }}"
+                                                                data-name="{{ $folder->name }}"
+                                                                data-children="{{ $folder->children->count() }}"
+                                                                data-documents="{{ $folder->documents->count() }}">
+                                                            <i class="bx bx-trash me-2"></i>Delete Folder
+                                                        </button>
+                                                    </li>
+                                                    @endif
+                                                    @endcan
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div class="folder-info">
+                                            <h5 class="folder-title fw-bold mb-2">{{ $folder->name }}</h5>
+
+                                            @if($folder->description)
+                                            <p class="folder-description text-muted small mb-3">
+                                                {{ Str::limit($folder->description, 80) }}
+                                            </p>
+                                            @endif
+
+                                            <div class="folder-stats mb-3">
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <div class="stat-item text-center p-2 bg-light rounded">
+                                                            <i class="bx bx-folder text-primary"></i>
+                                                            <div class="fw-bold">{{ $folder->children->count() }}</div>
+                                                            <div class="small text-muted">Subfolders</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="stat-item text-center p-2 bg-light rounded">
+                                                            <i class="bx bx-file text-success"></i>
+                                                            <div class="fw-bold">{{ $folder->documents->count() }}</div>
+                                                            <div class="small text-muted">Documents</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="folder-meta text-muted small">
+                                                <i class="bx bx-time-five me-1"></i>
+                                                Updated {{ $folder->updated_at->diffForHumans() }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-footer bg-transparent border-0 p-4 pt-0">
+                                        <a href="{{ route('folders.show', $folder) }}" class="btn btn-primary w-100">
+                                            <i class="bx bx-folder-open me-2"></i>
+                                            Open Folder
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
 </div>
 
+<!-- Keep the same delete modal from original -->
 @can('delete folders')
-<!-- Delete Folder Modal -->
 <div class="modal fade" id="deleteFolderModal" tabindex="-1" aria-labelledby="deleteFolderModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Delete Folder</h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title">
+                    <i class="bx bx-trash me-2"></i>
+                    Delete Folder
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p class="mb-1">Delete folder "<span id="folder-name" class="fw-medium"></span>"?</p>
-                <div id="folder-contents" class="alert alert-warning mt-3" style="display: none;">
-                    <i class="bx bx-error-circle"></i> Warning: This folder contains:
-                    <ul class="mb-0" id="contents-list"></ul>
-                    All these items will be permanently deleted.
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bx bx-error-circle text-danger display-4 mb-3"></i>
+                    <h6 class="mb-3">Are you sure you want to delete this folder?</h6>
+                    <div class="folder-name-display bg-light p-3 rounded mb-3">
+                        <strong id="folder-name"></strong>
+                    </div>
                 </div>
-                <p class="mb-0 small text-danger">This cannot be undone.</p>
+
+                <div id="folder-contents" class="alert alert-warning border-0" style="display: none;">
+                    <div class="d-flex align-items-start">
+                        <i class="bx bx-error-circle text-warning me-2 mt-1"></i>
+                        <div>
+                            <strong>Warning:</strong> This folder contains:
+                            <ul class="mb-0 mt-2" id="contents-list"></ul>
+                            <small class="text-muted d-block mt-2">All contents will be permanently deleted.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-danger border-0 mb-0">
+                    <i class="bx bx-info-circle me-2"></i>
+                    <small><strong>This action cannot be undone.</strong></small>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="delete-folder-form" action="" method="POST">
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <i class="bx bx-x me-2"></i>Cancel
+                </button>
+                <form id="delete-folder-form" action="" method="POST" class="d-inline">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-danger">
-                        Delete
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bx bx-trash me-2"></i>Delete Forever
                     </button>
                 </form>
             </div>
@@ -163,22 +364,151 @@
 
 @push('styles')
 <style>
+/* Existing styles... */
+.container-fluid {
+    max-width: 1400px;
+}
+
+/* Compact Department Header */
+.department-header-compact {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    border-left: 4px solid var(--bs-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.department-header-compact:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.collapse-icon {
+    transition: transform 0.2s ease;
+}
+
+.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+/* Compact Folder Cards */
+.folder-card-compact {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.folder-card-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: var(--bs-primary);
+}
+
+.folder-icon-small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.folder-title-compact {
+    color: #2c3e50;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.folder-stats-compact {
+    border-top: 1px solid #f1f3f4;
+    padding-top: 0.5rem;
+}
+
+/* Filter Controls */
+.filter-group {
+    min-width: 150px;
+}
+
+.view-toggle {
+    min-width: 120px;
+}
+
+.view-btn.active {
+    background-color: var(--bs-primary);
+    color: white;
+    border-color: var(--bs-primary);
+}
+
+/* Detailed view styles (keep original) */
 .folder-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: 1px solid #dee2e6;
+    background: white;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 }
 
 .folder-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 .folder-card .card-body {
-    padding: 1rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
 }
 
-.folder-card .card-footer {
-    padding: 0.75rem 1rem;
+.folder-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .col-xxl-2 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    .filter-group {
+        min-width: 120px;
+    }
+
+    .d-flex.flex-wrap.gap-3 {
+        gap: 1rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .col-xxl-2 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* Hide/show views */
+.folders-container {
+    transition: opacity 0.3s ease;
+}
+
+/* Animation improvements */
+.folder-item {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>
 @endpush
@@ -186,7 +516,62 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Delete folder modal functionality
+    // View toggle functionality
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const compactView = document.getElementById('compactView');
+    const detailedView = document.getElementById('detailedView');
+
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+
+            // Update active button
+            viewButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Switch views
+            if (view === 'compact') {
+                compactView.style.display = 'block';
+                detailedView.style.display = 'none';
+            } else {
+                compactView.style.display = 'none';
+                detailedView.style.display = 'block';
+            }
+        });
+    });
+
+    // Department filter
+    const departmentFilter = document.getElementById('departmentFilter');
+    departmentFilter.addEventListener('change', function() {
+        const selectedDept = this.value;
+        const departmentSections = document.querySelectorAll('.department-section');
+
+        departmentSections.forEach(section => {
+            if (!selectedDept || section.dataset.department === selectedDept) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+    });
+
+    // Search filter
+    const searchFilter = document.getElementById('searchFilter');
+    searchFilter.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const folderItems = document.querySelectorAll('.folder-item');
+
+        folderItems.forEach(item => {
+            const folderName = item.dataset.name;
+            if (!searchTerm || folderName.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    // Existing delete modal functionality
     const folderModal = new bootstrap.Modal(document.getElementById('deleteFolderModal'));
 
     document.querySelectorAll('.delete-folder-btn').forEach(btn => {
@@ -196,13 +581,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const childrenCount = parseInt(this.dataset.children) || 0;
             const documentsCount = parseInt(this.dataset.documents) || 0;
 
-            // Set folder name
             document.getElementById('folder-name').textContent = folderName;
-
-            // Set form action
             document.getElementById('delete-folder-form').action = `/folders/${folderId}`;
 
-            // Show/hide contents warning
             const contentsDiv = document.getElementById('folder-contents');
             const contentsList = document.getElementById('contents-list');
 
@@ -210,11 +591,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 contentsList.innerHTML = '';
 
                 if (childrenCount > 0) {
-                    contentsList.innerHTML += `<li>${childrenCount} subfolder(s)</li>`;
+                    contentsList.innerHTML += `<li><i class="bx bx-folder me-1"></i>${childrenCount} subfolder${childrenCount !== 1 ? 's' : ''}</li>`;
                 }
 
                 if (documentsCount > 0) {
-                    contentsList.innerHTML += `<li>${documentsCount} document(s)</li>`;
+                    contentsList.innerHTML += `<li><i class="bx bx-file me-1"></i>${documentsCount} document${documentsCount !== 1 ? 's' : ''}</li>`;
                 }
 
                 contentsDiv.style.display = 'block';
