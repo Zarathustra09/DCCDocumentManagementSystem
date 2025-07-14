@@ -210,6 +210,8 @@
 
                 <!-- / Navbar -->
                 @endauth
+
+
                 @yield('content')
 
 
