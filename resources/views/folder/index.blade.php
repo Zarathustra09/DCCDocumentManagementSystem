@@ -18,7 +18,7 @@
                     <div>
                         <a href="{{ route('folders.create') }}" class="btn btn-primary btn-lg shadow-sm">
                             <i class="bx bx-plus-circle me-2"></i>
-                            Create New Folder
+                            Folder
                         </a>
                     </div>
                     @endcan
