@@ -83,6 +83,15 @@
             <span class="menu-header-text">Tools</span>
         </li>
 
+        @can('manage users')
+          <li class="menu-item">
+              <a href="#" class="menu-link">
+                  <i class="menu-icon tf-icons bx bx-user-check"></i>
+                  <div data-i18n="Patient Records">Roles</div>
+              </a>
+          </li>
+        @endcan
+
         <li class="menu-item">
             <a href="#" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-search-alt"></i>

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-xxl">
+<div class="container-xxl pt-4">
     <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 15px;">
         <!-- Header Section -->
         <div class="row mb-4">
