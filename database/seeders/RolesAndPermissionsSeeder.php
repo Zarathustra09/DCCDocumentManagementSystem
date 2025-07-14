@@ -268,6 +268,30 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
 
+        // Add this after the Business Unit Head 2 role
+        // Create Business Unit Head 3 role
+        $buHead3Role = Role::create(['name' => 'Business Unit Head 3']);
+        $buHead3Role->givePermissionTo([
+            'view Sales documents', 'create Sales documents', 'edit Sales documents', 'download Sales documents', 'share Sales documents',
+            'view Operations documents', 'create Operations documents', 'edit Operations documents', 'download Operations documents', 'share Operations documents',
+            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view folders', 'create folders', 'edit folders', 'share folders',
+            'view reports',
+        ]);
+
+        // Add this after the Business Unit 2 Read Only role
+        $businessUnit3ReadOnlyRole = Role::create(['name' => 'Business Unit 3 Read Only']);
+        $businessUnit3ReadOnlyRole->givePermissionTo([
+            'view Sales documents',
+            'download Sales documents',
+            'view Operations documents',
+            'download Operations documents',
+            'view General documents',
+            'download General documents',
+            'view folders',
+        ]);
+
+
         $generalPublicRole = Role::create(['name' => 'General/Public']);
         $generalPublicRole->givePermissionTo([
             'view General documents',
@@ -312,6 +336,8 @@ class RolesAndPermissionsSeeder extends Seeder
             ['email' => 'dccreader@smartprobegroup.com', 'name' => 'DCC Reader', 'role' => 'DCC Read Only'],
             ['email' => 'bu1reader@smartprobegroup.com', 'name' => 'Business Unit 1 Reader', 'role' => 'Business Unit 1 Read Only'],
             ['email' => 'bu2reader@smartprobegroup.com', 'name' => 'Business Unit 2 Reader', 'role' => 'Business Unit 2 Read Only'],
+            ['email' => 'buhead3@smartprobegroup.com', 'name' => 'Business Unit Head 3', 'role' => 'Business Unit Head 3'],
+            ['email' => 'bu3reader@smartprobegroup.com', 'name' => 'Business Unit 3 Reader', 'role' => 'Business Unit 3 Read Only'],
             ['email' => 'general@smartprobegroup.com', 'name' => 'General Public', 'role' => 'General/Public'],
             ['email' => 'intern@smartprobegroup.com', 'name' => 'Company Intern', 'role' => 'Intern'],
         ];
