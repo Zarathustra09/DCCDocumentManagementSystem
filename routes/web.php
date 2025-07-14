@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\FolderController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -30,3 +31,12 @@ Route::post('/profile/upload-image', [App\Http\Controllers\ProfileController::cl
 Route::delete('/profile/reset-image', [App\Http\Controllers\ProfileController::class, 'resetImage'])->name('profile.resetImage')->middleware('auth');
 Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
 Route::delete('/profile', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+
+
+Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/{user}', [RoleController::class, 'show'])->name('roles.show');
+    Route::put('/users/{user}/roles', [RoleController::class, 'updateUserRoles'])->name('users.roles.update');
+    Route::put('/users/{user}/permissions', [RoleController::class, 'updateUserPermissions'])->name('users.permissions.update');
+
+});
