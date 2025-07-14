@@ -177,8 +177,8 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <span class="fw-semibold d-block">{{auth()->user()->first_name}} {{auth()->user()->last_name}}</span>
-                                                    <small class="text-muted">Admin</small>
+                                                    <span class="fw-semibold d-block">{{auth()->user()->name}}</span>
+                                                    <small>{{ auth()->user()->getRoleNames()->first() ?? 'User' }}</small>
                                                 </div>
                                             </div>
                                         </a>
