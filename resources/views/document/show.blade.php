@@ -3,65 +3,8 @@
 @section('content')
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar / Document Info -->
-        <div class="col-md-3 col-lg-2 d-none d-md-block sidebar" style="min-height: calc(100vh - 60px); background-color: #f8f9fa; border-right: 1px solid #e9ecef;">
-            <div class="position-sticky pt-3">
-                <div class="px-3 mb-4 d-flex align-items-center">
-                    <i class="bx bxs-file text-primary" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2 fw-medium">Document</span>
-                </div>
-
-                <ul class="nav flex-column mb-4">
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center text-dark" href="{{ route('folders.index') }}">
-                            <i class="bx bxs-home me-2"></i> Home
-                        </a>
-                    </li>
-                    @if($document->folder)
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center text-dark" href="{{ route('folders.show', $document->folder) }}">
-                            <i class="bx bx-arrow-back me-2"></i> Back to {{ $document->folder->name }}
-                        </a>
-                    </li>
-                    @endif
-                </ul>
-
-                <div class="px-3 mb-2 small text-muted text-uppercase" style="letter-spacing: 0.5px;">Details</div>
-                <div class="px-3 mb-4">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body py-2 px-3">
-                            <div class="mb-2">
-                                <span class="small d-block text-muted">Department</span>
-                                <span class="badge bg-primary">{{ $document->department_name }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="small d-block text-muted">Type</span>
-                                <span class="badge bg-secondary">{{ strtoupper($document->file_type) }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="small d-block text-muted">Size</span>
-                                <span>{{ number_format($document->file_size / 1024, 1) }} KB</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="small d-block text-muted">Uploaded by</span>
-                                <span>{{ $document->user->name }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="small d-block text-muted">Created</span>
-                                <span>{{ $document->created_at->format('M d, Y H:i') }}</span>
-                            </div>
-                            <div class="mb-0">
-                                <span class="small d-block text-muted">Modified</span>
-                                <span>{{ $document->updated_at->format('M d, Y H:i') }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <!-- Main Content Area (Full Width) -->
+        <div class="col-12 px-md-4">
             <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
                 <div class="d-flex align-items-center">
                     <nav aria-label="breadcrumb" class="d-none d-md-block me-3">
@@ -118,6 +61,9 @@
                 </div>
 
                 <div class="action-buttons">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#detailsModal">
+                        <i class="bx bx-info-circle"></i> More Details
+                    </button>
                     @can('download ' . $document->department . ' documents')
                     <a href="{{ route('documents.download', $document) }}" class="btn btn-sm btn-outline-success">
                         <i class="bx bx-download"></i> Download
@@ -153,7 +99,7 @@
                 @if(in_array($document->file_type, ['jpg', 'jpeg', 'png', 'gif']))
                     <!-- Image Preview -->
                     <div class="text-center">
-                        <img src="{{ route('documents.download', $document) }}"
+                        <img src="{{ Storage::url($document->file_path) }}"
                              alt="{{ $document->original_filename }}"
                              class="img-fluid rounded shadow"
                              style="max-height: 70vh;">
@@ -162,13 +108,38 @@
                     <!-- PDF Preview -->
                     <div class="pdf-preview">
                         <div class="embed-responsive" style="height: 70vh;">
-                            <iframe src="{{ route('documents.download', $document) }}#toolbar=1&navpanes=1&scrollbar=1"
+                            <iframe src="{{ Storage::url($document->file_path) }}"
                                     class="w-100 h-100 border rounded"
-                                    style="min-height: 500px;">
+                                    style="min-height: 500px;"
+                                    type="application/pdf">
                                 <p>Your browser does not support PDFs.
                                    <a href="{{ route('documents.download', $document) }}">Download the PDF</a>.
                                 </p>
                             </iframe>
+                        </div>
+                    </div>
+                @elseif(in_array($document->file_type, ['doc', 'docx']))
+                    <!-- Word Document Preview -->
+                    <div class="word-preview">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Document Preview</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadWordPreview()">
+                                    <i class="bx bx-refresh"></i> Load Preview
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="word-preview-content" class="text-center py-4">
+                                    <i class="bx bxs-file-doc text-primary" style="font-size: 3rem;"></i>
+                                    <p class="mt-2 text-muted">Click "Load Preview" to view document content</p>
+                                </div>
+                                <div id="word-preview-loading" class="text-center py-4 d-none">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Converting document...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 @elseif(in_array($document->file_type, ['txt']))
@@ -202,25 +173,95 @@
                     </div>
                 @endif
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Document Metadata -->
-            @if($document->meta_data && count($document->meta_data) > 0)
-            <div class="mt-4">
-                <h6>Metadata</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <tbody>
-                            @foreach($document->meta_data as $key => $value)
-                            <tr>
-                                <td class="fw-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}</td>
-                                <td>{{ is_array($value) ? implode(', ', $value) : $value }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+<!-- Document Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bx bx-info-circle me-2"></i>Document Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            @endif
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="small text-muted">File Name</label>
+                            <div class="fw-medium">{{ $document->original_filename }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted">Department</label>
+                            <div><span class="badge bg-primary">{{ $document->department_name }}</span></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted">File Type</label>
+                            <div><span class="badge bg-secondary">{{ strtoupper($document->file_type) }}</span></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted">File Size</label>
+                            <div>{{ number_format($document->file_size / 1024, 1) }} KB</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="small text-muted">Uploaded By</label>
+                            <div class="fw-medium">{{ $document->user->name }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted">Created</label>
+                            <div>{{ $document->created_at->format('M d, Y H:i') }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted">Last Modified</label>
+                            <div>{{ $document->updated_at->format('M d, Y H:i') }}</div>
+                        </div>
+                        @if($document->folder)
+                        <div class="mb-3">
+                            <label class="small text-muted">Folder</label>
+                            <div>
+                                <a href="{{ route('folders.show', $document->folder) }}" class="text-decoration-none">
+                                    <i class="bx bxs-folder me-1"></i>{{ $document->folder->name }}
+                                </a>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+
+                @if($document->description)
+                <div class="border-top pt-3 mt-3">
+                    <label class="small text-muted">Description</label>
+                    <div class="mt-1">{{ $document->description }}</div>
+                </div>
+                @endif
+
+                <!-- Document Metadata -->
+                @if($document->meta_data && count($document->meta_data) > 0)
+                <div class="border-top pt-3 mt-3">
+                    <label class="small text-muted">Metadata</label>
+                    <div class="table-responsive mt-2">
+                        <table class="table table-sm">
+                            <tbody>
+                                @foreach($document->meta_data as $key => $value)
+                                <tr>
+                                    <td class="fw-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}</td>
+                                    <td>{{ is_array($value) ? implode(', ', $value) : $value }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -317,12 +358,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.copyShareLink = function() {
         const shareLinkInput = document.getElementById('share-link');
         shareLinkInput.select();
-        shareLinkInput.setSelectionRange(0, 99999); // For mobile devices
+        shareLinkInput.setSelectionRange(0, 99999);
 
         try {
             document.execCommand('copy');
-
-            // Show success feedback
             const copyBtn = shareLinkInput.nextElementSibling;
             const originalText = copyBtn.innerHTML;
             copyBtn.innerHTML = '<i class="bx bx-check"></i> Copied!';
@@ -337,6 +376,57 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (err) {
             console.error('Failed to copy text: ', err);
         }
+    };
+
+    // Word document preview functionality
+    window.loadWordPreview = function() {
+        const contentDiv = document.getElementById('word-preview-content');
+        const loadingDiv = document.getElementById('word-preview-loading');
+
+        contentDiv.classList.add('d-none');
+        loadingDiv.classList.remove('d-none');
+
+        fetch(`{{ route('documents.preview', $document) }}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingDiv.classList.add('d-none');
+
+            if (data.success) {
+                contentDiv.innerHTML = data.content;
+                contentDiv.classList.remove('d-none');
+            } else {
+                contentDiv.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bx bx-error text-danger" style="font-size: 3rem;"></i>
+                        <p class="mt-2 text-danger">${data.message}</p>
+                        <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
+                            <i class="bx bx-download"></i> Download Document
+                        </a>
+                    </div>
+                `;
+                contentDiv.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            loadingDiv.classList.add('d-none');
+            contentDiv.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bx bx-error text-danger" style="font-size: 3rem;"></i>
+                    <p class="mt-2 text-danger">Error loading preview</p>
+                    <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
+                        <i class="bx bx-download"></i> Download Document
+                    </a>
+                </div>
+            `;
+            contentDiv.classList.remove('d-none');
+        });
     };
 
     // Handle PDF loading errors
@@ -375,4 +465,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+
 @endsection
