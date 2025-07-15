@@ -17,16 +17,19 @@ class Folder extends Model
         'description',
     ];
 
-    const DEPARTMENTS = [
-        'IT' => 'IT Department',
-        'Finance' => 'Finance Department',
-        'QA' => 'QA Department',
-        'HR' => 'HR Department',
-        'Purchasing' => 'Purchasing Department',
-        'Sales' => 'Sales Department',
-        'Operations' => 'Operations Department',
-        'General' => 'General/Public'
-    ];
+     const DEPARTMENTS = [
+         'IT' => 'IT Department',
+         'Finance' => 'Finance Department',
+         'QA' => 'QA Department',
+         'HR' => 'HR Department',
+         'Purchasing' => 'Purchasing Department',
+         'Sales' => 'Sales Department',
+         'Operations' => 'Operations Department',
+         'General' => 'General/Public',
+         'Business Unit 1' => 'Business Unit 1',
+         'Business Unit 2' => 'Business Unit 2',
+         'Business Unit 3' => 'Business Unit 3'
+     ];
 
     public function user()
     {

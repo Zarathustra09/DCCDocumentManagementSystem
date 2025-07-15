@@ -21,7 +21,7 @@ class FolderSeeder extends Seeder
             return;
         }
 
-        // Create 5 folders for each department
+        // Create folders for all departments including Business Units
         $departments = [
             'IT' => 'IT Department',
             'Finance' => 'Finance Department',
@@ -30,7 +30,10 @@ class FolderSeeder extends Seeder
             'Purchasing' => 'Purchasing Department',
             'Sales' => 'Sales Department',
             'Operations' => 'Operations Department',
-            'General' => 'General/Public'
+            'General' => 'General/Public',
+            'Business Unit 1' => 'Business Unit 1',
+            'Business Unit 2' => 'Business Unit 2',
+            'Business Unit 3' => 'Business Unit 3'
         ];
 
         foreach ($departments as $deptKey => $deptName) {
@@ -47,7 +50,7 @@ class FolderSeeder extends Seeder
             }
         }
 
-        $this->command->info('Department folders created successfully - 5 folders per department.');
+        $this->command->info('All department folders created successfully.');
     }
 
     /**
@@ -111,6 +114,27 @@ class FolderSeeder extends Seeder
                 'Legal & Compliance' => 'Legal contracts, regulatory compliance, and corporate legal documentation',
                 'Communications' => 'Company announcements, newsletters, and internal communications',
                 'Strategic Planning' => 'Business plans, strategic initiatives, and organizational development'
+            ],
+            'Business Unit 1' => [
+                'Sales Documents' => 'Sales proposals, contracts, and client communications for Business Unit 1',
+                'Operations Manuals' => 'Standard operating procedures and process documentation for Business Unit 1',
+                'Project Files' => 'Project plans, reports, and deliverables for Business Unit 1',
+                'Administrative Records' => 'Policies, forms, templates, and meeting minutes for Business Unit 1',
+                'Financial Reports' => 'Budget tracking, expense reports, and financial documentation for Business Unit 1'
+            ],
+            'Business Unit 2' => [
+                'Sales Documents' => 'Sales proposals, contracts, and client communications for Business Unit 2',
+                'Operations Manuals' => 'Standard operating procedures and process documentation for Business Unit 2',
+                'Project Files' => 'Project plans, reports, and deliverables for Business Unit 2',
+                'Administrative Records' => 'Policies, forms, templates, and meeting minutes for Business Unit 2',
+                'Financial Reports' => 'Budget tracking, expense reports, and financial documentation for Business Unit 2'
+            ],
+            'Business Unit 3' => [
+                'Sales Documents' => 'Sales proposals, contracts, and client communications for Business Unit 3',
+                'Operations Manuals' => 'Standard operating procedures and process documentation for Business Unit 3',
+                'Project Files' => 'Project plans, reports, and deliverables for Business Unit 3',
+                'Administrative Records' => 'Policies, forms, templates, and meeting minutes for Business Unit 3',
+                'Financial Reports' => 'Budget tracking, expense reports, and financial documentation for Business Unit 3'
             ],
             default => []
         };
