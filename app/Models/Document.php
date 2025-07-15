@@ -49,6 +49,11 @@ class Document extends Model
         return $this->belongsTo(Folder::class);
     }
 
+    public function documentRegistrationEntry()
+    {
+        return $this->belongsTo(DocumentRegistrationEntry::class);
+    }
+
     public function getDepartmentNameAttribute()
     {
         return self::DEPARTMENTS[$this->department] ?? $this->department;

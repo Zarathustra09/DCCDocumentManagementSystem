@@ -38,5 +38,30 @@ Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('adm
     Route::get('/roles/{user}', [RoleController::class, 'show'])->name('roles.show');
     Route::put('/users/{user}/roles', [RoleController::class, 'updateUserRoles'])->name('users.roles.update');
     Route::put('/users/{user}/permissions', [RoleController::class, 'updateUserPermissions'])->name('users.permissions.update');
+});
 
+
+// Document Registration Entry Routes
+Route::middleware(['auth'])->prefix('document-registry')->name('document-registry.')->group(function () {
+    // Basic CRUD routes
+    Route::get('/', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'create'])
+        ->middleware('permission:submit document for approval')->name('create');
+    Route::post('/', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'store'])
+        ->middleware('permission:submit document for approval')->name('store');
+    Route::get('/{documentRegistrationEntry}', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'show'])->name('show');
+    Route::get('/{documentRegistrationEntry}/edit', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'edit'])
+        ->middleware('permission:edit document registration details')->name('edit');
+    Route::put('/{documentRegistrationEntry}', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'update'])
+        ->middleware('permission:edit document registration details')->name('update');
+
+    // Approval workflow routes
+    Route::post('/{documentRegistrationEntry}/approve', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'approve'])
+        ->middleware('permission:approve document registration')->name('approve');
+    Route::post('/{documentRegistrationEntry}/reject', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'reject'])
+        ->middleware('permission:reject document registration')->name('reject');
+    Route::post('/{documentRegistrationEntry}/require-revision', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'requireRevision'])
+        ->middleware('permission:require revision for document')->name('require-revision');
+    Route::delete('/{documentRegistrationEntry}/withdraw', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'withdraw'])
+        ->middleware('permission:withdraw document submission')->name('withdraw');
 });
