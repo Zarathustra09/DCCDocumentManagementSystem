@@ -137,7 +137,20 @@
                         <!-- Current Status Info -->
                         <div class="alert alert-info">
                             <i class='bx bx-info-circle'></i>
-                            <strong>Status:</strong> {{ $documentRegistrationEntry->status_name }}
+                            <strong>Current Status:</strong>
+                            @if($documentRegistrationEntry->status === 'pending')
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class='bx bx-time'></i> {{ $documentRegistrationEntry->status_name }}
+                                </span>
+                            @elseif($documentRegistrationEntry->status === 'approved')
+                                <span class="badge bg-success text-white ms-2">
+                                    <i class='bx bx-check'></i> {{ $documentRegistrationEntry->status_name }}
+                                </span>
+                            @else
+                                <span class="badge bg-danger text-white ms-2">
+                                    <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status_name }}
+                                </span>
+                            @endif
                             <br>
                             <strong>Note:</strong> Changes will be saved but the approval status will remain unchanged.
                         </div>
@@ -157,6 +170,25 @@
         </div>
     </div>
 </div>
+
+<style>
+.badge {
+    font-size: 0.85em;
+    padding: 0.375rem 0.75rem;
+}
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

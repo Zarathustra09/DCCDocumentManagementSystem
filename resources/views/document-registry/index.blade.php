@@ -21,13 +21,11 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="status">Status</label>
-                                    <select name="status" id="status" class="form-control">
+                                    <select name="status" class="form-select">
                                         <option value="">All Statuses</option>
-                                        @foreach(\App\Models\DocumentRegistrationEntry::STATUSES as $key => $value)
-                                            <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
-                                                {{ $value }}
-                                            </option>
-                                        @endforeach
+                                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
+                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
                                     </select>
                                 </div>
                             </div>
@@ -85,15 +83,15 @@
                                         <td>{{ $entry->customer ?? '-' }}</td>
                                         <td>
                                             @if($entry->status === 'pending')
-                                                <span class="badge badge-warning">
+                                                <span class="badge bg-warning text-dark">
                                                     <i class='bx bx-time'></i> {{ $entry->status_name }}
                                                 </span>
                                             @elseif($entry->status === 'approved')
-                                                <span class="badge badge-success">
+                                                <span class="badge bg-success text-white">
                                                     <i class='bx bx-check'></i> {{ $entry->status_name }}
                                                 </span>
                                             @else
-                                                <span class="badge badge-danger">
+                                                <span class="badge bg-danger text-white">
                                                     <i class='bx bx-x'></i> {{ $entry->status_name }}
                                                 </span>
                                             @endif
@@ -158,4 +156,23 @@
         </div>
     </div>
 </div>
+
+<style>
+.badge {
+    font-size: 0.85em;
+    padding: 0.375rem 0.75rem;
+}
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+</style>
 @endsection

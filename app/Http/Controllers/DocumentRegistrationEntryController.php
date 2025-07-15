@@ -19,15 +19,15 @@ class DocumentRegistrationEntryController extends Controller
         } elseif (Auth::user()->can('view pending document registrations')) {
             $query->where(function($q) {
                 $q->where('status', 'pending')
-                  ->orWhere('submitted_by', Auth::id());
+                    ->orWhere('submitted_by', Auth::id());
             });
         } else {
             // Can only view own submissions
             $query->where('submitted_by', Auth::id());
         }
 
-        // Apply status filter
-        if ($request->has('status') && $request->status !== '') {
+        // Apply status filter - fix the condition here
+        if ($request->has('status') && $request->status !== '' && $request->status !== null) {
             $query->where('status', $request->status);
         }
 
@@ -36,9 +36,9 @@ class DocumentRegistrationEntryController extends Controller
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('document_title', 'like', "%{$search}%")
-                  ->orWhere('document_no', 'like', "%{$search}%")
-                  ->orWhere('originator_name', 'like', "%{$search}%")
-                  ->orWhere('customer', 'like', "%{$search}%");
+                    ->orWhere('document_no', 'like', "%{$search}%")
+                    ->orWhere('originator_name', 'like', "%{$search}%")
+                    ->orWhere('customer', 'like', "%{$search}%");
             });
         }
 
