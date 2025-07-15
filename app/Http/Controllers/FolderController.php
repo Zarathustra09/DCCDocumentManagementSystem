@@ -20,7 +20,7 @@ class FolderController extends Controller
     {
         $folders = Folder::with(['children', 'user'])
             ->whereNull('parent_id')
-//            ->accessibleByUser(Auth::user())
+            ->accessibleByUser(Auth::user())
             ->latest()
             ->get()
             ->groupBy('department');
