@@ -26,13 +26,26 @@
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Document Management</span>
         </li>
+
+
+        @can('submit document for approval')
+            <li class="menu-item {{Route::is('document-registry.*') ? 'active' : ''}}">
+                <a href="{{route('document-registry.index')}}" class="menu-link">
+                   <i class="menu-icon tf-icons bx bx-upload"></i>
+                    <div data-i18n="Patient Records">Submit Document</div>
+                </a>
+            </li>
+        @endcan
+
+
         <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-folder"></i>
                 <div data-i18n="Account Settings">My Documents</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}">                    <a href="{{route('folders.index')}}" class="menu-link">
+                <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}">
+                    <a href="{{route('folders.index')}}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-file"></i>
                         <div data-i18n="Account">All Documents</div>
                     </a>
@@ -59,6 +72,7 @@
                 </li>
             </ul>
         </li>
+
 
 
         <li class="menu-header small text-uppercase">
@@ -91,6 +105,8 @@
               </a>
           </li>
         @endcan
+
+
 
         <li class="menu-item">
             <a href="#" class="menu-link">
