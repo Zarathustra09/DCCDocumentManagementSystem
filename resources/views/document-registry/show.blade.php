@@ -15,7 +15,7 @@
                                 <i class='bx bx-edit'></i> Edit
                             </a>
                         @endif
-                        <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">
+                            <a href="javascript:history.back()" class="btn btn-secondary">
                             <i class='bx bx-arrow-back'></i> Back to Registry
                         </a>
                     </div>

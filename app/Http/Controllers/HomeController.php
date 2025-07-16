@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DocumentRegistrationEntry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -23,6 +25,24 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+        $pendingRegistrations = collect();
+        $canApprove = false;
+
+        // Check if user has approval permissions
+        if (Auth::user()->can('approve document registration') ||
+            Auth::user()->can('view pending document registrations') ||
+            Auth::user()->can('view all document registrations')) {
+
+            $canApprove = Auth::user()->can('approve document registration');
+
+            // Get pending document registrations
+            $pendingRegistrations = DocumentRegistrationEntry::with(['submittedBy'])
+                ->where('status', 'pending')
+                ->latest('submitted_at')
+                ->limit(10)
+                ->get();
+        }
+
+        return view('home', compact('pendingRegistrations', 'canApprove'));
     }
 }
