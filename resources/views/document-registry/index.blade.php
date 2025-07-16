@@ -29,7 +29,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="search">Search</label>
                                     <input type="text" name="search" id="search" class="form-control"
@@ -37,7 +37,7 @@
                                            placeholder="Search by title, document number, originator, or customer...">
                                 </div>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label>&nbsp;</label>
                                     <div>

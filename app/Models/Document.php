@@ -14,6 +14,7 @@ class Document extends Model
         'folder_id',
         'filename',
         'original_filename',
+        'document_registration_entry_id',
         'file_path',
         'file_type',
         'file_size',

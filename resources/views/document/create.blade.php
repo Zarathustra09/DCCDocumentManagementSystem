@@ -63,6 +63,24 @@
                                   <div class="invalid-feedback">{{ $message }}</div>
                               @enderror
                           </div>
+                        <div class="mb-3">
+                            <label for="document_registration_entry_id" class="form-label">Associated Registration Entry</label>
+                            <select class="form-select @error('document_registration_entry_id') is-invalid @enderror"
+                                    id="document_registration_entry_id"
+                                    name="document_registration_entry_id">
+                                <option value="">None (Optional)</option>
+                                @foreach($registrationEntries as $entry)
+                                    <option value="{{ $entry->id }}"
+                                        {{ old('document_registration_entry_id') == $entry->id ? 'selected' : '' }}>
+                                        {{ $entry->document_no }} - {{ $entry->document_title }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Optionally link this document to an approved registration entry</div>
+                            @error('document_registration_entry_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>

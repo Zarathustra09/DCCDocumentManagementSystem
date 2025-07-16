@@ -233,6 +233,38 @@
                     </div>
                 </div>
 
+                @if($document->documentRegistrationEntry)
+                <div class="border-top pt-3 mt-3">
+                    <label class="small text-muted">Associated Registration Entry</label>
+                    <div class="mt-1">
+                        <div class="card bg-light">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-medium">{{ $document->documentRegistrationEntry->document_title }}</div>
+                                        <div class="text-muted small">
+                                            <span class="me-2">{{ $document->documentRegistrationEntry->full_document_number }}</span>
+                                            @if($document->documentRegistrationEntry->approved_at)
+                                                <span class="text-muted">Approved: {{ $document->documentRegistrationEntry->approved_at->format('M d, Y') }}</span>
+                                            @endif
+                                        </div>
+                                        @if($document->documentRegistrationEntry->device_name)
+                                            <div class="text-muted small">Device: {{ $document->documentRegistrationEntry->device_name }}</div>
+                                        @endif
+                                        @if($document->documentRegistrationEntry->originator_name)
+                                            <div class="text-muted small">Originator: {{ $document->documentRegistrationEntry->originator_name }}</div>
+                                        @endif
+                                    </div>
+                                    <span class="badge bg-{{ $document->documentRegistrationEntry->status == 'approved' ? 'success' : ($document->documentRegistrationEntry->status == 'pending' ? 'warning' : 'danger') }}">
+                                        {{ $document->documentRegistrationEntry->status_name }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 @if($document->description)
                 <div class="border-top pt-3 mt-3">
                     <label class="small text-muted">Description</label>
@@ -276,13 +308,7 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="share-link" class="form-label">Share Link</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="share-link" value="{{ route('documents.show', $document) }}" readonly>
-                        <button class="btn btn-outline-secondary" type="button" onclick="copyShareLink()">
-                            <i class="bx bx-copy"></i> Copy
-                        </button>
-                    </div>
+                    [...]
                 </div>
                 <p class="small text-muted">Anyone with access to {{ $document->department_name }} documents can view this file.</p>
             </div>
@@ -305,11 +331,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ route('documents.destroy', $document) }}" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-danger">
-                        <i class="bx bx-trash"></i> Delete
-                    </button>
+                    [...]
                 </form>
             </div>
         </div>
@@ -369,10 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
             copyBtn.classList.add('btn-success');
 
             setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-                copyBtn.classList.remove('btn-success');
-                copyBtn.classList.add('btn-outline-secondary');
-            }, 2000);
+            [...]
         } catch (err) {
             console.error('Failed to copy text: ', err);
         }
@@ -399,30 +418,16 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingDiv.classList.add('d-none');
 
             if (data.success) {
-                contentDiv.innerHTML = data.content;
-                contentDiv.classList.remove('d-none');
+                [...]
             } else {
-                contentDiv.innerHTML = `
-                    <div class="text-center py-4">
-                        <i class="bx bx-error text-danger" style="font-size: 3rem;"></i>
-                        <p class="mt-2 text-danger">${data.message}</p>
-                        <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
-                            <i class="bx bx-download"></i> Download Document
-                        </a>
-                    </div>
-                `;
-                contentDiv.classList.remove('d-none');
+                [...]
             }
         })
         .catch(error => {
             loadingDiv.classList.add('d-none');
             contentDiv.innerHTML = `
                 <div class="text-center py-4">
-                    <i class="bx bx-error text-danger" style="font-size: 3rem;"></i>
-                    <p class="mt-2 text-danger">Error loading preview</p>
-                    <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
-                        <i class="bx bx-download"></i> Download Document
-                    </a>
+                    [...]
                 </div>
             `;
             contentDiv.classList.remove('d-none');
@@ -435,11 +440,10 @@ document.addEventListener('DOMContentLoaded', function() {
         pdfIframe.addEventListener('error', function() {
             this.outerHTML = `
                 <div class="text-center py-5">
-                    <i class="bx bxs-file-pdf text-danger" style="font-size: 4rem;"></i>
-                    <h4 class="mt-3">PDF Preview Unavailable</h4>
+                    [...]
                     <p class="text-muted">Unable to preview this PDF file</p>
                     <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
-                        <i class="bx bx-download"></i> Download PDF
+                        [...]
                     </a>
                 </div>
             `;
@@ -456,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h4 class="mt-3">Image Preview Unavailable</h4>
                     <p class="text-muted">Unable to preview this image file</p>
                     <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
-                        <i class="bx bx-download"></i> Download Image
+                        [...]
                     </a>
                 </div>
             `;

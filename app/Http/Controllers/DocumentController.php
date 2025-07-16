@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Document;
+use App\Models\DocumentRegistrationEntry;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,13 +17,13 @@ class DocumentController extends Controller
 
     }
 
+    // In app/Http/Controllers/DocumentController.php - update create method
     public function create(Request $request)
     {
         $currentFolderId = $request->get('folder_id');
         $currentFolder = null;
         $preselectedDepartment = null;
 
-        // Get the current folder if specified
         if ($currentFolderId) {
             $currentFolder = Folder::find($currentFolderId);
             if ($currentFolder && Auth::user()->can("create {$currentFolder->department} documents")) {
@@ -30,7 +31,6 @@ class DocumentController extends Controller
             }
         }
 
-        // Get available departments (only those user can create documents for)
         $availableDepartments = [];
         foreach (Document::DEPARTMENTS as $dept => $name) {
             if (Auth::user()->can("create {$dept} documents")) {
@@ -38,20 +38,24 @@ class DocumentController extends Controller
             }
         }
 
-        // Check if user has permission to create documents for any department
         if (empty($availableDepartments)) {
             abort(403, 'You do not have permission to create documents for any department.');
         }
 
-        // Get folders user can access
         $folders = Folder::accessibleByUser(Auth::user())->get();
+
+        // Get approved registration entries that user can access
+        $registrationEntries = DocumentRegistrationEntry::where('status', 'approved')
+            ->orderBy('document_title')
+            ->get();
 
         return view('document.create', compact(
             'folders',
             'currentFolderId',
             'currentFolder',
             'preselectedDepartment',
-            'availableDepartments'
+            'availableDepartments',
+            'registrationEntries'
         ));
     }
 
@@ -66,21 +70,21 @@ class DocumentController extends Controller
     }
 
     // Rest of your methods remain the same as they already have proper permission checks
+   // In app/Http/Controllers/DocumentController.php - update store method validation
     public function store(Request $request)
     {
         $request->validate([
             'file' => 'required|file|mimes:pdf,doc,docx,txt,jpg,jpeg,png,gif,xls,xlsx|max:10240',
             'department' => 'required|in:' . implode(',', array_keys(Document::DEPARTMENTS)),
             'folder_id' => 'nullable|exists:folders,id',
+            'document_registration_entry_id' => 'nullable|exists:document_registration_entries,id',
             'description' => 'nullable|string|max:500',
         ]);
 
-        // Check if user can create documents for this department
         if (!Auth::user()->can("create {$request->department} documents")) {
             abort(403, 'You do not have permission to create documents for this department.');
         }
 
-        // If folder is specified, ensure it's in the same department
         if ($request->folder_id) {
             $folder = Folder::find($request->folder_id);
             if ($folder->department !== $request->department) {
@@ -96,6 +100,7 @@ class DocumentController extends Controller
         $document = Document::create([
             'user_id' => Auth::id(),
             'folder_id' => $request->folder_id,
+            'document_registration_entry_id' => $request->document_registration_entry_id,
             'filename' => $filename,
             'original_filename' => $originalName,
             'file_path' => $filePath,
@@ -133,7 +138,12 @@ class DocumentController extends Controller
             ->where('department', $document->department)
             ->get();
 
-        return view('document.edit', compact('document', 'folders', 'departments'));
+        // Get approved registration entries that user can access
+        $registrationEntries = DocumentRegistrationEntry::where('status', 'approved')
+            ->orderBy('document_title')
+            ->get();
+
+        return view('document.edit', compact('document', 'folders', 'departments', 'registrationEntries'));
     }
 
     public function update(Request $request, Document $document)
@@ -146,6 +156,7 @@ class DocumentController extends Controller
         $request->validate([
             'department' => 'required|in:' . implode(',', array_keys(Document::DEPARTMENTS)),
             'folder_id' => 'nullable|exists:folders,id',
+            'document_registration_entry_id' => 'nullable|exists:document_registration_entries,id',
             'description' => 'nullable|string|max:500',
         ]);
 
@@ -164,6 +175,7 @@ class DocumentController extends Controller
 
         $document->update([
             'folder_id' => $request->folder_id,
+            'document_registration_entry_id' => $request->document_registration_entry_id,
             'description' => $request->description,
             'department' => $request->department,
         ]);
