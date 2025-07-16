@@ -9,7 +9,7 @@
                     <h3 class="card-title"><i class='bx bx-folder-open'></i> Document Registry</h3>
                     @can('submit document for approval')
                         <a href="{{ route('document-registry.create') }}" class="btn btn-primary">
-                            <i class='bx bx-plus'></i> Submit New Document
+                            <i class='bx bx-plus'></i> Register New Document
                         </a>
                     @endcan
                 </div>

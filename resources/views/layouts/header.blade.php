@@ -32,7 +32,7 @@
             <li class="menu-item {{Route::is('document-registry.*') ? 'active' : ''}}">
                 <a href="{{route('document-registry.index')}}" class="menu-link">
                    <i class="menu-icon tf-icons bx bx-upload"></i>
-                    <div data-i18n="Patient Records">Submit Document</div>
+                    <div data-i18n="Patient Records">Register Document</div>
                 </a>
             </li>
         @endcan

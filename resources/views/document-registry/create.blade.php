@@ -85,20 +85,21 @@
                             </div>
 
                             <!-- Originator Name -->
+                            <!-- Originator Name -->
                             <div class="col-md-6 mb-3">
                                 <label for="originator_name" class="form-label">
                                     <i class='bx bx-user'></i> Originator Name <span class="text-danger">*</span>
                                 </label>
                                 <input type="text"
-                                       class="form-control @error('originator_name') is-invalid @enderror"
+                                       class="form-control"
                                        id="originator_name"
                                        name="originator_name"
-                                       value="{{ old('originator_name', auth()->user()->name) }}"
-                                       required
-                                       placeholder="Enter originator name">
-                                @error('originator_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                       value="{{ auth()->user()->name }}"
+                                       readonly
+                                       required>
+                                <small class="form-text text-muted">
+                                    <i class='bx bx-info-circle'></i> Originator is automatically set to your name
+                                </small>
                             </div>
 
                             <!-- Customer -->

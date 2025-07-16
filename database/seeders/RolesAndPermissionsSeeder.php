@@ -196,7 +196,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports', 'view dashboard',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
-            'approve document registration', 'reject document registration', 'require revision for document', 'view all document registrations',
         ]);
 
         // Create Comptroller role
@@ -217,7 +216,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
-            'approve document registration', 'reject document registration', 'require revision for document',
         ]);
 
         // Create QA Head role
@@ -228,7 +226,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
-            'approve document registration', 'reject document registration', 'require revision for document',
         ]);
 
         // Create HR Head role
@@ -259,8 +256,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
-            'approve document registration', 'reject document registration', 'require revision for document',
         ]);
+
 
         $buHead2Role = Role::create(['name' => 'Business Unit Head 2']);
         $buHead2Role->givePermissionTo([
@@ -269,7 +266,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
-            'approve document registration', 'reject document registration', 'require revision for document',
         ]);
 
         $buHead3Role = Role::create(['name' => 'Business Unit Head 3']);
@@ -279,7 +275,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
-            'approve document registration', 'reject document registration', 'require revision for document',
         ]);
 
         // Update read-only roles with basic submission permission
@@ -393,6 +388,36 @@ class RolesAndPermissionsSeeder extends Seeder
                 'role' => 'VP Sales and Operations'
             ],
             [
+                'name' => 'Comptroller',
+                'email' => 'comptroller@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'Comptroller'
+            ],
+            [
+                'name' => 'IT Head',
+                'email' => 'ithead@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'IT Head'
+            ],
+            [
+                'name' => 'QA Head',
+                'email' => 'qahead@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'QA Head'
+            ],
+            [
+                'name' => 'HR Head',
+                'email' => 'hrhead@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'HR Head'
+            ],
+            [
+                'name' => 'Purchasing Head',
+                'email' => 'purchasinghead@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'Purchasing Head'
+            ],
+            [
                 'name' => 'Business Unit Head 1',
                 'email' => 'buhead1@smartprobegroup.com',
                 'password' => bcrypt('password'),
@@ -409,6 +434,55 @@ class RolesAndPermissionsSeeder extends Seeder
                 'email' => 'buhead3@smartprobegroup.com',
                 'password' => bcrypt('password'),
                 'role' => 'Business Unit Head 3'
+            ],
+            // Read-only departmental users
+            [
+                'name' => 'IT Employee',
+                'email' => 'itemployee@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'IT Read Only'
+            ],
+            [
+                'name' => 'QA Employee',
+                'email' => 'qaemployee@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'QA Read Only'
+            ],
+            [
+                'name' => 'DCC Employee',
+                'email' => 'dccemployee@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'DCC Read Only'
+            ],
+            [
+                'name' => 'Business Unit 1 Employee',
+                'email' => 'bu1employee@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'Business Unit 1 Read Only'
+            ],
+            [
+                'name' => 'Business Unit 2 Employee',
+                'email' => 'bu2employee@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'Business Unit 2 Read Only'
+            ],
+            [
+                'name' => 'Business Unit 3 Employee',
+                'email' => 'bu3employee@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'Business Unit 3 Read Only'
+            ],
+            [
+                'name' => 'General User',
+                'email' => 'generaluser@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'General/Public'
+            ],
+            [
+                'name' => 'Intern User',
+                'email' => 'intern@smartprobegroup.com',
+                'password' => bcrypt('password'),
+                'role' => 'Intern'
             ],
         ];
 
