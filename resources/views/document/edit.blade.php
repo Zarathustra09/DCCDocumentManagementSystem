@@ -60,25 +60,28 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="document_registration_entry_id" class="form-label">Associated Registration Entry</label>
-                            <select class="form-select select2-ajax @error('document_registration_entry_id') is-invalid @enderror"
-                                    id="document_registration_entry_id"
-                                    name="document_registration_entry_id"
-                                    data-placeholder="Search for a registration entry..."
-                                    data-ajax-url="{{ route('document-registration-entries.search') }}">
-                                <option value="">None (Optional)</option>
-                                @if($document->documentRegistrationEntry)
-                                    <option value="{{ $document->documentRegistrationEntry->id }}" selected>
-                                        {{ $document->documentRegistrationEntry->document_no }} - {{ $document->documentRegistrationEntry->document_title }}
-                                    </option>
-                                @endif
-                            </select>
-                            <div class="form-text">Optionally link this document to an approved registration entry</div>
-                            @error('document_registration_entry_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+
+                        @can('approve document registration')
+                            <div class="mb-3">
+                                <label for="document_registration_entry_id" class="form-label">Associated Registration Entry</label>
+                                <select class="form-select select2-ajax @error('document_registration_entry_id') is-invalid @enderror"
+                                        id="document_registration_entry_id"
+                                        name="document_registration_entry_id"
+                                        data-placeholder="Search for a registration entry..."
+                                        data-ajax-url="{{ route('document-registration-entries.search') }}">
+                                    <option value="">None (Optional)</option>
+                                    @if($document->documentRegistrationEntry)
+                                        <option value="{{ $document->documentRegistrationEntry->id }}" selected>
+                                            {{ $document->documentRegistrationEntry->document_no }} - {{ $document->documentRegistrationEntry->document_title }}
+                                        </option>
+                                    @endif
+                                </select>
+                                <div class="form-text">Optionally link this document to an approved registration entry</div>
+                                    @error('document_registration_entry_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                        @endcan
 
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>

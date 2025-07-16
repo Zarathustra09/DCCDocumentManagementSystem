@@ -16,46 +16,46 @@
 
                 <div class="card-body">
                     <!-- Filters -->
-                    <form method="GET" action="{{ route('document-registry.index') }}" class="mb-4">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="status">Status</label>
-                                    <select name="status" class="form-select">
-                                        <option value="">All Statuses</option>
-                                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="search">Search</label>
-                                    <input type="text" name="search" id="search" class="form-control"
-                                           value="{{ request('search') }}"
-                                           placeholder="Search by title, document number, originator, or customer...">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>&nbsp;</label>
-                                    <div>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class='bx bx-search'></i> Search
-                                        </button>
-                                        <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">
-                                            <i class='bx bx-x'></i> Clear
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+{{--                    <form method="GET" action="{{ route('document-registry.index') }}" class="mb-4">--}}
+{{--                        <div class="row">--}}
+{{--                            <div class="col-md-4">--}}
+{{--                                <div class="form-group">--}}
+{{--                                    <label for="status">Status</label>--}}
+{{--                                    <select name="status" class="form-select">--}}
+{{--                                        <option value="">All Statuses</option>--}}
+{{--                                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>--}}
+{{--                                        <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>--}}
+{{--                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>--}}
+{{--                                    </select>--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
+{{--                            <div class="col-md-4">--}}
+{{--                                <div class="form-group">--}}
+{{--                                    <label for="search">Search</label>--}}
+{{--                                    <input type="text" name="search" id="search" class="form-control"--}}
+{{--                                           value="{{ request('search') }}"--}}
+{{--                                           placeholder="Search by title, document number, originator, or customer...">--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
+{{--                            <div class="col-md-4">--}}
+{{--                                <div class="form-group">--}}
+{{--                                    <label>&nbsp;</label>--}}
+{{--                                    <div>--}}
+{{--                                        <button type="submit" class="btn btn-primary">--}}
+{{--                                            <i class='bx bx-search'></i> Search--}}
+{{--                                        </button>--}}
+{{--                                        <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">--}}
+{{--                                            <i class='bx bx-x'></i> Clear--}}
+{{--                                        </a>--}}
+{{--                                    </div>--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+{{--                    </form>--}}
 
                     <!-- Entries Table -->
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
+                        <table class="table table-striped table-hover" id="documentRegistry">
                             <thead>
                                 <tr>
                                     <th>Document Title</th>
@@ -176,3 +176,24 @@
 }
 </style>
 @endsection
+
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#documentRegistry').DataTable({
+                responsive: true,
+                order: [[5, 'desc']],
+                pageLength: 10,
+                columnDefs: [
+                    { orderable: false, targets: [0, 6] }
+                ],
+                language: {
+                    search: "Search users:",
+                    lengthMenu: "Show _MENU_ users per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ users"
+                }
+            });
+        });
+    </script>
+@endpush
