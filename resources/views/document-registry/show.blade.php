@@ -186,6 +186,63 @@
             </div>
         </div>
     </div>
+
+    @if($documentRegistrationEntry->status === 'approved' && $documentRegistrationEntry->documents->count() > 0)
+        <!-- Referenced Documents Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class='bx bx-file'></i> Referenced Documents</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Description</th>
+                                        <th>Department</th>
+                                        <th>File Size</th>
+                                        <th>Uploaded</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($documentRegistrationEntry->documents as $document)
+                                    <tr>
+                                        <td>
+                                            <i class='bx bx-file me-1'></i>
+                                            {{ $document->original_filename }}
+                                        </td>
+                                        <td>{{ $document->description ?? 'No description' }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ $document->department_name }}</span>
+                                        </td>
+                                        <td>{{ number_format($document->file_size / 1024, 2) }} KB</td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ $document->created_at->format('M d, Y') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            @if(auth()->user()->can("view {$document->department} documents"))
+                                                <a href="{{ route('documents.download', $document) }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class='bx bx-download'></i> Download
+                                                </a>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 
 <!-- Reject Modal -->
