@@ -98,7 +98,7 @@
         </li>
 
         @can('manage users')
-          <li class="menu-item">
+          <li class="menu-item {{Route::is('admin.roles.*') ? 'active' : ''}}">
               <a href="{{route('admin.roles.index')}}" class="menu-link">
                   <i class="menu-icon tf-icons bx bx-user-check"></i>
                   <div data-i18n="Patient Records">Roles</div>

@@ -7,6 +7,44 @@
             <span class="text-muted fw-light">Administration /</span> User Roles & Permissions
         </h4>
 
+        <!-- Quick Stats Cards -->
+        <div class="container-fluid mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5>{{ $roles->count() }}</h5>
+                            <p class="mb-0">Total Roles</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5>{{ $users->where('email_verified_at', '!=', null)->count() }}</h5>
+                            <p class="mb-0">Active Users</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5>{{ $usersWithoutRoles}}</h5>
+                            <p class="mb-0">Users Without Roles</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5>{{ \Spatie\Permission\Models\Permission::count() }}</h5>
+                            <p class="mb-0">Total Permissions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Users with Roles & Permissions</h5>
@@ -117,42 +155,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Stats Cards -->
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <h5>{{ $roles->count() }}</h5>
-                <p class="mb-0">Total Roles</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <h5>{{ $users->where('email_verified_at', '!=', null)->count() }}</h5>
-                <p class="mb-0">Active Users</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <h5>{{ $usersWithoutRoles}}</h5>
-                <p class="mb-0">Users Without Roles</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <h5>{{ \Spatie\Permission\Models\Permission::count() }}</h5>
-                <p class="mb-0">Total Permissions</p>
             </div>
         </div>
     </div>
