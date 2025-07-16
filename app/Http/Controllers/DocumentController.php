@@ -471,4 +471,39 @@ class DocumentController extends Controller
 
         return trim($html);
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+        $page = $request->get('page', 1);
+        $perPage = 10; // Number of items per page
+
+        $entries = DocumentRegistrationEntry::where('status', 'approved')
+            ->where(function($q) use ($query) {
+                $q->where('document_no', 'like', "%{$query}%")
+                    ->orWhere('document_title', 'like', "%{$query}%")
+                    ->orWhere('device_name', 'like', "%{$query}%")
+                    ->orWhere('originator_name', 'like', "%{$query}%");
+            })
+            ->orderBy('document_title')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $morePages = $entries->hasMorePages();
+
+        $results = [];
+        foreach ($entries as $entry) {
+            $results[] = [
+                'id' => $entry->id,
+                'text' => "{$entry->document_no} - {$entry->document_title}" .
+                    ($entry->device_name ? " ({$entry->device_name})" : "")
+            ];
+        }
+
+        return response()->json([
+            'results' => $results,
+            'pagination' => [
+                'more' => $morePages
+            ]
+        ]);
+    }
 }

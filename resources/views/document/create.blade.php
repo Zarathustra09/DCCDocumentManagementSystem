@@ -34,7 +34,6 @@
                         <div class="mb-3">
                             <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select @error('department') is-invalid @enderror" id="department" name="department" required>
-                                <option value="">Select Department</option>
                                 @foreach($availableDepartments as $key => $name)
                                     <option value="{{ $key }}" {{ old('department', $preselectedDepartment) == $key ? 'selected' : '' }}>
                                         {{ $name }}
@@ -46,52 +45,50 @@
                             @enderror
                         </div>
 
-                          <div class="mb-3">
-                              <label for="folder_id" class="form-label">Folder <span class="text-danger">*</span></label>
-                              <select class="form-select @error('folder_id') is-invalid @enderror" id="folder_id" name="folder_id" required>
-                                  <option value="">Please select a folder</option>
-                                  @foreach($folders as $folder)
-                                      <option value="{{ $folder->id }}"
-                                              data-department="{{ $folder->department }}"
-                                              {{ old('folder_id', $currentFolderId) == $folder->id ? 'selected' : '' }}>
-                                          {{ $folder->name }} ({{ $folder->department_name }})
-                                      </option>
-                                  @endforeach
-                              </select>
-                              <div class="form-text">Documents must be placed in a folder</div>
-                              @error('folder_id')
-                                  <div class="invalid-feedback">{{ $message }}</div>
-                              @enderror
-                          </div>
                         <div class="mb-3">
-                            <label for="document_registration_entry_id" class="form-label">Associated Registration Entry</label>
-                            <select class="form-select @error('document_registration_entry_id') is-invalid @enderror"
-                                    id="document_registration_entry_id"
-                                    name="document_registration_entry_id">
-                                <option value="">None (Optional)</option>
-                                @foreach($registrationEntries as $entry)
-                                    <option value="{{ $entry->id }}"
-                                        {{ old('document_registration_entry_id') == $entry->id ? 'selected' : '' }}>
-                                        {{ $entry->document_no }} - {{ $entry->document_title }}
+                            <label for="folder_id" class="form-label">Folder <span class="text-danger">*</span></label>
+                            <select class="form-select @error('folder_id') is-invalid @enderror" id="folder_id" name="folder_id" required>
+                                <option value="">Please select a folder</option>
+                                @foreach($folders->where('department', old('department', $preselectedDepartment)) as $folder)
+                                    <option value="{{ $folder->id }}" {{ old('folder_id', $currentFolderId) == $folder->id ? 'selected' : '' }}>
+                                        {{ $folder->name }}
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="form-text">Documents must be placed in a folder</div>
+                            @error('folder_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="document_registration_entry_id" class="form-label">Associated Registration Entry</label>
+                            <select class="form-select select2-ajax @error('document_registration_entry_id') is-invalid @enderror"
+                                    id="document_registration_entry_id"
+                                    name="document_registration_entry_id"
+                                    data-placeholder="Search for a registration entry..."
+                                    data-ajax-url="{{ route('document-registration-entries.search') }}">
+                                <option value="">None (Optional)</option>
+                                @if(old('document_registration_entry_id'))
+                                    @php
+                                        $selectedEntry = App\Models\DocumentRegistrationEntry::find(old('document_registration_entry_id'));
+                                    @endphp
+                                    @if($selectedEntry)
+                                        <option value="{{ $selectedEntry->id }}" selected>
+                                            {{ $selectedEntry->document_no }} - {{ $selectedEntry->document_title }}
+                                        </option>
+                                    @endif
+                                @endif
+                            </select>
                             <div class="form-text">Optionally link this document to an approved registration entry</div>
                             @error('document_registration_entry_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control @error('description') is-invalid @enderror"
-                                      id="description"
-                                      name="description"
-                                      rows="3"
-                                      placeholder="Optional description for this document">{{ old('description') }}</textarea>
-                            @error('description')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ old('description') }}</textarea>
                         </div>
 
                         <div class="d-flex justify-content-end">
@@ -107,71 +104,113 @@
 </div>
 @endsection
 
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .select2-container--bootstrap-5 .select2-selection {
+        min-height: 38px;
+        padding: 0.375rem 0.75rem;
+    }
+    .select2-result__title {
+        font-weight: 500;
+    }
+    .select2-result__info {
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+</style>
+@endpush
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2 for registration entry
+    $('.select2-ajax').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        delay: 250,
+        minimumInputLength: 2,
+        ajax: {
+            url: function() {
+                return $(this).data('ajax-url');
+            },
+            dataType: 'json',
+            data: function(params) {
+                return {
+                    q: params.term,
+                    page: params.page || 1
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.results,
+                    pagination: data.pagination
+                };
+            },
+            cache: true
+        },
+        placeholder: $(this).data('placeholder'),
+        allowClear: true,
+        templateResult: formatRegistrationEntry,
+        templateSelection: formatRegistrationEntrySelection
+    });
+
+    function formatRegistrationEntry(entry) {
+        if (entry.loading) {
+            return entry.text;
+        }
+
+        if (!entry.id) {
+            return entry.text;
+        }
+
+        var $container = $(
+            '<div class="select2-result">' +
+                '<div class="select2-result__title">' + entry.text + '</div>' +
+                (entry.info ? '<div class="select2-result__info">' + entry.info + '</div>' : '') +
+            '</div>'
+        );
+
+        return $container;
+    }
+
+    function formatRegistrationEntrySelection(entry) {
+        return entry.text || entry.id;
+    }
+
+    // Existing folder and department handling
     const departmentSelect = document.getElementById('department');
     const folderSelect = document.getElementById('folder_id');
 
-    // Function to filter folders by department
-    function filterFoldersByDepartment() {
-        const selectedDepartment = departmentSelect.value;
-        const folderOptions = folderSelect.querySelectorAll('option');
+    departmentSelect.addEventListener('change', function() {
+        const selectedDepartment = this.value;
 
-        // Reset folder selection if department changes
-        if (folderSelect.value !== '') {
-            const selectedFolder = folderSelect.querySelector('option[value="' + folderSelect.value + '"]');
-            if (selectedFolder && selectedFolder.dataset.department !== selectedDepartment) {
-                folderSelect.value = '';
-            }
-        }
+        // Clear and disable folder select first
+        folderSelect.innerHTML = '<option value="">Loading folders...</option>';
+        folderSelect.disabled = true;
 
-        // Show/hide folder options based on department
-        folderOptions.forEach(option => {
-            if (option.value === '') {
-                // Always show "Root" option
-                option.style.display = 'block';
-            } else if (selectedDepartment === '') {
-                // Hide all folders if no department selected
-                option.style.display = 'none';
-            } else if (option.dataset.department === selectedDepartment) {
-                // Show folders that match selected department
-                option.style.display = 'block';
-            } else {
-                // Hide folders that don't match
-                option.style.display = 'none';
-            }
-        });
-    }
+        // Fetch folders for the selected department via AJAX
+        fetch(`/api/folders?department=${selectedDepartment}`)
+            .then(response => response.json())
+            .then(data => {
+                folderSelect.innerHTML = '<option value="">Please select a folder</option>';
 
-    // Filter folders when department changes
-    departmentSelect.addEventListener('change', filterFoldersByDepartment);
+                data.forEach(folder => {
+                    const option = document.createElement('option');
+                    option.value = folder.id;
+                    option.textContent = folder.name;
+                    folderSelect.appendChild(option);
+                });
 
-    // Initial filter on page load
-    filterFoldersByDepartment();
-
-    // File validation
-    const fileInput = document.getElementById('file');
-    fileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            // Check file size (10MB = 10 * 1024 * 1024 bytes)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File size exceeds 10MB limit. Please choose a smaller file.');
-                this.value = '';
-                return;
-            }
-
-            // Check file type
-            const allowedTypes = ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'xls', 'xlsx'];
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-
-            if (!allowedTypes.includes(fileExtension)) {
-                alert('File type not supported. Please choose a file with one of these extensions: ' + allowedTypes.join(', '));
-                this.value = '';
-                return;
-            }
-        }
+                folderSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error fetching folders:', error);
+                folderSelect.innerHTML = '<option value="">Error loading folders</option>';
+                folderSelect.disabled = false;
+            });
     });
 });
 </script>

@@ -21,6 +21,10 @@ Route::resource('documents', DocumentController::class);
 Route::get('/download/{document}', [DocumentController::class, 'download'])->name('documents.download');
 Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
 Route::post('/documents/{document}/update-content', [DocumentController::class, 'updateContent'])->name('documents.update-content');
+// In routes/web.php
+Route::get('/document-registration-entries/search', [DocumentController::class, 'search'])
+    ->name('document-registration-entries.search');
+
 Route::resource('folders', FolderController::class);
 
 
