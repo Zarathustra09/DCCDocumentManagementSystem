@@ -131,7 +131,7 @@
                             </div>
 
                             <!-- Collapsible Folders Grid -->
-                            <div class="collapse show" id="dept-{{ Str::slug($department) }}">
+                            <div class="collapse" id="dept-{{ Str::slug($department) }}">
                                 <div class="row g-3">
                                     @foreach($deptFolders as $folder)
                                     <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 folder-item" data-name="{{ strtolower($folder->name) }}">
