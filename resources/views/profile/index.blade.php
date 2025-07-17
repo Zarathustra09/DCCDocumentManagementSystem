@@ -156,6 +156,58 @@
                         <!-- /Account -->
                     </div>
 
+                    <div class="card mb-4">
+                        <h5 class="card-header">Change Password</h5>
+                        <div class="card-body">
+                            <form id="formChangePassword" method="POST">
+                                @csrf
+                                <div class="row">
+                                    <div class="mb-3 col-md-6">
+                                        <label for="current_password" class="form-label">Current Password</label>
+                                        <input
+                                            class="form-control"
+                                            type="password"
+                                            id="current_password"
+                                            name="current_password"
+                                            required
+                                        />
+                                    </div>
+                                    <div class="w-100"></div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="new_password" class="form-label">New Password</label>
+                                        <input
+                                            class="form-control"
+                                            type="password"
+                                            id="new_password"
+                                            name="new_password"
+                                            required
+                                            minlength="8"
+                                        />
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="new_password_confirmation" class="form-label">Confirm New Password</label>
+                                        <input
+                                            class="form-control"
+                                            type="password"
+                                            id="new_password_confirmation"
+                                            name="new_password_confirmation"
+                                            required
+                                            minlength="8"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <button type="submit" class="btn btn-primary me-2">
+                                        <i class="bx bx-save"></i> Change Password
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetPasswordForm()">
+                                        <i class="bx bx-x"></i> Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <h5 class="card-header">Delete Account</h5>
                         <div class="card-body">
@@ -196,6 +248,73 @@
 
 @push('scripts')
     <script>
+
+
+        // Password change functionality
+        document.getElementById('formChangePassword').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const form = this;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            // Validate password confirmation
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('new_password_confirmation').value;
+
+            if (newPassword !== confirmPassword) {
+                showSwal('error', 'New password and confirmation do not match.');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showSwal('error', 'New password must be at least 8 characters long.');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Changing...';
+            submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+
+            fetch('{{ route('profile.updatePassword') }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        showSwal('success', data.message);
+                        resetPasswordForm();
+                    } else {
+                        showSwal('error', data.message || 'Failed to change password');
+                    }
+                })
+                .catch(error => {
+                    console.error('Password change error:', error);
+                    showSwal('error', 'Error changing password. Please try again.');
+                })
+                .finally(() => {
+                    // Reset button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+        });
+
+        function resetPasswordForm() {
+            document.getElementById('formChangePassword').reset();
+        }
+
+
         function previewImage(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
