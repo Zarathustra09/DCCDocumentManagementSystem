@@ -4,6 +4,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,8 @@ Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('adm
     Route::put('/users/{user}/permissions', [PermissionController::class, 'updateUserPermissions'])->name('users.permissions.update');
 });
 
+Route::resource('roles', RoleController::class)->only(['index', 'show']);
+Route::post('roles/{role}/update-permissions', [RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
 
 // Document Registration Entry Routes
 Route::middleware(['auth'])->prefix('document-registry')->name('document-registry.')->group(function () {

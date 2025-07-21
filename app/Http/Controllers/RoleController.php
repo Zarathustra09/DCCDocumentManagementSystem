@@ -26,8 +26,16 @@ class RoleController extends Controller
     public function show(Role $role)
     {
         $role->load(['permissions', 'users']);
-        $allPermissions = Permission::all();
-        $rolePermissions = $role->permissions;
+        $allPermissions = Permission::all()->groupBy(function ($permission) {
+            // Group permissions by category (first word before space)
+            $parts = explode(' ', $permission->name);
+            if (in_array($parts[0], ['view', 'create', 'edit', 'delete', 'download', 'share'])) {
+                return implode(' ', array_slice($parts, 1));
+            }
+            return 'System';
+        });
+
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
 
         return view('role.show', compact('role', 'allPermissions', 'rolePermissions'));
     }
@@ -48,7 +56,8 @@ class RoleController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Role permissions updated successfully.'
+                'message' => 'Role permissions updated successfully.',
+                'permissionCount' => $permissions->count()
             ]);
         } catch (\Exception $e) {
             return response()->json([
