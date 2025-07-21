@@ -8,7 +8,7 @@
                 <span class="text-muted fw-light">Administration / User Management /</span>
                 {{ $user->name }}
             </h4>
-            <a href="{{ route('admin.roles.index') }}" class="btn btn-secondary">
+            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
                 <i class="bx bx-arrow-back"></i> Back to Users
             </a>
         </div>

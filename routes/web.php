@@ -3,7 +3,7 @@
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -39,10 +39,10 @@ Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.
 Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.updatePassword');
 
 Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-    Route::get('/roles/{user}', [RoleController::class, 'show'])->name('roles.show');
-    Route::put('/users/{user}/roles', [RoleController::class, 'updateUserRoles'])->name('users.roles.update');
-    Route::put('/users/{user}/permissions', [RoleController::class, 'updateUserPermissions'])->name('users.permissions.update');
+    Route::get('/users', [PermissionController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [PermissionController::class, 'show'])->name('users.show');
+    Route::put('/users/{user}/roles', [PermissionController::class, 'updateUserRoles'])->name('users.roles.update');
+    Route::put('/users/{user}/permissions', [PermissionController::class, 'updateUserPermissions'])->name('users.permissions.update');
 });
 
 

@@ -137,7 +137,7 @@
                                             <i class="bx bx-cog"></i> Manage
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="{{ route('admin.roles.show', $user->id) }}">
+                                            <a class="dropdown-item" href="{{ route('admin.users.show', $user->id) }}">
                                                 <i class="bx bx-show me-2"></i> View Details
                                             </a>
                                             <a class="dropdown-item" href="#" onclick="editUserRoles({{ $user->id }}, '{{ addslashes($user->name) }}', {{ $user->roles->pluck('id') }})">

@@ -98,12 +98,37 @@
         </li>
 
         @can('manage users')
-          <li class="menu-item {{Route::is('admin.roles.*') ? 'active' : ''}}">
-              <a href="{{route('admin.roles.index')}}" class="menu-link">
-                  <i class="menu-icon tf-icons bx bx-user-check"></i>
-                  <div data-i18n="Patient Records">Roles</div>
-              </a>
-          </li>
+            <li class="menu-item {{Route::is('admin.users.*') ? 'active' : ''}}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons bx bx-shield"></i>
+                <div data-i18n="Account Settings">Roles & Permissions</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{Route::is('admin.users.*') ? 'active' : ''}}">
+                    <a href="{{route('admin.users.index')}}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-user"></i>
+                        <div data-i18n="Account">User Permissions</div>
+                    </a>
+                </li>
+
+                <li class="menu-item">
+                    <a href="#" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-id-card"></i>
+                        <div data-i18n="Account">Role Permissions</div>
+                    </a>
+                </li>
+
+            </ul>
+            </li>
+
+
+
+{{--          <li class="menu-item {{Route::is('admin.roles.*') ? 'active' : ''}}">--}}
+{{--              <a href="{{route('admin.roles.index')}}" class="menu-link">--}}
+{{--                  <i class="menu-icon tf-icons bx bx-user-check"></i>--}}
+{{--                  <div data-i18n="Patient Records">Roles</div>--}}
+{{--              </a>--}}
+{{--          </li>--}}
         @endcan
 
 

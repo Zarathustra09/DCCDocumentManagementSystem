@@ -2,82 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
 class RoleController extends Controller
 {
+    /**
+     * Display a listing of roles with their permissions.
+     */
     public function index()
     {
-        $users = User::with('roles')->get();
-        $roles = Role::all();
+        $roles = Role::with(['permissions', 'users'])->get();
+        $totalPermissions = Permission::count();
+        $rolesWithoutPermissions = Role::doesntHave('permissions')->count();
 
-        // Fix: Use query builder instead of model directly
-        $usersWithoutRoles = User::with('roles')->get()->filter(
-            fn ($user) => $user->roles->where('name', 'Manager')->toArray()
-        )->count();
-
-        return view('roles.index', compact('users', 'roles', 'usersWithoutRoles'));
+        return view('role.index', compact('roles', 'totalPermissions', 'rolesWithoutPermissions'));
     }
 
-    public function show(User $user)
+    /**
+     * Display the specified role with detailed permissions.
+     */
+    public function show(Role $role)
     {
-        $user->load('roles', 'permissions');
+        $role->load(['permissions', 'users']);
+        $allPermissions = Permission::all();
+        $rolePermissions = $role->permissions;
 
-        // Get all available roles and permissions
-        $roles = Role::all();
-        $permissions = Permission::all();
-
-        // Get permissions through roles
-        $rolePermissions = $user->getPermissionsViaRoles();
-
-        // Get direct permissions
-        $directPermissions = $user->getDirectPermissions();
-
-        // Get all effective permissions
-        $allPermissions = $user->getAllPermissions();
-
-        return view('roles.show', compact(
-            'user',
-            'roles',
-            'permissions',
-            'rolePermissions',
-            'directPermissions',
-            'allPermissions'
-        ));
+        return view('role.show', compact('role', 'allPermissions', 'rolePermissions'));
     }
 
-    public function updateUserRoles(Request $request, User $user)
-    {
-        $request->validate([
-            'roles' => 'array',
-            'roles.*' => 'exists:roles,id'
-        ]);
-
-        try {
-            // Convert role IDs to role names for Spatie
-            $roleNames = Role::whereIn('id', $request->roles ?? [])
-                ->pluck('name')
-                ->toArray();
-
-            // Sync roles using role names
-            $user->syncRoles($roleNames);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User roles updated successfully.'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update user roles: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function updateUserPermissions(Request $request, User $user)
+    /**
+     * Update the permissions for the specified role.
+     */
+    public function updatePermissions(Request $request, Role $role)
     {
         $request->validate([
             'permissions' => 'array',
@@ -85,22 +43,17 @@ class RoleController extends Controller
         ]);
 
         try {
-            // Get permission names from IDs
-            $permissionNames = Permission::whereIn('id', $request->permissions ?? [])
-                ->pluck('name')
-                ->toArray();
-
-            // Sync direct permissions using permission names
-            $user->syncPermissions($permissionNames);
+            $permissions = Permission::whereIn('id', $request->permissions ?? [])->get();
+            $role->syncPermissions($permissions);
 
             return response()->json([
                 'success' => true,
-                'message' => 'User permissions updated successfully.'
+                'message' => 'Role permissions updated successfully.'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user permissions: ' . $e->getMessage()
+                'message' => 'Failed to update role permissions: ' . $e->getMessage()
             ], 500);
         }
     }

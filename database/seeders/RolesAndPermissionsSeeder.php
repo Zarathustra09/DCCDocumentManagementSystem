@@ -176,9 +176,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view IT documents', 'view Finance documents', 'view QA documents', 'view HR documents',
             'view Purchasing documents', 'view Sales documents', 'view Operations documents', 'view General documents',
             'view Business Unit 1 documents', 'view Business Unit 2 documents', 'view Business Unit 3 documents',
-            'download IT documents', 'download Finance documents', 'download QA documents', 'download HR documents',
-            'download Purchasing documents', 'download Sales documents', 'download Operations documents', 'download General documents',
-            'download Business Unit 1 documents', 'download Business Unit 2 documents', 'download Business Unit 3 documents',
             'view folders',
             'approve document registration', 'reject document registration', 'require revision for document',
             'view pending document registrations', 'view all document registrations', 'edit document registration details',
@@ -187,12 +184,12 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create VP Sales and Operations role
         $vpSalesOpsRole = Role::create(['name' => 'VP Sales and Operations']);
         $vpSalesOpsRole->givePermissionTo([
-            'view Sales documents', 'create Sales documents', 'edit Sales documents', 'delete Sales documents', 'download Sales documents', 'share Sales documents',
-            'view Operations documents', 'create Operations documents', 'edit Operations documents', 'delete Operations documents', 'download Operations documents', 'share Operations documents',
-            'view Business Unit 1 documents', 'create Business Unit 1 documents', 'edit Business Unit 1 documents', 'delete Business Unit 1 documents', 'download Business Unit 1 documents', 'share Business Unit 1 documents',
-            'view Business Unit 2 documents', 'create Business Unit 2 documents', 'edit Business Unit 2 documents', 'delete Business Unit 2 documents', 'download Business Unit 2 documents', 'share Business Unit 2 documents',
-            'view Business Unit 3 documents', 'create Business Unit 3 documents', 'edit Business Unit 3 documents', 'delete Business Unit 3 documents', 'download Business Unit 3 documents', 'share Business Unit 3 documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view Sales documents', 'create Sales documents', 'edit Sales documents', 'delete Sales documents', 'share Sales documents',
+            'view Operations documents', 'create Operations documents', 'edit Operations documents', 'delete Operations documents', 'share Operations documents',
+            'view Business Unit 1 documents', 'create Business Unit 1 documents', 'edit Business Unit 1 documents', 'delete Business Unit 1 documents', 'share Business Unit 1 documents',
+            'view Business Unit 2 documents', 'create Business Unit 2 documents', 'edit Business Unit 2 documents', 'delete Business Unit 2 documents', 'share Business Unit 2 documents',
+            'view Business Unit 3 documents', 'create Business Unit 3 documents', 'edit Business Unit 3 documents', 'delete Business Unit 3 documents', 'share Business Unit 3 documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports', 'view dashboard',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -201,8 +198,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create Comptroller role
         $comptrollerRole = Role::create(['name' => 'Comptroller']);
         $comptrollerRole->givePermissionTo([
-            'view Finance documents', 'create Finance documents', 'edit Finance documents', 'delete Finance documents', 'download Finance documents', 'share Finance documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view Finance documents', 'create Finance documents', 'edit Finance documents', 'delete Finance documents', 'share Finance documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -211,8 +208,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create IT Head role
         $itHeadRole = Role::create(['name' => 'IT Head']);
         $itHeadRole->givePermissionTo([
-            'view IT documents', 'create IT documents', 'edit IT documents', 'delete IT documents', 'download IT documents', 'share IT documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view IT documents', 'create IT documents', 'edit IT documents', 'delete IT documents', 'share IT documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -221,8 +218,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create QA Head role
         $qaHeadRole = Role::create(['name' => 'QA Head']);
         $qaHeadRole->givePermissionTo([
-            'view QA documents', 'create QA documents', 'edit QA documents', 'delete QA documents', 'download QA documents', 'share QA documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view QA documents', 'create QA documents', 'edit QA documents', 'delete QA documents', 'share QA documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -231,8 +228,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create HR Head role
         $hrHeadRole = Role::create(['name' => 'HR Head']);
         $hrHeadRole->givePermissionTo([
-            'view HR documents', 'create HR documents', 'edit HR documents', 'delete HR documents', 'download HR documents', 'share HR documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view HR documents', 'create HR documents', 'edit HR documents', 'delete HR documents', 'share HR documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -241,8 +238,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create Purchasing Head role
         $purchasingHeadRole = Role::create(['name' => 'Purchasing Head']);
         $purchasingHeadRole->givePermissionTo([
-            'view Purchasing documents', 'create Purchasing documents', 'edit Purchasing documents', 'delete Purchasing documents', 'download Purchasing documents', 'share Purchasing documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view Purchasing documents', 'create Purchasing documents', 'edit Purchasing documents', 'delete Purchasing documents', 'share Purchasing documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -251,18 +248,17 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create Business Unit Head roles with approval permissions
         $buHead1Role = Role::create(['name' => 'Business Unit Head 1']);
         $buHead1Role->givePermissionTo([
-            'view Business Unit 1 documents', 'create Business Unit 1 documents', 'edit Business Unit 1 documents', 'delete Business Unit 1 documents', 'download Business Unit 1 documents', 'share Business Unit 1 documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view Business Unit 1 documents', 'create Business Unit 1 documents', 'edit Business Unit 1 documents', 'delete Business Unit 1 documents', 'share Business Unit 1 documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
         ]);
 
-
         $buHead2Role = Role::create(['name' => 'Business Unit Head 2']);
         $buHead2Role->givePermissionTo([
-            'view Business Unit 2 documents', 'create Business Unit 2 documents', 'edit Business Unit 2 documents', 'delete Business Unit 2 documents', 'download Business Unit 2 documents', 'share Business Unit 2 documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view Business Unit 2 documents', 'create Business Unit 2 documents', 'edit Business Unit 2 documents', 'delete Business Unit 2 documents', 'share Business Unit 2 documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -270,8 +266,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $buHead3Role = Role::create(['name' => 'Business Unit Head 3']);
         $buHead3Role->givePermissionTo([
-            'view Business Unit 3 documents', 'create Business Unit 3 documents', 'edit Business Unit 3 documents', 'delete Business Unit 3 documents', 'download Business Unit 3 documents', 'share Business Unit 3 documents',
-            'view General documents', 'create General documents', 'edit General documents', 'download General documents', 'share General documents',
+            'view Business Unit 3 documents', 'create Business Unit 3 documents', 'edit Business Unit 3 documents', 'delete Business Unit 3 documents', 'share Business Unit 3 documents',
+            'view General documents', 'create General documents', 'edit General documents', 'share General documents',
             'view folders', 'create folders', 'edit folders', 'delete folders', 'share folders',
             'view reports',
             'submit document for approval', 'withdraw document submission', 'view pending document registrations',
@@ -281,9 +277,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $itReadOnlyRole = Role::create(['name' => 'IT Read Only']);
         $itReadOnlyRole->givePermissionTo([
             'view IT documents',
-            'download IT documents',
             'view General documents',
-            'download General documents',
             'view folders',
             'submit document for approval',
         ]);
@@ -291,46 +285,44 @@ class RolesAndPermissionsSeeder extends Seeder
         $qaReadOnlyRole = Role::create(['name' => 'QA Read Only']);
         $qaReadOnlyRole->givePermissionTo([
             'view QA documents',
-            'download QA documents',
             'view General documents',
-            'download General documents',
             'view folders',
             'submit document for approval',
         ]);
 
         $dccReadOnlyRole = Role::create(['name' => 'DCC Read Only']);
         $dccReadOnlyRole->givePermissionTo([
-            'view IT documents', 'download IT documents', 'view Finance documents', 'download Finance documents',
-            'view QA documents', 'download QA documents', 'view Purchasing documents', 'download Purchasing documents',
-            'view Sales documents', 'download Sales documents', 'view Operations documents', 'download Operations documents',
-            'view General documents', 'download General documents',
-            'view Business Unit 1 documents', 'download Business Unit 1 documents',
-            'view Business Unit 2 documents', 'download Business Unit 2 documents',
-            'view Business Unit 3 documents', 'download Business Unit 3 documents',
+            'view IT documents', 'view Finance documents',
+            'view QA documents', 'view Purchasing documents',
+            'view Sales documents', 'view Operations documents',
+            'view General documents',
+            'view Business Unit 1 documents',
+            'view Business Unit 2 documents',
+            'view Business Unit 3 documents',
             'view folders', 'view reports',
             'submit document for approval', 'view pending document registrations',
         ]);
 
         $businessUnit1ReadOnlyRole = Role::create(['name' => 'Business Unit 1 Read Only']);
         $businessUnit1ReadOnlyRole->givePermissionTo([
-            'view Business Unit 1 documents', 'download Business Unit 1 documents',
-            'view General documents', 'download General documents',
+            'view Business Unit 1 documents',
+            'view General documents',
             'view folders',
             'submit document for approval',
         ]);
 
         $businessUnit2ReadOnlyRole = Role::create(['name' => 'Business Unit 2 Read Only']);
         $businessUnit2ReadOnlyRole->givePermissionTo([
-            'view Business Unit 2 documents', 'download Business Unit 2 documents',
-            'view General documents', 'download General documents',
+            'view Business Unit 2 documents',
+            'view General documents',
             'view folders',
             'submit document for approval',
         ]);
 
         $businessUnit3ReadOnlyRole = Role::create(['name' => 'Business Unit 3 Read Only']);
         $businessUnit3ReadOnlyRole->givePermissionTo([
-            'view Business Unit 3 documents', 'download Business Unit 3 documents',
-            'view General documents', 'download General documents',
+            'view Business Unit 3 documents',
+            'view General documents',
             'view folders',
             'submit document for approval',
         ]);
@@ -344,7 +336,6 @@ class RolesAndPermissionsSeeder extends Seeder
         $internRole = Role::create(['name' => 'Intern']);
         $internRole->givePermissionTo([
             'view General documents',
-            'download General documents',
             'view folders',
         ]);
 
@@ -365,7 +356,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $users = [
             [
                 'name' => 'Super Admin',
-                'email' => 'superadmin@smartprobegroup.com',
+                    'email' => 'superadmin@smartprobegroup.com',
                 'password' => bcrypt('password'),
                 'role' => 'SuperAdmin'
             ],
