@@ -112,7 +112,7 @@
                 </li>
 
                 <li class="menu-item {{Route::is('roles.*') ? 'active' : ''}}">
-                    <a href="#" class="menu-link">
+                    <a href="{{route('roles.index')}}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-id-card"></i>
                         <div data-i18n="Account">Role Permissions</div>
                     </a>
