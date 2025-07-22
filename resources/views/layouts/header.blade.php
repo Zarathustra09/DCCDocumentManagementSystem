@@ -28,8 +28,18 @@
         </li>
 
 
+        @can('approve document registration')
+            <li class="menu-item {{Route::is('document-registry.list') ? 'active' : ''}}">
+                <a href="{{route('document-registry.index')}}" class="menu-link">
+              <i class="menu-icon tf-icons bx bx-archive"></i>
+                    <div data-i18n="Patient Records">Registry Management</div>
+                </a>
+            </li>
+        @endcan
+
+
         @can('submit document for approval')
-            <li class="menu-item {{Route::is('document-registry.*') ? 'active' : ''}}">
+            <li class="menu-item {{Route::is('document-registry.create') ? 'active' : ''}}">
                 <a href="{{route('document-registry.index')}}" class="menu-link">
                    <i class="menu-icon tf-icons bx bx-upload"></i>
                     <div data-i18n="Patient Records">Register Document</div>
