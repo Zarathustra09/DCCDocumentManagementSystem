@@ -673,4 +673,100 @@ class DocumentRegistrationEntryController extends Controller
             ]
         ]);
     }
+
+    public function list(Request $request)
+    {
+        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy']);
+
+        // Apply permissions filter
+        if (Auth::user()->can('view all document registrations')) {
+            // User can see all entries
+        } else {
+            // User can only see their own submissions
+            $query->where('submitted_by', Auth::id());
+        }
+
+        // Apply status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Apply search filter (document number, title, originator)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('document_no', 'like', "%{$search}%")
+                    ->orWhere('document_title', 'like', "%{$search}%")
+                    ->orWhere('originator_name', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply customer filter
+        if ($request->filled('customer')) {
+            $query->where('customer', 'like', "%{$request->customer}%");
+        }
+
+        // Apply device name filter
+        if ($request->filled('device_name')) {
+            $query->where('device_name', 'like', "%{$request->device_name}%");
+        }
+
+        // Apply submitted by filter
+        if ($request->filled('submitted_by')) {
+            $query->where('submitted_by', $request->submitted_by);
+        }
+
+        // Apply date range filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('submitted_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('submitted_at', '<=', $request->date_to);
+        }
+
+        // Apply file attachment filter
+        if ($request->filled('has_file')) {
+            if ($request->has_file === 'yes') {
+                $query->whereNotNull('file_path');
+            } elseif ($request->has_file === 'no') {
+                $query->whereNull('file_path');
+            }
+        }
+
+        // Get unique values for filter dropdowns
+        $customers = DocumentRegistrationEntry::whereNotNull('customer')
+            ->distinct()
+            ->pluck('customer')
+            ->sort();
+
+        $deviceNames = DocumentRegistrationEntry::whereNotNull('device_name')
+            ->distinct()
+            ->pluck('device_name')
+            ->sort();
+
+        $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
+            ->orderBy('name')
+            ->get();
+
+        // Get entries with pagination
+        $entries = $query->latest('submitted_at')->paginate(15);
+
+        // Statistics for results summary
+        $totalEntries = $query->count();
+        $pendingCount = (clone $query)->where('status', 'pending')->count();
+        $approvedCount = (clone $query)->where('status', 'approved')->count();
+        $rejectedCount = (clone $query)->where('status', 'rejected')->count();
+
+        return view('document-registry.list', compact(
+            'entries',
+            'customers',
+            'deviceNames',
+            'submitters',
+            'totalEntries',
+            'pendingCount',
+            'approvedCount',
+            'rejectedCount'
+        ));
+    }
 }

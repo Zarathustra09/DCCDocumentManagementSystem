@@ -63,6 +63,9 @@ Route::get('/document-registry/{documentRegistrationEntry}/preview-api', [Docume
     ->name('document-registry.preview-api');
 // Document Registration Entry Routes
 Route::middleware(['auth'])->prefix('document-registry')->name('document-registry.')->group(function () {
+
+    Route::get('/list', [DocumentRegistrationEntryController::class, 'list'])->name('list');
+
     // Basic CRUD routes
     Route::get('/', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'index'])->name('index');
     Route::get('/create', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'create'])
@@ -84,5 +87,8 @@ Route::middleware(['auth'])->prefix('document-registry')->name('document-registr
         ->middleware('permission:require revision for document')->name('require-revision');
     Route::delete('/{documentRegistrationEntry}/withdraw', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'withdraw'])
         ->middleware('permission:withdraw document submission')->name('withdraw');
+
+
+
 });
 
