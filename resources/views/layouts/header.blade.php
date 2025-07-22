@@ -39,10 +39,10 @@
 
 
         @can('submit document for approval')
-            <li class="menu-item {{Route::is('document-registry.create') ? 'active' : ''}}">
+            <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}">
                 <a href="{{route('document-registry.index')}}" class="menu-link">
                    <i class="menu-icon tf-icons bx bx-upload"></i>
-                    <div data-i18n="Patient Records">Register Document</div>
+                    <div data-i18n="Patient Records">My Registrations</div>
                 </a>
             </li>
         @endcan
