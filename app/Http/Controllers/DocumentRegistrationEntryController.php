@@ -395,4 +395,128 @@ class DocumentRegistrationEntryController extends Controller
             'message' => 'Preview not available for this file type'
         ]);
     }
+
+    public function previewApi(DocumentRegistrationEntry $documentRegistrationEntry)
+    {
+        if (!$this->canViewEntry($documentRegistrationEntry)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        if (!$documentRegistrationEntry->hasFile()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File not found'
+            ], 404);
+        }
+
+        // Check if it's a Word document
+        if (!str_contains($documentRegistrationEntry->mime_type, 'word') &&
+            !str_contains($documentRegistrationEntry->mime_type, 'document')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Preview not available for this file type'
+            ], 400);
+        }
+
+        try {
+            $filePath = Storage::disk('local')->path($documentRegistrationEntry->file_path);
+
+            if (!file_exists($filePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File not found'
+                ], 404);
+            }
+
+            // Validate file size (limit to 10MB for preview)
+            $fileSize = filesize($filePath);
+            if ($fileSize > 10 * 1024 * 1024) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File too large for preview. Please download to view.'
+                ], 400);
+            }
+
+            // Try to load the document
+            try {
+                $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
+            } catch (\PhpOffice\PhpWord\Exception\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document appears to be corrupted or uses an unsupported format'
+                ], 400);
+            }
+
+            // Convert to HTML
+            try {
+                $htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
+
+                $tempFile = tempnam(sys_get_temp_dir(), 'phpword_preview_');
+                $htmlWriter->save($tempFile);
+
+                $htmlContent = file_get_contents($tempFile);
+                unlink($tempFile);
+
+                if (empty($htmlContent)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Document appears to be empty or could not be converted'
+                    ], 400);
+                }
+
+                // Clean up the HTML content
+                $htmlContent = $this->cleanWordHtml($htmlContent);
+
+                return response()->json([
+                    'success' => true,
+                    'content' => $htmlContent
+                ]);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error converting document to preview format'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred while loading the preview'
+            ], 500);
+        }
+    }
+
+    private function cleanWordHtml($html)
+    {
+        // Remove XML declaration and DOCTYPE
+        $html = preg_replace('/<\?xml[^>]*>/', '', $html);
+        $html = preg_replace('/<!DOCTYPE[^>]*>/', '', $html);
+
+        // Replace html tags with div container
+        $html = preg_replace('/<html[^>]*>/', '<div class="word-document">', $html);
+        $html = str_replace('</html>', '</div>', $html);
+
+        // Remove head section entirely
+        $html = preg_replace('/<head[^>]*>.*?<\/head>/s', '', $html);
+
+        // Clean body tags
+        $html = preg_replace('/<body[^>]*>/', '', $html);
+        $html = str_replace('</body>', '', $html);
+
+        // Remove problematic inline styles but keep basic formatting
+        $html = preg_replace('/style="[^"]*?(font-family|color|text-align|font-weight|font-style)[^"]*?"/', '', $html);
+
+        // Clean up multiple spaces and line breaks
+        $html = preg_replace('/\s+/', ' ', $html);
+        $html = str_replace('> <', '><', $html);
+
+        // Ensure proper paragraph spacing
+        $html = str_replace('<p></p>', '', $html);
+
+        return trim($html);
+    }
 }

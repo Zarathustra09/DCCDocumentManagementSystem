@@ -2,108 +2,118 @@
 
 @section('content')
 <div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb" class="d-none d-md-block">
+                        <ol class="breadcrumb m-0">
+                            <li class="breadcrumb-item">
+                                <a href="{{ route('document-registry.index') }}" class="text-decoration-none">
+                                    <i class="bx bx-file-find"></i> Document Registry
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                {{ $documentRegistrationEntry->document_no }}
+                            </li>
+                        </ol>
+                    </nav>
+                    <h4 class="mb-0 mt-2">
+                        <i class="bx bx-file-find me-2"></i>
+                        {{ $documentRegistrationEntry->document_title }}
+                    </h4>
+                    <p class="text-muted mb-0">{{ $documentRegistrationEntry->full_document_number }}</p>
+                </div>
+            </div>
+
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-file-find'></i> Document Registration Details</h3>
-                    <div>
-                        @if($documentRegistrationEntry->status === 'pending' &&
-                            $documentRegistrationEntry->submitted_by === auth()->id() &&
-                            auth()->user()->can('edit document registration details'))
-                            <a href="{{ route('document-registry.edit', $documentRegistrationEntry) }}" class="btn btn-warning">
-                                <i class='bx bx-edit'></i> Edit
-                            </a>
-                        @endif
-                        <a href="javascript:history.back()" class="btn btn-secondary">
-                            <i class='bx bx-arrow-back'></i> Back to Registry
-                        </a>
-                    </div>
-                </div>
-
                 <div class="card-body">
                     <div class="row">
-                        <!-- Left Column - Document Details -->
+                        <!-- Left Column - Document Information -->
                         <div class="col-md-8">
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label text-muted">Document Title</label>
-                                    <h4>{{ $documentRegistrationEntry->document_title }}</h4>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Document Number</label>
-                                    <p class="form-control-static"><strong>{{ $documentRegistrationEntry->document_no }}</strong></p>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Revision Number</label>
-                                    <p class="form-control-static"><strong>{{ $documentRegistrationEntry->revision_no }}</strong></p>
-                                </div>
-
-                                @if($documentRegistrationEntry->device_name)
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label text-muted">Device Name</label>
-                                        <p class="form-control-static">{{ $documentRegistrationEntry->device_name }}</p>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Document Number</label>
+                                        <p class="mb-0 fw-medium">{{ $documentRegistrationEntry->document_no }}</p>
                                     </div>
-                                @endif
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Originator</label>
-                                    <p class="form-control-static">{{ $documentRegistrationEntry->originator_name }}</p>
-                                </div>
-
-                                @if($documentRegistrationEntry->customer)
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label text-muted">Customer</label>
-                                        <p class="form-control-static">{{ $documentRegistrationEntry->customer }}</p>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Revision</label>
+                                        <p class="mb-0">{{ $documentRegistrationEntry->revision_no }}</p>
                                     </div>
-                                @endif
-
-                                @if($documentRegistrationEntry->hasFile())
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label text-muted">Attached Document</label>
-                                        <div class="border rounded p-3 bg-light d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bx
-                                                        @if(str_contains(strtolower($documentRegistrationEntry->mime_type), 'pdf')) bxs-file-pdf text-danger
-                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'word') || str_contains(strtolower($documentRegistrationEntry->mime_type), 'document')) bxs-file-doc text-primary
-                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'sheet') || str_contains(strtolower($documentRegistrationEntry->mime_type), 'excel')) bxs-file-spreadsheet text-success
-                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'presentation') || str_contains(strtolower($documentRegistrationEntry->mime_type), 'powerpoint')) bxs-file-presentation text-warning
-                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'image')) bxs-file-image text-info
-                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'text')) bxs-file-txt text-secondary
-                                                        @else bxs-file text-secondary
-                                                        @endif
-                                                    me-2" style="font-size: 1.2rem;"></i>
-                                                    <div>
-                                                        <div class="fw-medium">{{ $documentRegistrationEntry->original_filename }}</div>
-                                                        <small class="text-muted">{{ $documentRegistrationEntry->formatted_file_size }} • {{ strtoupper(pathinfo($documentRegistrationEntry->original_filename, PATHINFO_EXTENSION)) }}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="ms-3">
-                                                <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}"
-                                                   class="btn btn-sm btn-outline-primary">
-                                                    <i class='bx bx-download'></i> Download
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="previewDocument()">
-                                                    <i class='bx bx-show'></i> Preview
-                                                </button>
-                                            </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Originator</label>
+                                        <p class="mb-0">{{ $documentRegistrationEntry->originator_name }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    @if($documentRegistrationEntry->device_name)
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Device/Equipment</label>
+                                            <p class="mb-0">{{ $documentRegistrationEntry->device_name }}</p>
                                         </div>
-                                    </div>
-                                @endif
-
-                                @if($documentRegistrationEntry->remarks)
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label text-muted">Remarks</label>
-                                        <div class="border rounded p-3 bg-light">
-                                            {{ $documentRegistrationEntry->remarks }}
+                                    @endif
+                                    @if($documentRegistrationEntry->customer)
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Customer</label>
+                                            <p class="mb-0">{{ $documentRegistrationEntry->customer }}</p>
                                         </div>
-                                    </div>
-                                @endif
+                                    @endif
+                                </div>
                             </div>
+
+                            @if($documentRegistrationEntry->remarks)
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Remarks</label>
+                                    <div class="p-3 bg-light rounded">
+                                        {{ $documentRegistrationEntry->remarks }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- File Information and Preview -->
+                            @if($documentRegistrationEntry->hasFile())
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Attached File</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="file-info d-flex align-items-center flex-grow-1">
+                                            <i class="bx
+                                                @if(str_contains($documentRegistrationEntry->mime_type, 'pdf')) bxs-file-pdf text-danger
+                                                @elseif(str_contains($documentRegistrationEntry->mime_type, 'word') || str_contains($documentRegistrationEntry->mime_type, 'document')) bxs-file-doc text-primary
+                                                @elseif(str_contains($documentRegistrationEntry->mime_type, 'sheet') || str_contains($documentRegistrationEntry->mime_type, 'excel')) bxs-file-spreadsheet text-success
+                                                @elseif(str_contains($documentRegistrationEntry->mime_type, 'image')) bxs-file-image text-info
+                                                @else bxs-file text-secondary
+                                                @endif
+                                                me-2" style="font-size: 1.5rem;"></i>
+                                            <div>
+                                                <div class="fw-medium">{{ $documentRegistrationEntry->original_filename }}</div>
+                                                <small class="text-muted">{{ $documentRegistrationEntry->formatted_file_size }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="file-actions">
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="previewDocument()">
+                                                <i class="bx bx-show"></i> Preview
+                                            </button>
+                                            <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-sm btn-outline-success">
+                                                <i class="bx bx-download"></i> Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Right Column - Status and Actions -->
@@ -402,6 +412,10 @@
         border: none;
     }
 
+    .word-preview .card {
+        margin-bottom: 0;
+    }
+
     @media (max-width: 768px) {
         .document-preview {
             margin: 0 -15px;
@@ -465,7 +479,55 @@ function previewDocument() {
                      onerror="this.outerHTML='<div class=\\'text-center py-5\\'><i class=\\'bx bx-image-alt text-muted\\' style=\\'font-size: 4rem;\\'></i><h4 class=\\'mt-3\\'>Image Preview Unavailable</h4><p class=\\'text-muted\\'>Unable to preview this image file</p><a href=\\'${downloadUrl}\\' class=\\'btn btn-primary\\'><i class=\\'bx bx-download\\'></i> Download to View</a></div>'">
             </div>
         `;
+    } else if (mimeType.includes('word') || mimeType.includes('document')) {
+        // Word Document Preview - Auto-load
+        previewContent.innerHTML = `
+            <div class="word-preview">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Document Preview</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="word-preview-loading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Converting document...</p>
+                        </div>
+                        <div id="word-preview-content" class="d-none"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Auto-load Word preview
+        loadWordPreviewAuto();
+    } else if (mimeType.includes('text')) {
+        // Try to load text preview
+        fetch(previewUrl)
+            .then(response => response.text())
+            .then(text => {
+                previewContent.innerHTML = `
+                    <div class="text-preview">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">File Contents</h6>
+                            </div>
+                            <div class="card-body">
+                                <pre class="mb-0" style="white-space: pre-wrap; max-height: 60vh; overflow-y: auto;">${text}</pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(() => {
+                showGenericPreview();
+            });
     } else {
+        showGenericPreview();
+    }
+
+    function showGenericPreview() {
         // Generic file preview
         let iconClass = 'bxs-file text-secondary';
         if (mimeType.includes('word') || mimeType.includes('document')) {
@@ -489,9 +551,125 @@ function previewDocument() {
     }
 }
 
+// Auto-loading Word document preview functionality
+function loadWordPreviewAuto() {
+    const contentDiv = document.getElementById('word-preview-content');
+    const loadingDiv = document.getElementById('word-preview-loading');
+
+    const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
+
+    fetch(previewApiUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingDiv.classList.add('d-none');
+
+        if (data.success) {
+            contentDiv.innerHTML = `
+                <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
+                    ${data.content}
+                </div>
+            `;
+        } else {
+            contentDiv.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 text-danger">Preview Failed</h5>
+                    <p class="text-muted">${data.message || 'Unable to generate preview'}</p>
+                    <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
+                        <i class="bx bx-download"></i> Download Document
+                    </a>
+                </div>
+            `;
+        }
+
+        contentDiv.classList.remove('d-none');
+    })
+    .catch(error => {
+        loadingDiv.classList.add('d-none');
+        contentDiv.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 text-danger">Preview Error</h5>
+                <p class="text-muted">An error occurred while loading the preview</p>
+                <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
+                    <i class="bx bx-download"></i> Download Document
+                </a>
+            </div>
+        `;
+        contentDiv.classList.remove('d-none');
+    });
+}
+
 function hidePreview() {
     document.getElementById('preview-card').style.display = 'none';
 }
+
+// Word document preview functionality
+window.loadWordPreview = function() {
+    const contentDiv = document.getElementById('word-preview-content');
+    const loadingDiv = document.getElementById('word-preview-loading');
+
+    contentDiv.classList.add('d-none');
+    loadingDiv.classList.remove('d-none');
+
+    // Note: You'll need to add a preview route for document registry entries
+    const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
+
+    fetch(previewApiUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingDiv.classList.add('d-none');
+
+        if (data.success) {
+            contentDiv.innerHTML = `
+                <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
+                    ${data.content}
+                </div>
+            `;
+        } else {
+            contentDiv.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 text-danger">Preview Failed</h5>
+                    <p class="text-muted">${data.message || 'Unable to generate preview'}</p>
+                    <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
+                        <i class="bx bx-download"></i> Download Document
+                    </a>
+                </div>
+            `;
+        }
+
+        contentDiv.classList.remove('d-none');
+    })
+    .catch(error => {
+        loadingDiv.classList.add('d-none');
+        contentDiv.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 text-danger">Preview Error</h5>
+                <p class="text-muted">An error occurred while loading the preview</p>
+                <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
+                    <i class="bx bx-download"></i> Download Document
+                </a>
+            </div>
+        `;
+        contentDiv.classList.remove('d-none');
+    });
+};
 </script>
 @endpush
 

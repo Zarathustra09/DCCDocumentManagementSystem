@@ -59,7 +59,8 @@ Route::get('/document-registry/{documentRegistrationEntry}/download', [DocumentR
 Route::get('/document-registry/{documentRegistrationEntry}/preview', [DocumentRegistrationEntryController::class, 'previewFile'])
     ->name('document-registry.preview');
 
-
+Route::get('/document-registry/{documentRegistrationEntry}/preview-api', [DocumentRegistrationEntryController::class, 'previewApi'])
+    ->name('document-registry.preview-api');
 // Document Registration Entry Routes
 Route::middleware(['auth'])->prefix('document-registry')->name('document-registry.')->group(function () {
     // Basic CRUD routes
