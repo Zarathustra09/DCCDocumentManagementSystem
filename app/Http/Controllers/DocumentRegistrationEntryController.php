@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class DocumentRegistrationEntryController extends Controller
 {
@@ -16,14 +17,9 @@ class DocumentRegistrationEntryController extends Controller
 
         // Apply filters based on user permissions
         if (Auth::user()->can('view all document registrations')) {
-            // Can view all registrations
-        } elseif (Auth::user()->can('view pending document registrations')) {
-            $query->where(function($q) {
-                $q->where('status', 'pending')
-                    ->orWhere('submitted_by', Auth::id());
-            });
+            // User can see all entries
         } else {
-            // Can only view own submissions
+            // User can only see their own submissions
             $query->where('submitted_by', Auth::id());
         }
 
@@ -36,10 +32,10 @@ class DocumentRegistrationEntryController extends Controller
         if ($request->has('search') && $request->search !== '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('document_title', 'like', "%{$search}%")
-                    ->orWhere('document_no', 'like', "%{$search}%")
-                    ->orWhere('originator_name', 'like', "%{$search}%")
-                    ->orWhere('customer', 'like', "%{$search}%");
+                $q->where('document_no', 'like', "%{$search}%")
+                  ->orWhere('document_title', 'like', "%{$search}%")
+                  ->orWhere('device_name', 'like', "%{$search}%")
+                  ->orWhere('originator_name', 'like', "%{$search}%");
             });
         }
 
@@ -51,7 +47,7 @@ class DocumentRegistrationEntryController extends Controller
     public function create()
     {
         if (!Auth::user()->can('submit document for approval')) {
-            abort(403);
+            abort(403, 'You do not have permission to submit documents for approval.');
         }
 
         return view('document-registry.create');
@@ -64,14 +60,14 @@ class DocumentRegistrationEntryController extends Controller
         }
 
         $request->validate([
+            'document_no' => 'required|string|max:100|unique:document_registration_entries',
             'document_title' => 'required|string|max:255',
-            'document_no' => 'required|string|max:255|unique:document_registration_entries',
-            'revision_no' => 'required|string|max:10',
+            'revision_no' => 'required|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
             'customer' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
-            'document_file' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt',
+            'document_file' => 'nullable|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:10240'
         ]);
 
         // Handle file upload
@@ -83,39 +79,37 @@ class DocumentRegistrationEntryController extends Controller
         if ($request->hasFile('document_file')) {
             $file = $request->file('document_file');
             $originalFilename = $file->getClientOriginalName();
+            $filePath = $file->store('document_registrations', 'local');
             $mimeType = $file->getMimeType();
             $fileSize = $file->getSize();
-
-            // Generate unique filename
-            $filename = time() . '_' . preg_replace('/[^A-Za-z0-9\-\.]/', '_', $originalFilename);
-            $filePath = $file->storeAs('document-registrations', $filename, 'local'); // Changed from 'private' to 'local'
         }
 
         $entry = DocumentRegistrationEntry::create([
-            'document_title' => $request->document_title,
             'document_no' => $request->document_no,
+            'document_title' => $request->document_title,
             'revision_no' => $request->revision_no,
             'device_name' => $request->device_name,
             'originator_name' => $request->originator_name,
             'customer' => $request->customer,
             'remarks' => $request->remarks,
-            'status' => 'pending',
-            'submitted_by' => Auth::id(),
-            'submitted_at' => now(),
             'file_path' => $filePath,
             'original_filename' => $originalFilename,
             'mime_type' => $mimeType,
             'file_size' => $fileSize,
+            'status' => 'pending',
+            'submitted_by' => Auth::id(),
+            'submitted_at' => now(),
         ]);
 
         return redirect()->route('document-registry.show', $entry)
-            ->with('success', 'Document registration submitted for approval.');
+            ->with('success', 'Document registration submitted successfully and is pending approval.');
     }
+
     public function show(DocumentRegistrationEntry $documentRegistrationEntry)
     {
         // Check permissions
         if (!$this->canViewEntry($documentRegistrationEntry)) {
-            abort(403);
+            abort(403, 'You do not have permission to view this document registration.');
         }
 
         $documentRegistrationEntry->load(['submittedBy', 'approvedBy', 'documents']);
@@ -140,8 +134,7 @@ class DocumentRegistrationEntryController extends Controller
 
         $request->validate([
             'document_title' => 'required|string|max:255',
-            'document_no' => 'required|string|max:255|unique:document_registration_entries,document_no,' . $documentRegistrationEntry->id,
-            'revision_no' => 'required|string|max:10',
+            'revision_no' => 'required|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
             'customer' => 'nullable|string|max:255',
@@ -149,12 +142,12 @@ class DocumentRegistrationEntryController extends Controller
         ]);
 
         $documentRegistrationEntry->update($request->only([
-            'document_title', 'document_no', 'revision_no', 'device_name',
+            'document_title', 'revision_no', 'device_name',
             'originator_name', 'customer', 'remarks'
         ]));
 
         return redirect()->route('document-registry.show', $documentRegistrationEntry)
-            ->with('success', 'Document registration entry updated successfully.');
+            ->with('success', 'Document registration updated successfully.');
     }
 
     public function approve(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
@@ -183,7 +176,7 @@ class DocumentRegistrationEntryController extends Controller
         }
 
         $request->validate([
-            'rejection_reason' => 'required|string|max:1000',
+            'rejection_reason' => 'required|string'
         ]);
 
         $documentRegistrationEntry->update([
@@ -191,6 +184,7 @@ class DocumentRegistrationEntryController extends Controller
             'approved_by' => Auth::id(),
             'approved_at' => now(),
             'rejection_reason' => $request->rejection_reason,
+            'revision_notes' => null,
         ]);
 
         return back()->with('success', 'Document registration rejected.');
@@ -204,7 +198,7 @@ class DocumentRegistrationEntryController extends Controller
         }
 
         $request->validate([
-            'revision_notes' => 'required|string|max:1000',
+            'revision_notes' => 'required|string'
         ]);
 
         // Since you only have 3 statuses, we'll reject with revision notes
@@ -213,7 +207,7 @@ class DocumentRegistrationEntryController extends Controller
             'approved_by' => Auth::id(),
             'approved_at' => now(),
             'revision_notes' => $request->revision_notes,
-            'rejection_reason' => 'Revision required: ' . $request->revision_notes,
+            'rejection_reason' => 'Revision required. Please see revision notes.',
         ]);
 
         return back()->with('success', 'Revision requested for document registration.');
@@ -231,7 +225,7 @@ class DocumentRegistrationEntryController extends Controller
         $documentRegistrationEntry->delete();
 
         return redirect()->route('document-registry.index')
-            ->with('success', 'Document registration submission withdrawn.');
+            ->with('success', 'Document registration withdrawn successfully.');
     }
 
     public function bulkApprove(Request $request)
@@ -242,7 +236,7 @@ class DocumentRegistrationEntryController extends Controller
 
         $request->validate([
             'entries' => 'required|array',
-            'entries.*' => 'exists:document_registration_entries,id',
+            'entries.*' => 'exists:document_registration_entries,id'
         ]);
 
         $count = DocumentRegistrationEntry::whereIn('id', $request->entries)
@@ -250,7 +244,7 @@ class DocumentRegistrationEntryController extends Controller
             ->update([
                 'status' => 'approved',
                 'approved_by' => Auth::id(),
-                'approved_at' => now(),
+                'approved_at' => now()
             ]);
 
         return back()->with('success', "{$count} document registrations approved successfully.");
@@ -265,7 +259,7 @@ class DocumentRegistrationEntryController extends Controller
         $request->validate([
             'entries' => 'required|array',
             'entries.*' => 'exists:document_registration_entries,id',
-            'rejection_reason' => 'required|string|max:1000',
+            'rejection_reason' => 'required|string'
         ]);
 
         $count = DocumentRegistrationEntry::whereIn('id', $request->entries)
@@ -274,7 +268,7 @@ class DocumentRegistrationEntryController extends Controller
                 'status' => 'rejected',
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
-                'rejection_reason' => $request->rejection_reason,
+                'rejection_reason' => $request->rejection_reason
             ]);
 
         return back()->with('success', "{$count} document registrations rejected.");
@@ -287,7 +281,7 @@ class DocumentRegistrationEntryController extends Controller
         }
 
         $request->validate([
-            'approver_id' => 'required|exists:users,id',
+            'approver_id' => 'required|exists:users,id'
         ]);
 
         // Verify the new approver has approval permissions
@@ -308,7 +302,7 @@ class DocumentRegistrationEntryController extends Controller
 
         $request->validate([
             'action' => 'required|in:approve,reject',
-            'reason' => 'required|string|max:1000',
+            'reason' => 'required|string'
         ]);
 
         if ($request->action === 'approve') {
@@ -316,8 +310,6 @@ class DocumentRegistrationEntryController extends Controller
                 'status' => 'approved',
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
-                'remarks' => ($documentRegistrationEntry->remarks ? $documentRegistrationEntry->remarks . "\n\n" : '') .
-                            "Override Approval: " . $request->reason,
             ]);
         } else {
             $documentRegistrationEntry->update([
@@ -334,9 +326,7 @@ class DocumentRegistrationEntryController extends Controller
     private function canViewEntry(DocumentRegistrationEntry $entry)
     {
         return Auth::user()->can('view all document registrations') ||
-               (Auth::user()->can('view pending document registrations') &&
-                ($entry->status === 'pending' || $entry->submitted_by === Auth::id())) ||
-               $entry->submitted_by === Auth::id();
+               ($entry->submitted_by === Auth::id() && Auth::user()->can('view own document registrations'));
     }
 
     private function canEditEntry(DocumentRegistrationEntry $entry)
@@ -346,43 +336,41 @@ class DocumentRegistrationEntryController extends Controller
                $entry->status === 'pending';
     }
 
-    public function downloadFile(DocumentRegistrationEntry $documentRegistrationEntry)
+    public function download(DocumentRegistrationEntry $documentRegistrationEntry)
     {
         if (!$this->canViewEntry($documentRegistrationEntry)) {
-            abort(403);
+            abort(403, 'You do not have permission to download this file.');
         }
 
         if (!$documentRegistrationEntry->hasFile()) {
-            abort(404, 'File not found');
+            abort(404, 'File not found.');
         }
 
-        return Storage::disk('local')->download( // Specify the disk explicitly
+        return Storage::disk('local')->download(
             $documentRegistrationEntry->file_path,
             $documentRegistrationEntry->original_filename
         );
     }
 
-    public function previewFile(DocumentRegistrationEntry $documentRegistrationEntry)
+    public function preview(DocumentRegistrationEntry $documentRegistrationEntry)
     {
         if (!$this->canViewEntry($documentRegistrationEntry)) {
-            abort(403);
+            abort(403, 'You do not have permission to view this file.');
         }
 
         if (!$documentRegistrationEntry->hasFile()) {
-            abort(404, 'File not found');
+            abort(404, 'File not found.');
         }
 
-        // Use the private disk instead of building the path manually
-        if (!Storage::disk('private')->exists($documentRegistrationEntry->file_path)) {
-            abort(404, 'File not found');
+        if (!Storage::disk('local')->exists($documentRegistrationEntry->file_path)) {
+            abort(404, 'File not found.');
         }
 
-        $filePath = Storage::disk('private')->path($documentRegistrationEntry->file_path);
+        $filePath = Storage::disk('local')->path($documentRegistrationEntry->file_path);
 
         // For PDFs and images, return the file with inline disposition
         if (str_contains($documentRegistrationEntry->mime_type, 'pdf') ||
             str_contains($documentRegistrationEntry->mime_type, 'image')) {
-
             return response()->file($filePath, [
                 'Content-Type' => $documentRegistrationEntry->mime_type,
                 'Content-Disposition' => 'inline; filename="' . $documentRegistrationEntry->original_filename . '"'
@@ -393,7 +381,7 @@ class DocumentRegistrationEntryController extends Controller
         return response()->json([
             'success' => false,
             'message' => 'Preview not available for this file type'
-        ]);
+        ], 400);
     }
 
     public function previewApi(DocumentRegistrationEntry $documentRegistrationEntry)
@@ -401,24 +389,15 @@ class DocumentRegistrationEntryController extends Controller
         if (!$this->canViewEntry($documentRegistrationEntry)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Access denied'
+                'message' => 'Permission denied'
             ], 403);
         }
 
         if (!$documentRegistrationEntry->hasFile()) {
             return response()->json([
                 'success' => false,
-                'message' => 'File not found'
+                'message' => 'No file attached'
             ], 404);
-        }
-
-        // Check if it's a Word document
-        if (!str_contains($documentRegistrationEntry->mime_type, 'word') &&
-            !str_contains($documentRegistrationEntry->mime_type, 'document')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Preview not available for this file type'
-            ], 400);
         }
 
         try {
@@ -440,54 +419,194 @@ class DocumentRegistrationEntryController extends Controller
                 ], 400);
             }
 
-            // Try to load the document
-            try {
-                $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
-            } catch (\PhpOffice\PhpWord\Exception\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Document appears to be corrupted or uses an unsupported format'
-                ], 400);
+            $extension = strtolower(pathinfo($documentRegistrationEntry->original_filename, PATHINFO_EXTENSION));
+            $mimeType = $documentRegistrationEntry->mime_type;
+
+            // Handle Word documents
+            if (in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word')) {
+                return $this->previewWordDocument($filePath);
             }
 
-            // Convert to HTML
-            try {
-                $htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
-
-                $tempFile = tempnam(sys_get_temp_dir(), 'phpword_preview_');
-                $htmlWriter->save($tempFile);
-
-                $htmlContent = file_get_contents($tempFile);
-                unlink($tempFile);
-
-                if (empty($htmlContent)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Document appears to be empty or could not be converted'
-                    ], 400);
-                }
-
-                // Clean up the HTML content
-                $htmlContent = $this->cleanWordHtml($htmlContent);
-
-                return response()->json([
-                    'success' => true,
-                    'content' => $htmlContent
-                ]);
-
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error converting document to preview format'
-                ], 500);
+            // Handle spreadsheet files
+            if (in_array($extension, ['xls', 'xlsx', 'csv']) || str_contains($mimeType, 'spreadsheet') || str_contains($mimeType, 'excel')) {
+                return $this->previewSpreadsheet($filePath);
             }
+
+            // Handle text files
+            if (in_array($extension, ['txt', 'csv']) || str_contains($mimeType, 'text')) {
+                return $this->previewTextFile($filePath);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Preview not available for this file type'
+            ], 400);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An unexpected error occurred while loading the preview'
+                'message' => 'An error occurred while generating the preview'
             ], 500);
         }
+    }
+
+    private function previewWordDocument($filePath)
+    {
+        try {
+            $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
+        } catch (\PhpOffice\PhpWord\Exception\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Document appears to be corrupted or uses an unsupported format'
+            ], 400);
+        }
+
+        try {
+            $htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
+            $tempFile = tempnam(sys_get_temp_dir(), 'phpword_preview_');
+            $htmlWriter->save($tempFile);
+
+            $htmlContent = file_get_contents($tempFile);
+            unlink($tempFile);
+
+            if (empty($htmlContent)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document appears to be empty'
+                ], 400);
+            }
+
+            $htmlContent = $this->cleanWordHtml($htmlContent);
+
+            return response()->json([
+                'success' => true,
+                'content' => $htmlContent,
+                'content_type' => 'word'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error converting document to preview format'
+            ], 500);
+        }
+    }
+
+    private function previewSpreadsheet($filePath)
+    {
+        try {
+            $spreadsheet = IOFactory::load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+
+            $highestRow = $worksheet->getHighestRow();
+            $highestColumn = $worksheet->getHighestColumn();
+
+            // Limit columns to prevent memory issues (max 20 columns)
+            $maxColumn = min(20, \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn));
+            $limitedHighestColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($maxColumn);
+
+            // Get data with row/column limits
+            $data = $worksheet->rangeToArray('A1:' . $limitedHighestColumn . min(100, $highestRow), null, true, true);
+
+            if (empty($data)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Spreadsheet appears to be empty'
+                ], 400);
+            }
+
+            // First row as headings
+            $headings = array_shift($data);
+
+            $html = $this->generateSpreadsheetHtml($headings, $data, $highestRow);
+
+            return response()->json([
+                'success' => true,
+                'content' => $html,
+                'content_type' => 'spreadsheet'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error reading spreadsheet file'
+            ], 500);
+        }
+    }
+
+    private function previewTextFile($filePath)
+    {
+        try {
+            $content = file_get_contents($filePath);
+
+            if ($content === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to read text file'
+                ], 500);
+            }
+
+            // Limit content size for preview (first 50KB)
+            if (strlen($content) > 50000) {
+                $content = substr($content, 0, 50000) . "\n\n... (content truncated for preview)";
+            }
+
+            // Convert to HTML with proper formatting
+            $html = '<div class="text-preview-content">' . htmlspecialchars($content) . '</div>';
+
+            return response()->json([
+                'success' => true,
+                'content' => $html,
+                'content_type' => 'text'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error reading text file'
+            ], 500);
+        }
+    }
+
+    private function generateSpreadsheetHtml($headings, $data, $totalRows)
+    {
+        $html = '<div class="spreadsheet-preview">';
+        $html .= '<div class="table-responsive">';
+        $html .= '<table class="table table-bordered table-sm">';
+
+        // Add thead
+        if (!empty($headings)) {
+            $html .= '<thead><tr>';
+            foreach ($headings as $heading) {
+                $html .= '<th>' . htmlspecialchars($heading ?? '') . '</th>';
+            }
+            $html .= '</tr></thead>';
+        }
+
+        // Add tbody
+        $html .= '<tbody>';
+        foreach ($data as $row) {
+            $html .= '<tr>';
+            foreach ($row as $cell) {
+                $html .= '<td>' . htmlspecialchars($cell ?? '') . '</td>';
+            }
+            $html .= '</tr>';
+        }
+        $html .= '</tbody>';
+
+        $html .= '</table>';
+        $html .= '</div>';
+
+        // Add info message if content is truncated
+        if ($totalRows > 100) {
+            $html .= '<div class="alert alert-info mt-2 mb-0">';
+            $html .= '<small><i class="bx bx-info-circle"></i> Showing first 100 rows of ' . $totalRows . ' total rows. Download the file to view all data.</small>';
+            $html .= '</div>';
+        }
+
+        $html .= '</div>';
+
+        return $html;
     }
 
     private function cleanWordHtml($html)
@@ -518,5 +637,40 @@ class DocumentRegistrationEntryController extends Controller
         $html = str_replace('<p></p>', '', $html);
 
         return trim($html);
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+        $page = $request->get('page', 1);
+        $perPage = 10;
+
+        $entries = DocumentRegistrationEntry::where('status', 'approved')
+            ->where(function($q) use ($query) {
+                $q->where('document_no', 'like', "%{$query}%")
+                    ->orWhere('document_title', 'like', "%{$query}%")
+                    ->orWhere('device_name', 'like', "%{$query}%")
+                    ->orWhere('originator_name', 'like', "%{$query}%");
+            })
+            ->orderBy('document_title')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $morePages = $entries->hasMorePages();
+
+        $results = [];
+        foreach ($entries as $entry) {
+            $results[] = [
+                'id' => $entry->id,
+                'text' => "{$entry->document_no} - {$entry->document_title}" .
+                    ($entry->device_name ? " ({$entry->device_name})" : "")
+            ];
+        }
+
+        return response()->json([
+            'results' => $results,
+            'pagination' => [
+                'more' => $morePages
+            ]
+        ]);
     }
 }
