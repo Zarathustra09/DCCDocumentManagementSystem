@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\DocumentRegistrationEntryController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PermissionController;
@@ -49,6 +50,16 @@ Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('adm
 Route::resource('roles', RoleController::class)->only(['index', 'show']);
 Route::post('roles/{role}/update-permissions', [RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
 
+
+
+Route::get('/document-registry/{documentRegistrationEntry}/download', [DocumentRegistrationEntryController::class, 'downloadFile'])
+    ->name('document-registry.download');
+
+
+Route::get('/document-registry/{documentRegistrationEntry}/preview', [DocumentRegistrationEntryController::class, 'previewFile'])
+    ->name('document-registry.preview');
+
+
 // Document Registration Entry Routes
 Route::middleware(['auth'])->prefix('document-registry')->name('document-registry.')->group(function () {
     // Basic CRUD routes
@@ -73,3 +84,4 @@ Route::middleware(['auth'])->prefix('document-registry')->name('document-registr
     Route::delete('/{documentRegistrationEntry}/withdraw', [App\Http\Controllers\DocumentRegistrationEntryController::class, 'withdraw'])
         ->middleware('permission:withdraw document submission')->name('withdraw');
 });
+

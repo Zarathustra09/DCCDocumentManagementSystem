@@ -6,6 +6,7 @@ use App\Models\DocumentRegistrationEntry;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentRegistrationEntryController extends Controller
 {
@@ -70,7 +71,25 @@ class DocumentRegistrationEntryController extends Controller
             'originator_name' => 'required|string|max:255',
             'customer' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
+            'document_file' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt',
         ]);
+
+        // Handle file upload
+        $filePath = null;
+        $originalFilename = null;
+        $mimeType = null;
+        $fileSize = null;
+
+        if ($request->hasFile('document_file')) {
+            $file = $request->file('document_file');
+            $originalFilename = $file->getClientOriginalName();
+            $mimeType = $file->getMimeType();
+            $fileSize = $file->getSize();
+
+            // Generate unique filename
+            $filename = time() . '_' . preg_replace('/[^A-Za-z0-9\-\.]/', '_', $originalFilename);
+            $filePath = $file->storeAs('document-registrations', $filename, 'local'); // Changed from 'private' to 'local'
+        }
 
         $entry = DocumentRegistrationEntry::create([
             'document_title' => $request->document_title,
@@ -83,12 +102,15 @@ class DocumentRegistrationEntryController extends Controller
             'status' => 'pending',
             'submitted_by' => Auth::id(),
             'submitted_at' => now(),
+            'file_path' => $filePath,
+            'original_filename' => $originalFilename,
+            'mime_type' => $mimeType,
+            'file_size' => $fileSize,
         ]);
 
         return redirect()->route('document-registry.show', $entry)
             ->with('success', 'Document registration submitted for approval.');
     }
-
     public function show(DocumentRegistrationEntry $documentRegistrationEntry)
     {
         // Check permissions
@@ -322,5 +344,55 @@ class DocumentRegistrationEntryController extends Controller
         return Auth::user()->can('edit document registration details') &&
                $entry->submitted_by === Auth::id() &&
                $entry->status === 'pending';
+    }
+
+    public function downloadFile(DocumentRegistrationEntry $documentRegistrationEntry)
+    {
+        if (!$this->canViewEntry($documentRegistrationEntry)) {
+            abort(403);
+        }
+
+        if (!$documentRegistrationEntry->hasFile()) {
+            abort(404, 'File not found');
+        }
+
+        return Storage::disk('local')->download( // Specify the disk explicitly
+            $documentRegistrationEntry->file_path,
+            $documentRegistrationEntry->original_filename
+        );
+    }
+
+    public function previewFile(DocumentRegistrationEntry $documentRegistrationEntry)
+    {
+        if (!$this->canViewEntry($documentRegistrationEntry)) {
+            abort(403);
+        }
+
+        if (!$documentRegistrationEntry->hasFile()) {
+            abort(404, 'File not found');
+        }
+
+        // Use the private disk instead of building the path manually
+        if (!Storage::disk('private')->exists($documentRegistrationEntry->file_path)) {
+            abort(404, 'File not found');
+        }
+
+        $filePath = Storage::disk('private')->path($documentRegistrationEntry->file_path);
+
+        // For PDFs and images, return the file with inline disposition
+        if (str_contains($documentRegistrationEntry->mime_type, 'pdf') ||
+            str_contains($documentRegistrationEntry->mime_type, 'image')) {
+
+            return response()->file($filePath, [
+                'Content-Type' => $documentRegistrationEntry->mime_type,
+                'Content-Disposition' => 'inline; filename="' . $documentRegistrationEntry->original_filename . '"'
+            ]);
+        }
+
+        // For other file types, return JSON response for AJAX handling
+        return response()->json([
+            'success' => false,
+            'message' => 'Preview not available for this file type'
+        ]);
     }
 }

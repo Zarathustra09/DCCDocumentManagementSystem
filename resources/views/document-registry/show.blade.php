@@ -15,7 +15,7 @@
                                 <i class='bx bx-edit'></i> Edit
                             </a>
                         @endif
-                            <a href="javascript:history.back()" class="btn btn-secondary">
+                        <a href="javascript:history.back()" class="btn btn-secondary">
                             <i class='bx bx-arrow-back'></i> Back to Registry
                         </a>
                     </div>
@@ -57,6 +57,41 @@
                                     <div class="col-md-12 mb-3">
                                         <label class="form-label text-muted">Customer</label>
                                         <p class="form-control-static">{{ $documentRegistrationEntry->customer }}</p>
+                                    </div>
+                                @endif
+
+                                @if($documentRegistrationEntry->hasFile())
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label text-muted">Attached Document</label>
+                                        <div class="border rounded p-3 bg-light d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx
+                                                        @if(str_contains(strtolower($documentRegistrationEntry->mime_type), 'pdf')) bxs-file-pdf text-danger
+                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'word') || str_contains(strtolower($documentRegistrationEntry->mime_type), 'document')) bxs-file-doc text-primary
+                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'sheet') || str_contains(strtolower($documentRegistrationEntry->mime_type), 'excel')) bxs-file-spreadsheet text-success
+                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'presentation') || str_contains(strtolower($documentRegistrationEntry->mime_type), 'powerpoint')) bxs-file-presentation text-warning
+                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'image')) bxs-file-image text-info
+                                                        @elseif(str_contains(strtolower($documentRegistrationEntry->mime_type), 'text')) bxs-file-txt text-secondary
+                                                        @else bxs-file text-secondary
+                                                        @endif
+                                                    me-2" style="font-size: 1.2rem;"></i>
+                                                    <div>
+                                                        <div class="fw-medium">{{ $documentRegistrationEntry->original_filename }}</div>
+                                                        <small class="text-muted">{{ $documentRegistrationEntry->formatted_file_size }} • {{ strtoupper(pathinfo($documentRegistrationEntry->original_filename, PATHINFO_EXTENSION)) }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="ms-3">
+                                                <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class='bx bx-download'></i> Download
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="previewDocument()">
+                                                    <i class='bx bx-show'></i> Preview
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 @endif
 
@@ -136,17 +171,17 @@
                                 </div>
                             </div>
 
-                            <!-- Actions Card -->
-                            @if($documentRegistrationEntry->status === 'pending')
+                            <!-- Actions Card for Approvers -->
+                            @if($documentRegistrationEntry->status === 'pending' && (auth()->user()->can('approve document registration') || auth()->user()->can('reject document registration')))
                                 <div class="card">
                                     <div class="card-header">
                                         <h5 class="mb-0"><i class='bx bx-cog'></i> Actions</h5>
                                     </div>
                                     <div class="card-body">
                                         @can('approve document registration')
-                                            <form action="{{ route('document-registry.approve', $documentRegistrationEntry) }}" method="POST" class="mb-2">
+                                            <form action="{{ route('document-registry.approve', $documentRegistrationEntry) }}" method="POST" class="d-inline">
                                                 @csrf
-                                                <button type="submit" class="btn btn-success btn-sm w-100"
+                                                <button type="submit" class="btn btn-success btn-sm w-100 mb-2"
                                                         onclick="return confirm('Are you sure you want to approve this document registration?')">
                                                     <i class='bx bx-check'></i> Approve
                                                 </button>
@@ -154,29 +189,36 @@
                                         @endcan
 
                                         @can('reject document registration')
-                                            <button type="button" class="btn btn-danger btn-sm w-100 mb-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                            <button type="button" class="btn btn-danger btn-sm w-100 mb-2"
+                                                    data-bs-toggle="modal" data-bs-target="#rejectModal">
                                                 <i class='bx bx-x'></i> Reject
                                             </button>
                                         @endcan
 
                                         @can('require revision for document')
-                                            <button type="button" class="btn btn-warning btn-sm w-100 mb-2" data-bs-toggle="modal" data-bs-target="#revisionModal">
+                                            <button type="button" class="btn btn-warning btn-sm w-100"
+                                                    data-bs-toggle="modal" data-bs-target="#revisionModal">
                                                 <i class='bx bx-edit'></i> Require Revision
                                             </button>
                                         @endcan
+                                    </div>
+                                </div>
+                            @endif
 
-                                        @if($documentRegistrationEntry->submitted_by === auth()->id())
-                                            @can('withdraw document submission')
-                                                <form action="{{ route('document-registry.withdraw', $documentRegistrationEntry) }}" method="POST">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100"
-                                                            onclick="return confirm('Are you sure you want to withdraw this submission?')">
-                                                        <i class='bx bx-trash'></i> Withdraw
-                                                    </button>
-                                                </form>
-                                            @endcan
-                                        @endif
+                            <!-- Withdraw Action for Submitter -->
+                            @if($documentRegistrationEntry->status === 'pending' &&
+                                $documentRegistrationEntry->submitted_by === auth()->id() &&
+                                auth()->user()->can('withdraw document submission'))
+                                <div class="card mt-3">
+                                    <div class="card-body">
+                                        <form action="{{ route('document-registry.withdraw', $documentRegistrationEntry) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100"
+                                                    onclick="return confirm('Are you sure you want to withdraw this submission? This action cannot be undone.')">
+                                                <i class='bx bx-trash'></i> Withdraw Submission
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             @endif
@@ -187,8 +229,29 @@
         </div>
     </div>
 
+    <!-- Document Preview Section -->
+    @if($documentRegistrationEntry->hasFile())
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card" id="preview-card" style="display: none;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class='bx bx-show'></i> Document Preview</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="hidePreview()">
+                            <i class='bx bx-x'></i> Close Preview
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="document-preview">
+                            <!-- Preview content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Referenced Documents Section (only show for approved entries) -->
     @if($documentRegistrationEntry->status === 'approved' && $documentRegistrationEntry->documents->count() > 0)
-        <!-- Referenced Documents Section -->
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
@@ -297,25 +360,139 @@
     </div>
 </div>
 
+@push('styles')
 <style>
-.badge {
-    font-size: 0.9em;
-    padding: 0.5rem 0.75rem;
-}
-.badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529 !important;
-}
-.badge.bg-success {
-    background-color: #198754 !important;
-    color: #ffffff !important;
-}
-.badge.bg-danger {
-    background-color: #dc3545 !important;
-    color: #ffffff !important;
-}
-.fs-6 {
-    font-size: 1rem !important;
-}
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5rem 0.75rem;
+    }
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .badge.bg-success {
+        background-color: #198754 !important;
+        color: #ffffff !important;
+    }
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+        color: #ffffff !important;
+    }
+    .fs-6 {
+        font-size: 1rem !important;
+    }
+
+    .document-preview {
+        background: white;
+        border-radius: 0.375rem;
+        border: 1px solid #dee2e6;
+        overflow: hidden;
+    }
+
+    .text-preview pre {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+    }
+
+    .pdf-preview iframe {
+        border: none;
+    }
+
+    @media (max-width: 768px) {
+        .document-preview {
+            margin: 0 -15px;
+        }
+
+        .pdf-preview iframe {
+            height: 50vh !important;
+            min-height: 300px !important;
+        }
+    }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+function previewDocument() {
+    const previewCard = document.getElementById('preview-card');
+    const previewContent = document.getElementById('document-preview');
+
+    previewCard.style.display = 'block';
+    previewCard.scrollIntoView({ behavior: 'smooth' });
+
+    const mimeType = '{{ $documentRegistrationEntry->mime_type }}';
+    const fileName = '{{ $documentRegistrationEntry->original_filename }}';
+    const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}';
+    const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}';
+
+    // Show loading
+    previewContent.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading preview...</p>
+        </div>
+    `;
+
+    // Handle different file types
+    if (mimeType.includes('pdf')) {
+        previewContent.innerHTML = `
+            <div class="pdf-preview">
+                <div class="embed-responsive" style="height: 70vh;">
+                    <iframe src="${previewUrl}"
+                            class="w-100 h-100 border rounded"
+                            style="min-height: 500px;"
+                            type="application/pdf">
+                        <p>Your browser does not support PDFs.
+                           <a href="${downloadUrl}">Download the PDF</a>.
+                        </p>
+                    </iframe>
+                </div>
+            </div>
+        `;
+    } else if (mimeType.includes('image')) {
+        previewContent.innerHTML = `
+            <div class="text-center">
+                <img src="${previewUrl}"
+                     alt="${fileName}"
+                     class="img-fluid rounded shadow"
+                     style="max-height: 70vh;"
+                     onerror="this.outerHTML='<div class=\\'text-center py-5\\'><i class=\\'bx bx-image-alt text-muted\\' style=\\'font-size: 4rem;\\'></i><h4 class=\\'mt-3\\'>Image Preview Unavailable</h4><p class=\\'text-muted\\'>Unable to preview this image file</p><a href=\\'${downloadUrl}\\' class=\\'btn btn-primary\\'><i class=\\'bx bx-download\\'></i> Download to View</a></div>'">
+            </div>
+        `;
+    } else {
+        // Generic file preview
+        let iconClass = 'bxs-file text-secondary';
+        if (mimeType.includes('word') || mimeType.includes('document')) {
+            iconClass = 'bxs-file-doc text-primary';
+        } else if (mimeType.includes('sheet') || mimeType.includes('excel')) {
+            iconClass = 'bxs-file-spreadsheet text-success';
+        } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
+            iconClass = 'bxs-file-presentation text-warning';
+        }
+
+        previewContent.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bx ${iconClass}" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">${fileName}</h4>
+                <p class="text-muted">Preview not available for this file type</p>
+                <a href="${downloadUrl}" class="btn btn-primary">
+                    <i class="bx bx-download"></i> Download to View
+                </a>
+            </div>
+        `;
+    }
+}
+
+function hidePreview() {
+    document.getElementById('preview-card').style.display = 'none';
+}
+</script>
+@endpush
+
 @endsection

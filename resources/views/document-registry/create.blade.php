@@ -13,7 +13,7 @@
                 </div>
 
                 <div class="card-body">
-                    <form action="{{ route('document-registry.store') }}" method="POST">
+                    <form action="{{ route('document-registry.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="row">
@@ -85,7 +85,6 @@
                             </div>
 
                             <!-- Originator Name -->
-                            <!-- Originator Name -->
                             <div class="col-md-6 mb-3">
                                 <label for="originator_name" class="form-label">
                                     <i class='bx bx-user'></i> Originator Name <span class="text-danger">*</span>
@@ -114,6 +113,26 @@
                                        value="{{ old('customer') }}"
                                        placeholder="Enter customer name (if applicable)">
                                 @error('customer')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Document File Upload -->
+                            <div class="col-md-12 mb-3">
+                                <label for="document_file" class="form-label">
+                                    <i class='bx bx-upload'></i> Document File <span class="text-danger">*</span>
+                                </label>
+                                <input type="file"
+                                       class="form-control @error('document_file') is-invalid @enderror"
+                                       id="document_file"
+                                       name="document_file"
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                                       required>
+                                <div class="form-text">
+                                    <i class='bx bx-info-circle'></i>
+                                    Accepted formats: PDF, Word, Excel, PowerPoint, Text files. Maximum size: 10MB
+                                </div>
+                                @error('document_file')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -180,6 +199,25 @@ document.addEventListener('DOMContentLoaded', function() {
     revisionInput.addEventListener('input', function() {
         // Only allow numbers and basic revision formats
         this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
+    });
+
+    // File upload validation
+    const fileInput = document.getElementById('document_file');
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                alert('File size must be less than 10MB');
+                this.value = '';
+                return;
+            }
+
+            // Display file info
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            console.log(`Selected file: ${fileName} (${fileSize} MB)`);
+        }
     });
 });
 </script>
