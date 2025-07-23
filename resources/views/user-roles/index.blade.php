@@ -10,7 +10,7 @@
         <!-- Quick Stats Cards -->
         <div class="container-fluid mb-4">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="card bg-primary text-white">
                         <div class="card-body">
                             <h5>{{ $roles->count() }}</h5>
@@ -18,15 +18,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body">
-                            <h5>{{ $users->where('email_verified_at', '!=', null)->count() }}</h5>
-                            <p class="mb-0">Active Users</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="card bg-warning text-white">
                         <div class="card-body">
                             <h5>{{ $usersWithoutRoles}}</h5>
@@ -34,7 +26,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="card bg-info text-white">
                         <div class="card-body">
                             <h5>{{ \Spatie\Permission\Models\Permission::count() }}</h5>
