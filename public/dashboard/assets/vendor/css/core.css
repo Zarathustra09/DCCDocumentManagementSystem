@@ -64,6 +64,15 @@
   }
 }
 
+
+ .table {
+     font-size: 0.85rem;
+ }
+.table th, .table td {
+    padding: 0.4rem 0.5rem;
+    white-space: nowrap;
+}
+
 body {
   margin: 0;
   font-family: var(--bs-body-font-family);

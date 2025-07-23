@@ -16,13 +16,13 @@ class DocumentRegistrationEntryController extends Controller
         $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy']);
 
         // Apply filters based on user permissions
-        if (Auth::user()->can('view all document registrations')) {
-            // User can see all entries
-        } else {
-            // User can only see their own submissions
-            $query->where('submitted_by', Auth::id());
-        }
-
+//        if (Auth::user()->can('view all document registrations')) {
+//            // User can see all entries
+//        } else {
+//            // User can only see their own submissions
+//
+//        }
+        $query->where('submitted_by', Auth::id());
         // Apply status filter - fix the condition here
         if ($request->has('status') && $request->status !== '' && $request->status !== null) {
             $query->where('status', $request->status);
@@ -323,17 +323,19 @@ class DocumentRegistrationEntryController extends Controller
         return back()->with('success', 'Approval process overridden successfully.');
     }
 
+    // app/Http/Controllers/DocumentRegistrationEntryController.php
+
     private function canViewEntry(DocumentRegistrationEntry $entry)
     {
-        return Auth::user()->can('view all document registrations') ||
-               ($entry->submitted_by === Auth::id() && Auth::user()->can('view own document registrations'));
+        return Auth::user()->can('view all document registrations')
+            || (Auth::user()->can('view own document registrations') && $entry->submitted_by === Auth::id())
+            || ($entry->submitted_by === Auth::id());
     }
 
     private function canEditEntry(DocumentRegistrationEntry $entry)
     {
-        return Auth::user()->can('edit document registration details') &&
-               $entry->submitted_by === Auth::id() &&
-               $entry->status === 'pending';
+        return (Auth::user()->can('edit document registration details') && $entry->submitted_by === Auth::id() && $entry->status === 'pending')
+            || ($entry->submitted_by === Auth::id() && $entry->status === 'pending');
     }
 
     public function download(DocumentRegistrationEntry $documentRegistrationEntry)

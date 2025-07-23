@@ -13,7 +13,6 @@
                         </a>
                     @endcan
                 </div>
-
                 <div class="card-body">
                     <!-- Advanced Filters -->
                     <form method="GET" action="{{ route('document-registry.list') }}" class="mb-4">
@@ -54,7 +53,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group mb-3">
@@ -94,7 +92,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-12">
                                 <div class="d-flex gap-2">
@@ -108,7 +105,6 @@
                             </div>
                         </div>
                     </form>
-
                     <!-- Results Summary -->
                     <div class="row mb-3">
                         <div class="col-md-8">
@@ -128,10 +124,9 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Entries Table -->
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
+                        <table class="table table-striped table-hover" id="documentRegistry">
                             <thead>
                                 <tr>
                                     <th>Document Title</th>
@@ -139,10 +134,8 @@
                                     <th>Rev.</th>
                                     <th>Originator</th>
                                     <th>Customer</th>
-                                    <th>Device</th>
                                     <th>Status</th>
                                     <th>Submitted</th>
-                                    <th>File</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -151,15 +144,14 @@
                                     <tr>
                                         <td>
                                             <strong>{{ $entry->document_title }}</strong>
-                                            @if($entry->remarks)
-                                                <br><small class="text-muted">{{ Str::limit($entry->remarks, 50) }}</small>
+                                            @if($entry->device_name)
+                                                <br><small class="text-muted">{{ $entry->device_name }}</small>
                                             @endif
                                         </td>
                                         <td>{{ $entry->document_no }}</td>
                                         <td>{{ $entry->revision_no }}</td>
                                         <td>{{ $entry->originator_name }}</td>
                                         <td>{{ $entry->customer ?? '-' }}</td>
-                                        <td>{{ $entry->device_name ?? '-' }}</td>
                                         <td>
                                             @if($entry->status === 'pending')
                                                 <span class="badge bg-warning text-dark">
@@ -182,28 +174,11 @@
                                             </small>
                                         </td>
                                         <td>
-                                            @if($entry->hasFile())
-                                                <span class="badge bg-info text-white">
-                                                    <i class='bx bx-file'></i> {{ $entry->formatted_file_size }}
-                                                </span>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
                                             <div class="btn-group btn-group-sm">
                                                 <a href="{{ route('document-registry.show', $entry) }}"
                                                    class="btn btn-info" title="View Details">
                                                     <i class='bx bx-show'></i>
                                                 </a>
-
-                                                @if($entry->hasFile())
-                                                    <a href="{{ route('document-registry.download', $entry) }}"
-                                                       class="btn btn-secondary" title="Download File">
-                                                        <i class='bx bx-download'></i>
-                                                    </a>
-                                                @endif
-
                                                 @if($entry->status === 'pending' &&
                                                     $entry->submitted_by === auth()->id() &&
                                                     auth()->user()->can('edit document registration details'))
@@ -212,7 +187,6 @@
                                                         <i class='bx bx-edit'></i>
                                                     </a>
                                                 @endif
-
                                                 @if($entry->status === 'pending' &&
                                                     $entry->submitted_by === auth()->id() &&
                                                     auth()->user()->can('withdraw document submission'))
@@ -231,7 +205,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="text-center py-4">
+                                        <td colspan="8" class="text-center py-4">
                                             <i class='bx bx-info-circle'></i> No document registrations found.
                                             @if(request()->hasAny(['status', 'search', 'customer', 'device_name', 'submitted_by', 'date_from', 'date_to', 'has_file']))
                                                 <br><small class="text-muted">Try adjusting your filters.</small>
@@ -242,7 +216,6 @@
                             </tbody>
                         </table>
                     </div>
-
                     <!-- Pagination -->
                     @if($entries->hasPages())
                         <div class="d-flex justify-content-center">
@@ -258,26 +231,38 @@
 
 @push('styles')
 <style>
-.badge {
-    font-size: 0.85em;
-    padding: 0.375rem 0.75rem;
-}
-.table-responsive {
-    border-radius: 0.375rem;
-    overflow: hidden;
-}
-.table thead th {
-    border-top: none;
-    font-weight: 600;
-    text-transform: uppercase;
+.table {
     font-size: 0.85rem;
-    letter-spacing: 0.025rem;
 }
+.table th, .table td {
+    padding: 0.4rem 0.5rem;
+    white-space: nowrap;
+}
+.card-title {
+    font-size: 1.1rem;
+}
+/*.badge {*/
+/*    font-size: 0.8em;*/
+/*    padding: 0.25rem 0.5rem;*/
+/*}*/
 </style>
-@endpush
 
 @push('scripts')
 <script>
-
+    $(document).ready(function() {
+        $('#documentRegistry').DataTable({
+            responsive: true,
+            order: [[5, 'desc']],
+            pageLength: 10,
+            columnDefs: [
+                { orderable: false, targets: [0, 6] }
+            ],
+            language: {
+                search: "Search users:",
+                lengthMenu: "Show _MENU_ users per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ users"
+            }
+        });
+    });
 </script>
 @endpush

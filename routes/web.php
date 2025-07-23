@@ -56,7 +56,7 @@ Route::get('/document-registry/{documentRegistrationEntry}/download', [DocumentR
     ->name('document-registry.download');
 
 
-Route::get('/document-registry/{documentRegistrationEntry}/preview', [DocumentRegistrationEntryController::class, 'previewFile'])
+Route::get('/document-registry/{documentRegistrationEntry}/preview', [DocumentRegistrationEntryController::class, 'preview'])
     ->name('document-registry.preview');
 
 Route::get('/document-registry/{documentRegistrationEntry}/preview-api', [DocumentRegistrationEntryController::class, 'previewApi'])
