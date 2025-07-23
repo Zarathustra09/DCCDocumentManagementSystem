@@ -103,34 +103,34 @@
                                             </small>
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{{ route('document-registry.show', $entry) }}"
-                                                   class="btn btn-info" title="View Details">
-                                                    <i class='bx bx-show'></i>
-                                                </a>
-
-                                                @if($entry->status === 'pending' &&
-                                                    $entry->submitted_by === auth()->id() &&
-                                                    auth()->user()->can('edit document registration details'))
-                                                    <a href="{{ route('document-registry.edit', $entry) }}"
-                                                       class="btn btn-warning" title="Edit">
-                                                        <i class='bx bx-edit'></i>
+                                            <div class="dropdown">
+                                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                    <i class="bx bx-cog"></i> Manage
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="{{ route('document-registry.show', $entry) }}">
+                                                        <i class="bx bx-show me-2"></i> View Details
                                                     </a>
-                                                @endif
-
-                                                @if($entry->status === 'pending' &&
-                                                    $entry->submitted_by === auth()->id() &&
-                                                    auth()->user()->can('withdraw document submission'))
-                                                    <form action="{{ route('document-registry.withdraw', $entry) }}"
-                                                          method="POST" style="display: inline;"
-                                                          onsubmit="return confirm('Are you sure you want to withdraw this submission?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger btn-sm" title="Withdraw">
-                                                            <i class='bx bx-trash'></i>
-                                                        </button>
-                                                    </form>
-                                                @endif
+                                                    @if($entry->status === 'pending' &&
+                                                        $entry->submitted_by === auth()->id() &&
+                                                        auth()->user()->can('edit document registration details'))
+                                                        <a class="dropdown-item" href="{{ route('document-registry.edit', $entry) }}">
+                                                            <i class="bx bx-edit-alt me-2"></i> Edit
+                                                        </a>
+                                                    @endif
+                                                    @if($entry->status === 'pending' &&
+                                                        $entry->submitted_by === auth()->id() &&
+                                                        auth()->user()->can('withdraw document submission'))
+                                                        <form action="{{ route('document-registry.withdraw', $entry) }}"
+                                                              method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="dropdown-item text-danger">
+                                                                <i class="bx bx-trash me-2"></i> Withdraw
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
