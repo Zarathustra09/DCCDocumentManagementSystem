@@ -83,11 +83,16 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group mb-3">
-                                    <label for="has_file">File Attachment</label>
-                                    <select name="has_file" id="has_file" class="form-select">
-                                        <option value="">All Entries</option>
-                                        <option value="yes" {{ request('has_file') === 'yes' ? 'selected' : '' }}>With File</option>
-                                        <option value="no" {{ request('has_file') === 'no' ? 'selected' : '' }}>No File</option>
+                                    <label for="file_format">File Format</label>
+                                    <select name="file_format" id="file_format" class="form-select">
+                                        <option value="">All Formats</option>
+                                        <option value="pdf" {{ request('file_format') === 'pdf' ? 'selected' : '' }}>PDF</option>
+                                        <option value="doc" {{ request('file_format') === 'doc' ? 'selected' : '' }}>DOC</option>
+                                        <option value="docx" {{ request('file_format') === 'docx' ? 'selected' : '' }}>DOCX</option>
+                                        <option value="xls" {{ request('file_format') === 'xls' ? 'selected' : '' }}>XLS</option>
+                                        <option value="xlsx" {{ request('file_format') === 'xlsx' ? 'selected' : '' }}>XLSX</option>
+                                        <option value="csv" {{ request('file_format') === 'csv' ? 'selected' : '' }}>CSV</option>
+                                        <option value="txt" {{ request('file_format') === 'txt' ? 'selected' : '' }}>TXT</option>
                                     </select>
                                 </div>
                             </div>

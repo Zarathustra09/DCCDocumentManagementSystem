@@ -728,12 +728,9 @@ class DocumentRegistrationEntryController extends Controller
         }
 
         // Apply file attachment filter
-        if ($request->filled('has_file')) {
-            if ($request->has_file === 'yes') {
-                $query->whereNotNull('file_path');
-            } elseif ($request->has_file === 'no') {
-                $query->whereNull('file_path');
-            }
+        // Apply file format filter
+        if ($request->filled('file_format')) {
+            $query->where('original_filename', 'like', '%.'.$request->file_format);
         }
 
         // Get unique values for filter dropdowns
