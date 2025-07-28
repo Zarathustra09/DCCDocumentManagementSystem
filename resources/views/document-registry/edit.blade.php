@@ -171,49 +171,58 @@
     </div>
 </div>
 
-<style>
-.badge {
-    font-size: 0.85em;
-    padding: 0.375rem 0.75rem;
-}
-.badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529 !important;
-}
-.badge.bg-success {
-    background-color: #198754 !important;
-    color: #ffffff !important;
-}
-.badge.bg-danger {
-    background-color: #dc3545 !important;
-    color: #ffffff !important;
-}
-</style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-format document number
-    const documentNoInput = document.getElementById('document_no');
-    documentNoInput.addEventListener('blur', function() {
-        let value = this.value.trim().toUpperCase();
-        if (value && !value.includes('-')) {
-            // Auto-format if it doesn't contain hyphens
-            const year = new Date().getFullYear();
-            const match = value.match(/(\d+)$/);
-            if (match) {
-                const number = match[1].padStart(3, '0');
-                value = `DOC-${year}-${number}`;
-            }
-        }
-        this.value = value;
-    });
 
-    // Validate revision number format
-    const revisionInput = document.getElementById('revision_no');
-    revisionInput.addEventListener('input', function() {
-        // Only allow numbers and basic revision formats
-        this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
-    });
-});
-</script>
 @endsection
+
+{{--TODO: To remove the style after the database migration of the new document registry files reference to the registry--}}
+@push('styles')
+    <style>
+        .badge {
+            font-size: 0.85em;
+            padding: 0.375rem 0.75rem;
+        }
+        .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+        }
+        .badge.bg-success {
+            background-color: #198754 !important;
+            color: #ffffff !important;
+        }
+        .badge.bg-danger {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-format document number
+            const documentNoInput = document.getElementById('document_no');
+            documentNoInput.addEventListener('blur', function() {
+                let value = this.value.trim().toUpperCase();
+                if (value && !value.includes('-')) {
+                    // Auto-format if it doesn't contain hyphens
+                    const year = new Date().getFullYear();
+                    const match = value.match(/(\d+)$/);
+                    if (match) {
+                        const number = match[1].padStart(3, '0');
+                        value = `DOC-${year}-${number}`;
+                    }
+                }
+                this.value = value;
+            });
+
+            // Validate revision number format
+            const revisionInput = document.getElementById('revision_no');
+            revisionInput.addEventListener('input', function() {
+                // Only allow numbers and basic revision formats
+                this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
+            });
+        });
+    </script>
+@endpush

@@ -222,49 +222,53 @@
     </div>
 </div>
 
-<script>
-function approveRegistration(entryId) {
-    if (confirm('Are you sure you want to approve this document registration?')) {
-        // Create a form and submit it
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/document-registry/${entryId}/approve`;
-
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '_token';
-        csrfToken.value = '{{ csrf_token() }}';
-
-        form.appendChild(csrfToken);
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-
-function showRejectModal(entryId, documentTitle) {
-    document.getElementById('rejectDocumentTitle').textContent = documentTitle;
-    document.getElementById('quickRejectForm').action = `/document-registry/${entryId}/reject`;
-    document.getElementById('quick_rejection_reason').value = '';
-
-    const modal = new bootstrap.Modal(document.getElementById('quickRejectModal'));
-    modal.show();
-}
-
-function showRevisionModal(entryId, documentTitle) {
-    document.getElementById('revisionDocumentTitle').textContent = documentTitle;
-    document.getElementById('quickRevisionForm').action = `/document-registry/${entryId}/require-revision`;
-    document.getElementById('quick_revision_notes').value = '';
-
-    const modal = new bootstrap.Modal(document.getElementById('quickRevisionModal'));
-    modal.show();
-}
-
-
-$(document).ready(function() {
-    $('#documentRegistry').DataTable({
-    });
-});
-</script>
-
 
 @endsection
+
+
+@push('scripts')
+
+    <script>
+        function approveRegistration(entryId) {
+            if (confirm('Are you sure you want to approve this document registration?')) {
+                // Create a form and submit it
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/document-registry/${entryId}/approve`;
+
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = '_token';
+                csrfToken.value = '{{ csrf_token() }}';
+
+                form.appendChild(csrfToken);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function showRejectModal(entryId, documentTitle) {
+            document.getElementById('rejectDocumentTitle').textContent = documentTitle;
+            document.getElementById('quickRejectForm').action = `/document-registry/${entryId}/reject`;
+            document.getElementById('quick_rejection_reason').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('quickRejectModal'));
+            modal.show();
+        }
+
+        function showRevisionModal(entryId, documentTitle) {
+            document.getElementById('revisionDocumentTitle').textContent = documentTitle;
+            document.getElementById('quickRevisionForm').action = `/document-registry/${entryId}/require-revision`;
+            document.getElementById('quick_revision_notes').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('quickRevisionModal'));
+            modal.show();
+        }
+
+
+        $(document).ready(function() {
+            $('#documentRegistry').DataTable({
+            });
+        });
+    </script>
+@endpush

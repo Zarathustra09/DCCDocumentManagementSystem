@@ -177,6 +177,11 @@
         </div>
     </div>
 
+@endsection
+
+
+@push('scripts')
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Auto-format document number
@@ -299,4 +304,4 @@
             });
         });
     </script>
-@endsection
+@endpush

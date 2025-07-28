@@ -376,81 +376,86 @@
         </div>
     </div>
 
-    @push('styles')
-        <style>
-            .badge {
-                font-size: 0.9em;
-                padding: 0.5rem 0.75rem;
-            }
-            .badge.bg-warning {
-                background-color: #ffc107 !important;
-                color: #212529 !important;
-            }
-            .badge.bg-success {
-                background-color: #198754 !important;
-                color: #ffffff !important;
-            }
-            .badge.bg-danger {
-                background-color: #dc3545 !important;
-                color: #ffffff !important;
-            }
-            .fs-6 {
-                font-size: 1rem !important;
-            }
 
+
+@endsection
+
+
+@push('styles')
+    <style>
+        .badge {
+            font-size: 0.9em;
+            padding: 0.5rem 0.75rem;
+        }
+        .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+        }
+        .badge.bg-success {
+            background-color: #198754 !important;
+            color: #ffffff !important;
+        }
+        .badge.bg-danger {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+        .fs-6 {
+            font-size: 1rem !important;
+        }
+
+        .document-preview {
+            background: white;
+            border-radius: 0.375rem;
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+        }
+
+        .text-preview pre {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+
+        .pdf-preview iframe {
+            border: none;
+        }
+
+        .word-preview .card {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
             .document-preview {
-                background: white;
-                border-radius: 0.375rem;
-                border: 1px solid #dee2e6;
-                overflow: hidden;
-            }
-
-            .text-preview pre {
-                font-family: 'Courier New', monospace;
-                font-size: 0.875rem;
-                line-height: 1.4;
-                background-color: #f8f9fa;
-                padding: 1rem;
-                border-radius: 0.25rem;
+                margin: 0 -15px;
             }
 
             .pdf-preview iframe {
-                border: none;
+                height: 50vh !important;
+                min-height: 300px !important;
             }
+        }
+    </style>
+@endpush
 
-            .word-preview .card {
-                margin-bottom: 0;
-            }
+@push('scripts')
+    <script>
+        function previewDocument() {
+            const previewCard = document.getElementById('preview-card');
+            const previewContent = document.getElementById('document-preview');
 
-            @media (max-width: 768px) {
-                .document-preview {
-                    margin: 0 -15px;
-                }
+            previewCard.style.display = 'block';
+            previewCard.scrollIntoView({ behavior: 'smooth' });
 
-                .pdf-preview iframe {
-                    height: 50vh !important;
-                    min-height: 300px !important;
-                }
-            }
-        </style>
-    @endpush
+            const mimeType = '{{ $documentRegistrationEntry->mime_type }}';
+            const fileName = '{{ $documentRegistrationEntry->original_filename }}';
+            const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}';
+            const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}';
 
-    @push('scripts')
-        <script>
-            function previewDocument() {
-                const previewCard = document.getElementById('preview-card');
-                const previewContent = document.getElementById('document-preview');
-
-                previewCard.style.display = 'block';
-                previewCard.scrollIntoView({ behavior: 'smooth' });
-
-                const mimeType = '{{ $documentRegistrationEntry->mime_type }}';
-                const fileName = '{{ $documentRegistrationEntry->original_filename }}';
-                const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}';
-                const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}';
-
-                // Show loading
-                previewContent.innerHTML = `
+            // Show loading
+            previewContent.innerHTML = `
         <div class="text-center py-4">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -459,9 +464,9 @@
         </div>
     `;
 
-                // Handle different file types
-                if (mimeType.includes('pdf')) {
-                    previewContent.innerHTML = `
+            // Handle different file types
+            if (mimeType.includes('pdf')) {
+                previewContent.innerHTML = `
             <div class="pdf-preview">
                 <div class="embed-responsive" style="height: 70vh;">
                     <iframe src="${previewUrl}"
@@ -475,8 +480,8 @@
                 </div>
             </div>
         `;
-                } else if (mimeType.includes('image')) {
-                    previewContent.innerHTML = `
+            } else if (mimeType.includes('image')) {
+                previewContent.innerHTML = `
             <div class="text-center">
                 <img src="${previewUrl}"
                      alt="${fileName}"
@@ -485,9 +490,9 @@
                      onerror="this.outerHTML='<div class=\\'text-center py-5\\'><i class=\\'bx bx-image-alt text-muted\\' style=\\'font-size: 4rem;\\'></i><h4 class=\\'mt-3\\'>Image Preview Unavailable</h4><p class=\\'text-muted\\'>Unable to preview this image file</p><a href=\\'${downloadUrl}\\' class=\\'btn btn-primary\\'><i class=\\'bx bx-download\\'></i> Download to View</a></div>'">
             </div>
         `;
-                } else if (mimeType.includes('word') || mimeType.includes('document')) {
-                    // Word Document Preview - Auto-load
-                    previewContent.innerHTML = `
+            } else if (mimeType.includes('word') || mimeType.includes('document')) {
+                // Word Document Preview - Auto-load
+                previewContent.innerHTML = `
             <div class="word-preview">
                 <div class="card">
                     <div class="card-header">
@@ -506,14 +511,14 @@
             </div>
         `;
 
-                    // Auto-load Word preview
-                    loadWordPreviewAuto();
-                } else if (mimeType.includes('text')) {
-                    // Try to load text preview
-                    fetch(previewUrl)
-                        .then(response => response.text())
-                        .then(text => {
-                            previewContent.innerHTML = `
+                // Auto-load Word preview
+                loadWordPreviewAuto();
+            } else if (mimeType.includes('text')) {
+                // Try to load text preview
+                fetch(previewUrl)
+                    .then(response => response.text())
+                    .then(text => {
+                        previewContent.innerHTML = `
                     <div class="text-preview">
                         <div class="card">
                             <div class="card-header">
@@ -525,26 +530,26 @@
                         </div>
                     </div>
                 `;
-                        })
-                        .catch(() => {
-                            showGenericPreview();
-                        });
-                } else {
-                    showGenericPreview();
+                    })
+                    .catch(() => {
+                        showGenericPreview();
+                    });
+            } else {
+                showGenericPreview();
+            }
+
+            function showGenericPreview() {
+                // Generic file preview
+                let iconClass = 'bxs-file text-secondary';
+                if (mimeType.includes('word') || mimeType.includes('document')) {
+                    iconClass = 'bxs-file-doc text-primary';
+                } else if (mimeType.includes('sheet') || mimeType.includes('excel')) {
+                    iconClass = 'bxs-file-spreadsheet text-success';
+                } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
+                    iconClass = 'bxs-file-presentation text-warning';
                 }
 
-                function showGenericPreview() {
-                    // Generic file preview
-                    let iconClass = 'bxs-file text-secondary';
-                    if (mimeType.includes('word') || mimeType.includes('document')) {
-                        iconClass = 'bxs-file-doc text-primary';
-                    } else if (mimeType.includes('sheet') || mimeType.includes('excel')) {
-                        iconClass = 'bxs-file-spreadsheet text-success';
-                    } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
-                        iconClass = 'bxs-file-presentation text-warning';
-                    }
-
-                    previewContent.innerHTML = `
+                previewContent.innerHTML = `
             <div class="text-center py-5">
                 <i class="bx ${iconClass}" style="font-size: 4rem;"></i>
                 <h4 class="mt-3">${fileName}</h4>
@@ -554,36 +559,36 @@
                 </a>
             </div>
         `;
+            }
+        }
+
+        // Auto-loading Word document preview functionality
+        function loadWordPreviewAuto() {
+            const contentDiv = document.getElementById('word-preview-content');
+            const loadingDiv = document.getElementById('word-preview-loading');
+
+            const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
+
+            fetch(previewApiUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 }
-            }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.classList.add('d-none');
 
-            // Auto-loading Word document preview functionality
-            function loadWordPreviewAuto() {
-                const contentDiv = document.getElementById('word-preview-content');
-                const loadingDiv = document.getElementById('word-preview-loading');
-
-                const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
-
-                fetch(previewApiUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        loadingDiv.classList.add('d-none');
-
-                        if (data.success) {
-                            contentDiv.innerHTML = `
+                    if (data.success) {
+                        contentDiv.innerHTML = `
                 <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
                     ${data.content}
                 </div>
             `;
-                        } else {
-                            contentDiv.innerHTML = `
+                    } else {
+                        contentDiv.innerHTML = `
                 <div class="text-center py-4">
                     <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
                     <h5 class="mt-3 text-danger">Preview Failed</h5>
@@ -593,13 +598,13 @@
                     </a>
                 </div>
             `;
-                        }
+                    }
 
-                        contentDiv.classList.remove('d-none');
-                    })
-                    .catch(error => {
-                        loadingDiv.classList.add('d-none');
-                        contentDiv.innerHTML = `
+                    contentDiv.classList.remove('d-none');
+                })
+                .catch(error => {
+                    loadingDiv.classList.add('d-none');
+                    contentDiv.innerHTML = `
             <div class="text-center py-4">
                 <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
                 <h5 class="mt-3 text-danger">Preview Error</h5>
@@ -609,45 +614,45 @@
                 </a>
             </div>
         `;
-                        contentDiv.classList.remove('d-none');
-                    });
-            }
+                    contentDiv.classList.remove('d-none');
+                });
+        }
 
-            function hidePreview() {
-                document.getElementById('preview-card').style.display = 'none';
-            }
+        function hidePreview() {
+            document.getElementById('preview-card').style.display = 'none';
+        }
 
-            // Word document preview functionality
-            window.loadWordPreview = function() {
-                const contentDiv = document.getElementById('word-preview-content');
-                const loadingDiv = document.getElementById('word-preview-loading');
+        // Word document preview functionality
+        window.loadWordPreview = function() {
+            const contentDiv = document.getElementById('word-preview-content');
+            const loadingDiv = document.getElementById('word-preview-loading');
 
-                contentDiv.classList.add('d-none');
-                loadingDiv.classList.remove('d-none');
+            contentDiv.classList.add('d-none');
+            loadingDiv.classList.remove('d-none');
 
-                // Note: You'll need to add a preview route for document registry entries
-                const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
+            // Note: You'll need to add a preview route for document registry entries
+            const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
 
-                fetch(previewApiUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        loadingDiv.classList.add('d-none');
+            fetch(previewApiUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.classList.add('d-none');
 
-                        if (data.success) {
-                            contentDiv.innerHTML = `
+                    if (data.success) {
+                        contentDiv.innerHTML = `
                 <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
                     ${data.content}
                 </div>
             `;
-                        } else {
-                            contentDiv.innerHTML = `
+                    } else {
+                        contentDiv.innerHTML = `
                 <div class="text-center py-4">
                     <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
                     <h5 class="mt-3 text-danger">Preview Failed</h5>
@@ -657,13 +662,13 @@
                     </a>
                 </div>
             `;
-                        }
+                    }
 
-                        contentDiv.classList.remove('d-none');
-                    })
-                    .catch(error => {
-                        loadingDiv.classList.add('d-none');
-                        contentDiv.innerHTML = `
+                    contentDiv.classList.remove('d-none');
+                })
+                .catch(error => {
+                    loadingDiv.classList.add('d-none');
+                    contentDiv.innerHTML = `
             <div class="text-center py-4">
                 <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
                 <h5 class="mt-3 text-danger">Preview Error</h5>
@@ -673,10 +678,8 @@
                 </a>
             </div>
         `;
-                        contentDiv.classList.remove('d-none');
-                    });
-            };
-        </script>
-    @endpush
-
-@endsection
+                    contentDiv.classList.remove('d-none');
+                });
+        };
+    </script>
+@endpush
