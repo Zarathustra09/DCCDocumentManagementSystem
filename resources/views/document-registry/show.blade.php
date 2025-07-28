@@ -42,8 +42,8 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h3 class="card-title"><i class='bx bx-plus'></i> Submit New Document Registration</h3>
-                      <a href="javascript:history.back()" class="btn btn-secondary">
-                            <i class='bx bx-arrow-back'></i> Back to List
+                      <a href="{{route('document-registry.index')}}" class="btn btn-secondary">
+                            <i class='bx bx-arrow-back'></i> Back to Registry
                         </a>
                     </div>
                     <div class="card-body">

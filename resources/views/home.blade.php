@@ -53,7 +53,7 @@
 
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="documentRegistry">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Document Details</th>
@@ -258,22 +258,13 @@ function showRevisionModal(entryId, documentTitle) {
     const modal = new bootstrap.Modal(document.getElementById('quickRevisionModal'));
     modal.show();
 }
+
+
+$(document).ready(function() {
+    $('#documentRegistry').DataTable({
+    });
+});
 </script>
 
-<style>
-.badge {
-    font-size: 0.9em;
-    padding: 0.5rem 0.75rem;
-}
-.badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529 !important;
-}
-.table td {
-    vertical-align: middle;
-}
-.btn-group .btn {
-    margin: 0 1px;
-}
-</style>
+
 @endsection
