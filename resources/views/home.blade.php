@@ -21,9 +21,14 @@
                             <p class="text-muted">{{ __('You are logged in and ready to manage your documents.') }}</p>
                         </div>
                         <div class="col-md-4 text-end">
-                            <a href="{{ route('document-registry.index') }}" class="btn btn-primary">
-                                <i class='bx bx-file-find'></i> View My Registrations
-                            </a>
+                            <div class="btn-group" role="group" aria-label="Document Actions">
+                                <a href="{{ route('document-registry.create') }}" class="btn btn-primary">
+                                    <i class='bx bx-file-find'></i> Create Registration
+                                </a>
+                                <a href="{{ route('document-registry.index') }}" class="btn btn-outline-primary">
+                                    <i class='bx bx-file-find'></i> View My Registrations
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -98,28 +103,34 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                <div class="btn-group" role="group">
-                                                    <a href="{{ route('document-registry.show', $entry) }}"
-                                                       class="btn btn-outline-primary btn-sm" title="View Details">
-                                                        <i class='bx bx-show'></i>
-                                                    </a>
-
-                                                    @can('approve document registration')
-                                                        <button type="button" class="btn btn-success btn-sm"
-                                                                onclick="approveRegistration({{ $entry->id }})" title="Approve">
-                                                            <i class='bx bx-check'></i>
-                                                        </button>
-
-                                                        <button type="button" class="btn btn-danger btn-sm"
-                                                                onclick="showRejectModal({{ $entry->id }}, '{{ $entry->document_title }}')" title="Reject">
-                                                            <i class='bx bx-x'></i>
-                                                        </button>
-
-                                                        <button type="button" class="btn btn-warning btn-sm"
-                                                                onclick="showRevisionModal({{ $entry->id }}, '{{ $entry->document_title }}')" title="Require Revision">
-                                                            <i class='bx bx-edit'></i>
-                                                        </button>
-                                                    @endcan
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-cog"></i> Manage
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="{{ route('document-registry.show', $entry) }}">
+                                                            <i class="bx bx-show me-2"></i> View Details
+                                                        </a>
+{{--                                                        @if($entry->status === 'pending' &&--}}
+{{--                                                            $entry->submitted_by === auth()->id() &&--}}
+{{--                                                            auth()->user()->can('edit document registration details'))--}}
+{{--                                                            <a class="dropdown-item" href="{{ route('document-registry.edit', $entry) }}">--}}
+{{--                                                                <i class="bx bx-edit-alt me-2"></i> Edit--}}
+{{--                                                            </a>--}}
+{{--                                                        @endif--}}
+{{--                                                        @if($entry->status === 'pending' &&--}}
+{{--                                                            $entry->submitted_by === auth()->id() &&--}}
+{{--                                                            auth()->user()->can('withdraw document submission'))--}}
+{{--                                                            <form action="{{ route('document-registry.withdraw', $entry) }}"--}}
+{{--                                                                  method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">--}}
+{{--                                                                @csrf--}}
+{{--                                                                @method('DELETE')--}}
+{{--                                                                <button type="submit" class="dropdown-item text-danger">--}}
+{{--                                                                    <i class="bx bx-trash me-2"></i> Withdraw--}}
+{{--                                                                </button>--}}
+{{--                                                            </form>--}}
+{{--                                                        @endif--}}
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>

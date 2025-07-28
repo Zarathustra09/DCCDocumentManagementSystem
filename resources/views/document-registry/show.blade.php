@@ -211,12 +211,12 @@
                                                 </button>
                                             @endcan
 
-                                            @can('require revision for document')
-                                                <button type="button" class="btn btn-warning btn-sm w-100"
-                                                        data-bs-toggle="modal" data-bs-target="#revisionModal">
-                                                    <i class='bx bx-edit'></i> Require Revision
-                                                </button>
-                                            @endcan
+{{--                                            @can('require revision for document')--}}
+{{--                                                <button type="button" class="btn btn-warning btn-sm w-100"--}}
+{{--                                                        data-bs-toggle="modal" data-bs-target="#revisionModal">--}}
+{{--                                                    <i class='bx bx-edit'></i> Require Revision--}}
+{{--                                                </button>--}}
+{{--                                            @endcan--}}
                                         </div>
                                     </div>
                                 @endif
