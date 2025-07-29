@@ -102,18 +102,18 @@
                                                 <thead>
                                                 <tr>
                                                     <th>File Name</th>
-{{--                                                    <th>Type</th>--}}
+                                                    <th>Type</th>
                                                     <th>Size</th>
                                                     <th>Status</th>
-                                                    <th>Actions</th>
                                                     <th>Time Submitted</th>
+                                                    <th>Actions</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody>
                                                 @foreach($documentRegistrationEntry->files as $file)
                                                     <tr>
                                                         <td>{{ $file->original_filename }}</td>
-{{--                                                        <td>{{ $file->mime_type }}</td>--}}
+                                                        <td>{{ $file->mime_type }}</td>
                                                         <td>{{ number_format($file->file_size / 1024, 2) }} KB</td>
                                                         <td>
                                                             <span class="badge
@@ -124,31 +124,18 @@
                                                                 {{ $file->status_name }}
                                                             </span></td>
                                                         <td>
-
-                                                            <div class="dropdown">
-                                                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                                                    <i class="bx bx-cog"></i> Manage
-                                                                </button>
-                                                                <div class="dropdown-menu">
-                                                                    <a class="dropdown-item" onclick="previewDocument({{ $file->id }})">
-                                                                        <i class="bx bx-show me-2"></i> Preview
-                                                                    </a>
-                                                                    <a class="dropdown-item" href="{{ route('document-registry.download', $documentRegistrationEntry) }}?file_id={{ $file->id }}">
-                                                                        <i class="bx bx-download"></i> Download
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-{{--                                                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="previewDocument({{ $file->id }})">--}}
-{{--                                                                <i class="bx bx-show"></i> Preview--}}
-{{--                                                            </button>--}}
-{{--                                                            <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}?file_id={{ $file->id }}" class="btn btn-sm btn-outline-success">--}}
-{{--                                                                <i class="bx bx-download"></i> Download--}}
-{{--                                                            </a>--}}
-                                                        </td>
-                                                        <td>
                                                             {{$file->created_at->format('M d, Y \a\t g:i A')}}
                                                         </td>
-
+                                                        <td>
+                                                            <!-- In the Actions column for each file -->
+                                                            <button type="button" class="btn btn-sm btn-outline-primary me-2"
+                                                                    onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')">
+                                                                <i class="bx bx-show"></i> Preview
+                                                            </button>
+                                                            <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}?file_id={{ $file->id }}" class="btn btn-sm btn-outline-success">
+                                                                <i class="bx bx-download"></i> Download
+                                                            </a>
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                                 </tbody>
@@ -495,24 +482,26 @@
                 order: [[1, 'desc']],
                 pageLength: 10,
                 language: {
-                    search: "Search files:",
+                    search: "Search roles:",
+                    lengthMenu: "Show _MENU_ roles per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ roles"
                 }
             });
         });
 
-        function previewDocument() {
+        function previewDocument(fileId, mimeType, fileName) {
             const previewCard = document.getElementById('preview-card');
             const previewContent = document.getElementById('document-preview');
-
             previewCard.style.display = 'block';
             previewCard.scrollIntoView({ behavior: 'smooth' });
 
-            const mimeType = '{{ $file ? $file->mime_type : '' }}';
-            const fileName = '{{ $file ? $file->original_filename : '' }}';
-            const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}';
-            const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}';
+            // Build URLs using entry and file ID
+            const entryId = '{{ $documentRegistrationEntry->id }}';
+            const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
+            const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
+            const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
 
-            // Show loading
+            // Show loading spinner
             previewContent.innerHTML = `
         <div class="text-center py-4">
             <div class="spinner-border text-primary" role="status">
@@ -522,7 +511,6 @@
         </div>
     `;
 
-            // Handle different file types
             if (mimeType.includes('pdf')) {
                 previewContent.innerHTML = `
             <div class="pdf-preview">
@@ -549,7 +537,6 @@
             </div>
         `;
             } else if (mimeType.includes('word') || mimeType.includes('document')) {
-                // Word Document Preview - Auto-load
                 previewContent.innerHTML = `
             <div class="word-preview">
                 <div class="card">
@@ -568,11 +555,55 @@
                 </div>
             </div>
         `;
-
                 // Auto-load Word preview
-                loadWordPreviewAuto();
+                fetch(previewApiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('word-preview-loading').classList.add('d-none');
+                        const contentDiv = document.getElementById('word-preview-content');
+                        if (data.success) {
+                            contentDiv.innerHTML = `
+                    <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
+                        ${data.content}
+                    </div>
+                `;
+                        } else {
+                            contentDiv.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3 text-danger">Preview Failed</h5>
+                        <p class="text-muted">${data.message || 'Unable to generate preview'}</p>
+                        <a href="${downloadUrl}" class="btn btn-primary">
+                            <i class="bx bx-download"></i> Download Document
+                        </a>
+                    </div>
+                `;
+                        }
+                        contentDiv.classList.remove('d-none');
+                    })
+                    .catch(() => {
+                        document.getElementById('word-preview-loading').classList.add('d-none');
+                        const contentDiv = document.getElementById('word-preview-content');
+                        contentDiv.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 text-danger">Preview Error</h5>
+                    <p class="text-muted">An error occurred while loading the preview</p>
+                    <a href="${downloadUrl}" class="btn btn-primary">
+                        <i class="bx bx-download"></i> Download Document
+                    </a>
+                </div>
+            `;
+                        contentDiv.classList.remove('d-none');
+                    });
             } else if (mimeType.includes('text')) {
-                // Try to load text preview
                 fetch(previewUrl)
                     .then(response => response.text())
                     .then(text => {
@@ -597,7 +628,6 @@
             }
 
             function showGenericPreview() {
-                // Generic file preview
                 let iconClass = 'bxs-file text-secondary';
                 if (mimeType.includes('word') || mimeType.includes('document')) {
                     iconClass = 'bxs-file-doc text-primary';
@@ -606,7 +636,6 @@
                 } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
                     iconClass = 'bxs-file-presentation text-warning';
                 }
-
                 previewContent.innerHTML = `
             <div class="text-center py-5">
                 <i class="bx ${iconClass}" style="font-size: 4rem;"></i>
@@ -619,7 +648,6 @@
         `;
             }
         }
-
         // Auto-loading Word document preview functionality
         function loadWordPreviewAuto() {
             const contentDiv = document.getElementById('word-preview-content');

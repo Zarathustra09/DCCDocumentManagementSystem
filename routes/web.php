@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentRegistrationEntryController;
+use App\Http\Controllers\DocumentRegistrationEntryFileController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PermissionController;
@@ -50,10 +51,28 @@ Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('adm
 Route::resource('roles', RoleController::class)->only(['index', 'show']);
 Route::post('roles/{role}/update-permissions', [RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
 
-Route::post('document-registry/{documentRegistrationEntry}/upload-file', [DocumentRegistrationEntryController::class, 'uploadFile'])
+// Document Registration Entry File Routes
+Route::post('document-registry/files/{file}/approve', [DocumentRegistrationEntryFileController::class, 'approve'])
+    ->name('document-registry.files.approve');
+Route::post('document-registry/files/{file}/reject', [DocumentRegistrationEntryFileController::class, 'reject'])
+    ->name('document-registry.files.reject');
+Route::get('document-registry/files/{file}/download', [DocumentRegistrationEntryFileController::class, 'download'])
+    ->name('document-registry.files.download');
+Route::get('document-registry/files/{file}/preview', [DocumentRegistrationEntryFileController::class, 'preview'])
+    ->name('document-registry.files.preview');
+
+
+
+
+
+
+
+
+
+Route::post('document-registry/{documentRegistrationEntry}/upload-file', [DocumentRegistrationEntryFileController::class, 'uploadFile'])
     ->name('document-registry.upload-file');
 
-Route::get('/document-registry/{documentRegistrationEntry}/download', [DocumentRegistrationEntryController::class, 'downloadFile'])
+Route::get('/document-registry/{documentRegistrationEntry}/download', [DocumentRegistrationEntryController::class, 'download'])
     ->name('document-registry.download');
 
 
@@ -62,7 +81,8 @@ Route::get('/document-registry/{documentRegistrationEntry}/preview', [DocumentRe
 
 Route::get('/document-registry/{documentRegistrationEntry}/preview-api', [DocumentRegistrationEntryController::class, 'previewApi'])
     ->name('document-registry.preview-api');
-// Document Registration Entry Routes
+
+
 Route::middleware(['auth'])->prefix('document-registry')->name('document-registry.')->group(function () {
 
     Route::get('/list', [DocumentRegistrationEntryController::class, 'list'])->name('list');

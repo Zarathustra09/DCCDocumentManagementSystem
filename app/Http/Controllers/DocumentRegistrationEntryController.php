@@ -354,13 +354,13 @@ class DocumentRegistrationEntryController extends Controller
         if (!$this->canViewEntry($documentRegistrationEntry)) {
             abort(403, 'You do not have permission to view this file.');
         }
-        $file = $documentRegistrationEntry->files()->first();
-        if (!$file || !Storage::disk('local')->exists($file->file_path)) {
+        $fileId = request('file_id');
+        $file = $documentRegistrationEntry->files()->find($fileId);
+        if (!$file || !\Storage::disk('local')->exists($file->file_path)) {
             abort(404, 'File not found.');
         }
-        $filePath = Storage::disk('local')->path($file->file_path);
-        if (str_contains($file->mime_type, 'pdf') ||
-            str_contains($file->mime_type, 'image')) {
+        $filePath = \Storage::disk('local')->path($file->file_path);
+        if (str_contains($file->mime_type, 'pdf') || str_contains($file->mime_type, 'image')) {
             return response()->file($filePath, [
                 'Content-Type' => $file->mime_type,
                 'Content-Disposition' => 'inline; filename="' . $file->original_filename . '"'
@@ -380,7 +380,8 @@ class DocumentRegistrationEntryController extends Controller
                 'message' => 'Permission denied'
             ], 403);
         }
-        $file = $documentRegistrationEntry->files()->first();
+        $fileId = request('file_id');
+        $file = $documentRegistrationEntry->files()->find($fileId);
         if (!$file) {
             return response()->json([
                 'success' => false,
@@ -665,26 +666,4 @@ class DocumentRegistrationEntryController extends Controller
         ));
     }
 
-    public function uploadFile(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
-    {
-        if (!Auth::user()->can('submit document for approval') || $documentRegistrationEntry->status !== 'pending') {
-            abort(403);
-        }
-
-        $request->validate([
-            'document_file' => 'required|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:10240'
-        ]);
-
-        $file = $request->file('document_file');
-        DocumentRegistrationEntryFile::create([
-            'entry_id' => $documentRegistrationEntry->id,
-            'file_path' => $file->store('document_registrations', 'local'),
-            'original_filename' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'file_size' => $file->getSize(),
-            'status' => 'pending',
-        ]);
-
-        return back()->with('success', 'File uploaded successfully.');
-    }
 }
