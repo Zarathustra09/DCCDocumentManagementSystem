@@ -50,7 +50,8 @@ Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('adm
 Route::resource('roles', RoleController::class)->only(['index', 'show']);
 Route::post('roles/{role}/update-permissions', [RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
 
-
+Route::post('document-registry/{documentRegistrationEntry}/upload-file', [DocumentRegistrationEntryController::class, 'uploadFile'])
+    ->name('document-registry.upload-file');
 
 Route::get('/document-registry/{documentRegistrationEntry}/download', [DocumentRegistrationEntryController::class, 'downloadFile'])
     ->name('document-registry.download');

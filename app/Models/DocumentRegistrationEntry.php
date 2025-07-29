@@ -23,12 +23,12 @@ class DocumentRegistrationEntry extends Model
         'approved_by',
         'submitted_at',
         'approved_at',
-        'rejection_reason',
-        'revision_notes',
-        'file_path',
-        'original_filename',
-        'mime_type',
-        'file_size',
+//        'rejection_reason',
+//        'revision_notes',
+//        'file_path',
+//        'original_filename',
+//        'mime_type',
+//        'file_size',
     ];
 
     protected $casts = [
@@ -99,5 +99,9 @@ class DocumentRegistrationEntry extends Model
     public function scopeRejected($query)
     {
         return $query->where('status', 'rejected');
+    }
+    public function files()
+    {
+        return $this->hasMany(DocumentRegistrationEntryFile::class, 'entry_id');
     }
 }

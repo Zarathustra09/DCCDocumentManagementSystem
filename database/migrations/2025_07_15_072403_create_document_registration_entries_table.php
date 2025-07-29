@@ -22,8 +22,8 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('approved_at')->nullable();
-            $table->text('rejection_reason')->nullable();
-            $table->text('revision_notes')->nullable();
+//            $table->text('rejection_reason')->nullable();
+//            $table->text('revision_notes')->nullable();
             $table->timestamps();
         });
     }

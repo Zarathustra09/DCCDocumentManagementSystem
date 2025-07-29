@@ -42,7 +42,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h3 class="card-title"><i class='bx bx-plus'></i> Submit New Document Registration</h3>
-                      <a href="{{route('document-registry.index')}}" class="btn btn-secondary">
+                        <a href="{{route('document-registry.index')}}" class="btn btn-secondary">
                             <i class='bx bx-arrow-back'></i> Back to Registry
                         </a>
                     </div>
@@ -91,32 +91,68 @@
                                 @endif
 
                                 <!-- File Information and Preview -->
-                                @if($documentRegistrationEntry->hasFile())
+                                @php
+                                    $file = $documentRegistrationEntry->files->first();
+                                @endphp
+                                @if($documentRegistrationEntry->files->count())
                                     <div class="mb-3">
-                                        <label class="form-label text-muted">Attached File</label>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="file-info d-flex align-items-center flex-grow-1">
-                                                <i class="bx
-                                                @if(str_contains($documentRegistrationEntry->mime_type, 'pdf')) bxs-file-pdf text-danger
-                                                @elseif(str_contains($documentRegistrationEntry->mime_type, 'word') || str_contains($documentRegistrationEntry->mime_type, 'document')) bxs-file-doc text-primary
-                                                @elseif(str_contains($documentRegistrationEntry->mime_type, 'sheet') || str_contains($documentRegistrationEntry->mime_type, 'excel')) bxs-file-spreadsheet text-success
-                                                @elseif(str_contains($documentRegistrationEntry->mime_type, 'image')) bxs-file-image text-info
-                                                @else bxs-file text-secondary
-                                                @endif
-                                                me-2" style="font-size: 1.5rem;"></i>
-                                                <div>
-                                                    <div class="fw-medium">{{ $documentRegistrationEntry->original_filename }}</div>
-                                                    <small class="text-muted">{{ $documentRegistrationEntry->formatted_file_size }}</small>
-                                                </div>
-                                            </div>
-                                            <div class="file-actions">
-                                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="previewDocument()">
-                                                    <i class="bx bx-show"></i> Preview
-                                                </button>
-                                                <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-sm btn-outline-success">
-                                                    <i class="bx bx-download"></i> Download
-                                                </a>
-                                            </div>
+                                        <label class="form-label text-muted">Attached Files</label>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-sm align-middle" id="fileTable">
+                                                <thead>
+                                                <tr>
+                                                    <th>File Name</th>
+{{--                                                    <th>Type</th>--}}
+                                                    <th>Size</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                    <th>Time Submitted</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach($documentRegistrationEntry->files as $file)
+                                                    <tr>
+                                                        <td>{{ $file->original_filename }}</td>
+{{--                                                        <td>{{ $file->mime_type }}</td>--}}
+                                                        <td>{{ number_format($file->file_size / 1024, 2) }} KB</td>
+                                                        <td>
+                                                            <span class="badge
+                                                                @if($file->status === 'pending') bg-warning text-dark
+                                                                @elseif($file->status === 'approved') bg-success
+                                                                @else bg-danger
+                                                                @endif">
+                                                                {{ $file->status_name }}
+                                                            </span></td>
+                                                        <td>
+
+                                                            <div class="dropdown">
+                                                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                                    <i class="bx bx-cog"></i> Manage
+                                                                </button>
+                                                                <div class="dropdown-menu">
+                                                                    <a class="dropdown-item" onclick="previewDocument({{ $file->id }})">
+                                                                        <i class="bx bx-show me-2"></i> Preview
+                                                                    </a>
+                                                                    <a class="dropdown-item" href="{{ route('document-registry.download', $documentRegistrationEntry) }}?file_id={{ $file->id }}">
+                                                                        <i class="bx bx-download"></i> Download
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+{{--                                                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="previewDocument({{ $file->id }})">--}}
+{{--                                                                <i class="bx bx-show"></i> Preview--}}
+{{--                                                            </button>--}}
+{{--                                                            <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}?file_id={{ $file->id }}" class="btn btn-sm btn-outline-success">--}}
+{{--                                                                <i class="bx bx-download"></i> Download--}}
+{{--                                                            </a>--}}
+                                                        </td>
+                                                        <td>
+                                                            {{$file->created_at->format('M d, Y \a\t g:i A')}}
+                                                        </td>
+
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 @endif
@@ -210,13 +246,27 @@
                                                     <i class='bx bx-x'></i> Reject
                                                 </button>
                                             @endcan
+                                        </div>
+                                    </div>
+                                @endif
 
-{{--                                            @can('require revision for document')--}}
-{{--                                                <button type="button" class="btn btn-warning btn-sm w-100"--}}
-{{--                                                        data-bs-toggle="modal" data-bs-target="#revisionModal">--}}
-{{--                                                    <i class='bx bx-edit'></i> Require Revision--}}
-{{--                                                </button>--}}
-{{--                                            @endcan--}}
+                                @if($documentRegistrationEntry->status === 'pending' && auth()->user()->can('submit document for approval'))
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="bx bx-upload"></i> Upload Additional File</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <form action="{{ route('document-registry.upload-file', $documentRegistrationEntry) }}" method="POST" enctype="multipart/form-data">
+                                                @csrf
+                                                <div class="mb-3">
+                                                    <label for="document_file" class="form-label">Choose File</label>
+                                                    <input type="file" class="form-control" id="document_file" name="document_file"
+                                                           accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.csv" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bx bx-upload"></i> Upload File
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 @endif
@@ -246,7 +296,7 @@
         </div>
 
         <!-- Document Preview Section -->
-        @if($documentRegistrationEntry->hasFile())
+        @if($file)
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card" id="preview-card" style="display: none;">
@@ -375,11 +425,7 @@
             </div>
         </div>
     </div>
-
-
-
 @endsection
-
 
 @push('styles')
     <style>
@@ -442,6 +488,18 @@
 
 @push('scripts')
     <script>
+
+        $(document).ready(function() {
+            $('#fileTable').DataTable({
+                responsive: true,
+                order: [[1, 'desc']],
+                pageLength: 10,
+                language: {
+                    search: "Search files:",
+                }
+            });
+        });
+
         function previewDocument() {
             const previewCard = document.getElementById('preview-card');
             const previewContent = document.getElementById('document-preview');
@@ -449,8 +507,8 @@
             previewCard.style.display = 'block';
             previewCard.scrollIntoView({ behavior: 'smooth' });
 
-            const mimeType = '{{ $documentRegistrationEntry->mime_type }}';
-            const fileName = '{{ $documentRegistrationEntry->original_filename }}';
+            const mimeType = '{{ $file ? $file->mime_type : '' }}';
+            const fileName = '{{ $file ? $file->original_filename : '' }}';
             const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}';
             const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}';
 
@@ -621,65 +679,5 @@
         function hidePreview() {
             document.getElementById('preview-card').style.display = 'none';
         }
-
-        // Word document preview functionality
-        window.loadWordPreview = function() {
-            const contentDiv = document.getElementById('word-preview-content');
-            const loadingDiv = document.getElementById('word-preview-loading');
-
-            contentDiv.classList.add('d-none');
-            loadingDiv.classList.remove('d-none');
-
-            // Note: You'll need to add a preview route for document registry entries
-            const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
-
-            fetch(previewApiUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    loadingDiv.classList.add('d-none');
-
-                    if (data.success) {
-                        contentDiv.innerHTML = `
-                <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
-                    ${data.content}
-                </div>
-            `;
-                    } else {
-                        contentDiv.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3 text-danger">Preview Failed</h5>
-                    <p class="text-muted">${data.message || 'Unable to generate preview'}</p>
-                    <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
-                        <i class="bx bx-download"></i> Download Document
-                    </a>
-                </div>
-            `;
-                    }
-
-                    contentDiv.classList.remove('d-none');
-                })
-                .catch(error => {
-                    loadingDiv.classList.add('d-none');
-                    contentDiv.innerHTML = `
-            <div class="text-center py-4">
-                <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
-                <h5 class="mt-3 text-danger">Preview Error</h5>
-                <p class="text-muted">An error occurred while loading the preview</p>
-                <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
-                    <i class="bx bx-download"></i> Download Document
-                </a>
-            </div>
-        `;
-                    contentDiv.classList.remove('d-none');
-                });
-        };
     </script>
 @endpush
