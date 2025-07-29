@@ -37,7 +37,7 @@ class DocumentRegistrationEntry extends Model
     ];
 
     const STATUSES = [
-        'pending' => 'Pending Approval',
+        'pending' => 'Pending Registration',
         'approved' => 'Approved',
         'rejected' => 'Rejected',
     ];

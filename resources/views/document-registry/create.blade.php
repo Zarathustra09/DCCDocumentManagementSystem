@@ -167,7 +167,7 @@
                                     <i class='bx bx-x'></i> Cancel
                                 </a>
                                 <button type="button" id="submitBtn" class="btn btn-primary">
-                                    <i class='bx bx-check'></i> Submit for Approval
+                                    <i class='bx bx-check'></i> Submit for Registration
                                 </button>
                             </div>
                         </form>
