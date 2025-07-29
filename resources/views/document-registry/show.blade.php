@@ -274,6 +274,9 @@
 {{--                                    </div>--}}
 {{--                                @endif--}}
 
+
+
+{{--                                TODO: EXAMPLE--}}
                                 @if($documentRegistrationEntry->status === 'pending' && auth()->user()->can('submit document for approval'))
                                     <div class="card mb-3">
                                         <div class="card-header">
