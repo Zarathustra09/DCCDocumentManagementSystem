@@ -327,41 +327,117 @@ function saveUserPermissions() {
         return;
     }
 
-    const selectedPermissions = Array.from(document.querySelectorAll('.permission-checkbox:checked')).map(cb => cb.value);
+    // Get current and original permissions for comparison
+    const selectedPermissions = Array.from(document.querySelectorAll('.permission-checkbox:checked')).map(cb => parseInt(cb.value));
+    const originalPermissionsArray = originalPermissions.map(id => parseInt(id));
 
-    const saveBtn = document.getElementById('savePermissionsBtn');
-    const originalText = saveBtn.innerHTML;
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Saving...';
+    // Calculate changes
+    const permissionsToAdd = selectedPermissions.filter(id => !originalPermissionsArray.includes(id));
+    const permissionsToRemove = originalPermissionsArray.filter(id => !selectedPermissions.includes(id));
 
-    fetch(`{{ route('admin.users.permissions.update', $user->id) }}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    // Get permission names for display
+    const getPermissionName = (id) => {
+        const checkbox = document.querySelector(`input[value="${id}"]`);
+        return checkbox ? checkbox.nextElementSibling.textContent.trim() : `Permission ${id}`;
+    };
+
+    // Build change summary HTML
+    let changesHtml = '<div class="text-start">';
+    changesHtml += `<p class="mb-3">You are about to update permissions for <strong>{{ $user->name }}</strong>.</p>`;
+
+    if (permissionsToAdd.length > 0) {
+        changesHtml += `
+            <div class="alert alert-success small mb-2">
+                <strong><i class="bx bx-plus-circle me-1"></i>Adding ${permissionsToAdd.length} permission(s):</strong>
+                <ul class="mb-0 mt-1 small">
+                    ${permissionsToAdd.map(id => `<li>${getPermissionName(id)}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    if (permissionsToRemove.length > 0) {
+        changesHtml += `
+            <div class="alert alert-warning small mb-2">
+                <strong><i class="bx bx-minus-circle me-1"></i>Removing ${permissionsToRemove.length} permission(s):</strong>
+                <ul class="mb-0 mt-1 small">
+                    ${permissionsToRemove.map(id => `<li>${getPermissionName(id)}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    changesHtml += `
+        <div class="alert alert-info small mb-2">
+            <i class="bx bx-info-circle me-1"></i>
+            <strong>Final Count:</strong> ${selectedPermissions.length} of ${document.querySelectorAll('.permission-checkbox').length} permissions
+        </div>
+        <p class="text-muted small mb-0">
+            <i class="bx bx-shield-check me-1"></i>
+            These changes will take effect immediately after confirmation.
+        </p>
+    </div>`;
+
+    // Show confirmation dialog
+    Swal.fire({
+        title: 'Update Permissions?',
+        html: changesHtml,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bx bx-check"></i> Yes, Update Permissions',
+        cancelButtonText: '<i class="bx bx-x"></i> Cancel',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
         },
-        body: JSON.stringify({ permissions: selectedPermissions })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: 'User permissions updated successfully.',
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => location.reload());
-        } else {
-            throw new Error(data.message || 'Failed to update user permissions');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire('Error!', error.message || 'An error occurred while updating permissions.', 'error');
+        reverseButtons: true,
+        width: '600px'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Proceed with saving permissions
+            const saveBtn = document.getElementById('savePermissionsBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Saving...';
 
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalText;
+            fetch(`{{ route('admin.users.permissions.update', $user->id) }}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ permissions: selectedPermissions.map(id => id.toString()) })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Permissions Updated!',
+                            text: `Successfully granted ${selectedPermissions.length} permissions to ${data.user_name || '{{ $user->name }}'}`,
+                            timer: 2500,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        throw new Error(data.message || 'Failed to update user permissions');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed!',
+                        text: error.message || 'An error occurred while updating permissions.',
+                        confirmButtonText: 'Try Again',
+                        confirmButtonColor: '#dc3545'
+                    });
+
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalText;
+                });
+        }
     });
 }
 

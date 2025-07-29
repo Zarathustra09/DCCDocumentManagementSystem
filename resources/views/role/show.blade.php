@@ -196,29 +196,29 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // Store original permissions for reset functionality
+    const originalPermissions = $('.permission-checkbox:checked').map(function() { return parseInt(this.value); }).get();
+    let hasPermissionChanges = false;
+
     // Select All functionality
     $('#select-all').click(function() {
         $('.permission-checkbox').prop('checked', true);
+        checkForPermissionChanges();
         updatePermissionCount();
     });
 
     // Deselect All functionality
     $('#deselect-all').click(function() {
         $('.permission-checkbox').prop('checked', false);
+        checkForPermissionChanges();
         updatePermissionCount();
     });
 
     // Update permission count when checkboxes change
     $('.permission-checkbox').change(function() {
+        checkForPermissionChanges();
         updatePermissionCount();
     });
-
-    // Update permission count display
-    function updatePermissionCount() {
-        var count = $('.permission-checkbox:checked').length;
-        $('#selectedCount').text(count);
-        $('#current-permission-count').text(count);
-    }
 
     // Handle form submission
     $('#permission-form').submit(function(e) {
@@ -231,46 +231,139 @@ $(document).ready(function() {
         savePermissions();
     });
 
+    function arraysEqual(a, b) {
+        return a.length === b.length && a.every((val, i) => val === b[i]);
+    }
+
+    function checkForPermissionChanges() {
+        const currentPermissions = $('.permission-checkbox:checked').map(function() { return parseInt(this.value); }).get();
+        hasPermissionChanges = !arraysEqual(currentPermissions.sort(), originalPermissions.slice().sort());
+        const saveBtn = $('#save-permissions');
+        if (hasPermissionChanges) {
+            saveBtn.removeClass('btn-primary').addClass('btn-success');
+            saveBtn.html('<i class="bx bx-save"></i> Save Changes');
+        } else {
+            saveBtn.removeClass('btn-success').addClass('btn-primary');
+            saveBtn.html('<i class="bx bx-save"></i> Save');
+        }
+    }
+
+    function updatePermissionCount() {
+        var count = $('.permission-checkbox:checked').length;
+        $('#selectedCount').text(count);
+        $('#current-permission-count').text(count);
+    }
+
+    function getPermissionName(id) {
+        const checkbox = document.querySelector(`input[value="${id}"]`);
+        return checkbox ? checkbox.nextElementSibling.textContent.trim() : `Permission ${id}`;
+    }
+
     function savePermissions() {
-        var formData = $('#permission-form').serialize();
-        var submitButton = $('#save-permissions');
+        if (!hasPermissionChanges) {
+            Swal.fire({
+                icon: 'info',
+                title: 'No Changes',
+                text: 'No changes have been made to the permissions.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            return;
+        }
+        const selectedPermissions = $('.permission-checkbox:checked').map(function() { return parseInt(this.value); }).get();
+        const originalPermissionsArray = originalPermissions.slice();
+        const permissionsToAdd = selectedPermissions.filter(id => !originalPermissionsArray.includes(id));
+        const permissionsToRemove = originalPermissionsArray.filter(id => !selectedPermissions.includes(id));
 
-        // Disable submit button and show loading
-        submitButton.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i> Saving...');
+        // Build change summary HTML
+        let changesHtml = '<div class="text-start">';
+        changesHtml += `<p class="mb-3">You are about to update permissions for <strong>{{ $role->name }}</strong>.</p>`;
+        if (permissionsToAdd.length > 0) {
+            changesHtml += `
+                <div class="alert alert-success small mb-2">
+                    <strong><i class="bx bx-plus-circle me-1"></i>Adding ${permissionsToAdd.length} permission(s):</strong>
+                    <ul class="mb-0 mt-1 small">
+                        ${permissionsToAdd.map(id => `<li>${getPermissionName(id)}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        if (permissionsToRemove.length > 0) {
+            changesHtml += `
+                <div class="alert alert-warning small mb-2">
+                    <strong><i class="bx bx-minus-circle me-1"></i>Removing ${permissionsToRemove.length} permission(s):</strong>
+                    <ul class="mb-0 mt-1 small">
+                        ${permissionsToRemove.map(id => `<li>${getPermissionName(id)}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        changesHtml += `
+            <div class="alert alert-info small mb-2">
+                <i class="bx bx-info-circle me-1"></i>
+                <strong>Final Count:</strong> ${selectedPermissions.length} of ${$('.permission-checkbox').length} permissions
+            </div>
+            <p class="text-muted small mb-0">
+                <i class="bx bx-shield-check me-1"></i>
+                These changes will take effect immediately after confirmation.
+            </p>
+        </div>`;
 
-        $.ajax({
-            url: '{{ route("roles.update-permissions", $role) }}',
-            method: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    $('#current-permission-count').text(response.permissionCount);
-                } else {
-                    Swal.fire('Error!', response.message, 'error');
-                }
+        Swal.fire({
+            title: 'Update Permissions?',
+            html: changesHtml,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="bx bx-check"></i> Yes, Update Permissions',
+            cancelButtonText: '<i class="bx bx-x"></i> Cancel',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            customClass: {
+                confirmButton: 'btn btn-success',
+                cancelButton: 'btn btn-secondary'
             },
-            error: function(xhr) {
-                var errorMessage = 'An error occurred while updating permissions.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-                Swal.fire('Error!', errorMessage, 'error');
-            },
-            complete: function() {
-                // Re-enable submit button
-                submitButton.prop('disabled', false).html('<i class="bx bx-save"></i> Save Changes');
+            reverseButtons: true,
+            width: '600px'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const submitButton = $('#save-permissions');
+                const originalText = submitButton.html();
+                submitButton.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i> Saving...');
+                $.ajax({
+                    url: '{{ route("roles.update-permissions", $role) }}',
+                    method: 'POST',
+                    data: $('#permission-form').serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: response.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            $('#current-permission-count').text(response.permissionCount);
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'An error occurred while updating permissions.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire('Error!', errorMessage, 'error');
+                    },
+                    complete: function() {
+                        submitButton.prop('disabled', false).html(originalText);
+                    }
+                });
             }
         });
     }
 
     updatePermissionCount();
+    checkForPermissionChanges();
 });
 
 function filterPermissions() {
