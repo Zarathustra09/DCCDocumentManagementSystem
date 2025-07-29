@@ -127,7 +127,44 @@
                                                             {{$file->created_at->format('M d, Y \a\t g:i A')}}
                                                         </td>
                                                         <td>
-                                                            <!-- In the Actions column for each file -->
+                                                            @if($file->status === 'pending' && auth()->user()->can('approve document registration'))
+                                                                <form action="{{ route('document-registry.files.approve', $file->id) }}" method="POST" class="d-inline">
+                                                                    @csrf
+                                                                    <button type="submit" class="btn btn-sm btn-success"
+                                                                            onclick="return confirm('Approve this file?')">
+                                                                        <i class="bx bx-check"></i> Approve
+                                                                    </button>
+                                                                </form>
+                                                            @endif
+                                                            @if($file->status === 'pending' && auth()->user()->can('reject document registration'))
+                                                                <button type="button" class="btn btn-sm btn-danger"
+                                                                        data-bs-toggle="modal" data-bs-target="#rejectFileModal{{$file->id}}">
+                                                                    <i class="bx bx-x"></i> Reject
+                                                                </button>
+                                                                <!-- Modal for rejection reason -->
+                                                                <div class="modal fade" id="rejectFileModal{{$file->id}}" tabindex="-1">
+                                                                    <div class="modal-dialog">
+                                                                        <div class="modal-content">
+                                                                            <form action="{{ route('document-registry.files.reject', $file->id) }}" method="POST">
+                                                                                @csrf
+                                                                                <div class="modal-header">
+                                                                                    <h5 class="modal-title">Reject File</h5>
+                                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                                </div>
+                                                                                <div class="modal-body">
+                                                                                    <label for="rejection_reason_{{$file->id}}" class="form-label">Reason <span class="text-danger">*</span></label>
+                                                                                    <textarea class="form-control" id="rejection_reason_{{$file->id}}" name="rejection_reason" required></textarea>
+                                                                                </div>
+                                                                                <div class="modal-footer">
+                                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                                    <button type="submit" class="btn btn-danger">Reject</button>
+                                                                                </div>
+                                                                            </form>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                            <!-- Existing Preview and Download buttons -->
                                                             <button type="button" class="btn btn-sm btn-outline-primary me-2"
                                                                     onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')">
                                                                 <i class="bx bx-show"></i> Preview
@@ -211,36 +248,36 @@
                                 </div>
 
                                 <!-- Actions Card for Approvers -->
-                                @if($documentRegistrationEntry->status === 'pending' && (auth()->user()->can('approve document registration') || auth()->user()->can('reject document registration')))
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h5 class="mb-0"><i class='bx bx-cog'></i> Actions</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            @can('approve document registration')
-                                                <form action="{{ route('document-registry.approve', $documentRegistrationEntry) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-success btn-sm w-100 mb-2"
-                                                            onclick="return confirm('Are you sure you want to approve this document registration?')">
-                                                        <i class='bx bx-check'></i> Approve
-                                                    </button>
-                                                </form>
-                                            @endcan
+{{--                                @if($documentRegistrationEntry->status === 'pending' && (auth()->user()->can('approve document registration') || auth()->user()->can('reject document registration')))--}}
+{{--                                    <div class="card">--}}
+{{--                                        <div class="card-header">--}}
+{{--                                            <h5 class="mb-0"><i class='bx bx-cog'></i> Actions</h5>--}}
+{{--                                        </div>--}}
+{{--                                        <div class="card-body">--}}
+{{--                                            @can('approve document registration')--}}
+{{--                                                <form action="{{ route('document-registry.approve', $documentRegistrationEntry) }}" method="POST" class="d-inline">--}}
+{{--                                                    @csrf--}}
+{{--                                                    <button type="submit" class="btn btn-success btn-sm w-100 mb-2"--}}
+{{--                                                            onclick="return confirm('Are you sure you want to approve this document registration?')">--}}
+{{--                                                        <i class='bx bx-check'></i> Approve--}}
+{{--                                                    </button>--}}
+{{--                                                </form>--}}
+{{--                                            @endcan--}}
 
-                                            @can('reject document registration')
-                                                <button type="button" class="btn btn-danger btn-sm w-100 mb-2"
-                                                        data-bs-toggle="modal" data-bs-target="#rejectModal">
-                                                    <i class='bx bx-x'></i> Reject
-                                                </button>
-                                            @endcan
-                                        </div>
-                                    </div>
-                                @endif
+{{--                                            @can('reject document registration')--}}
+{{--                                                <button type="button" class="btn btn-danger btn-sm w-100 mb-2"--}}
+{{--                                                        data-bs-toggle="modal" data-bs-target="#rejectModal">--}}
+{{--                                                    <i class='bx bx-x'></i> Reject--}}
+{{--                                                </button>--}}
+{{--                                            @endcan--}}
+{{--                                        </div>--}}
+{{--                                    </div>--}}
+{{--                                @endif--}}
 
                                 @if($documentRegistrationEntry->status === 'pending' && auth()->user()->can('submit document for approval'))
                                     <div class="card mb-3">
                                         <div class="card-header">
-                                            <h5 class="mb-0"><i class="bx bx-upload"></i> Upload Additional File</h5>
+                                            <h5 class="mb-0"><i class="bx bx-upload"></i> Upload Revision</h5>
                                         </div>
                                         <div class="card-body">
                                             <form action="{{ route('document-registry.upload-file', $documentRegistrationEntry) }}" method="POST" enctype="multipart/form-data">
@@ -259,22 +296,22 @@
                                 @endif
 
                                 <!-- Withdraw Action for Submitter -->
-                                @if($documentRegistrationEntry->status === 'pending' &&
-                                    $documentRegistrationEntry->submitted_by === auth()->id() &&
-                                    auth()->user()->can('withdraw document submission'))
-                                    <div class="card mt-3">
-                                        <div class="card-body">
-                                            <form action="{{ route('document-registry.withdraw', $documentRegistrationEntry) }}" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-outline-danger btn-sm w-100"
-                                                        onclick="return confirm('Are you sure you want to withdraw this submission? This action cannot be undone.')">
-                                                    <i class='bx bx-trash'></i> Withdraw Submission
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                @endif
+{{--                                @if($documentRegistrationEntry->status === 'pending' &&--}}
+{{--                                    $documentRegistrationEntry->submitted_by === auth()->id() &&--}}
+{{--                                    auth()->user()->can('withdraw document submission'))--}}
+{{--                                    <div class="card mt-3">--}}
+{{--                                        <div class="card-body">--}}
+{{--                                            <form action="{{ route('document-registry.withdraw', $documentRegistrationEntry) }}" method="POST">--}}
+{{--                                                @csrf--}}
+{{--                                                @method('DELETE')--}}
+{{--                                                <button type="submit" class="btn btn-outline-danger btn-sm w-100"--}}
+{{--                                                        onclick="return confirm('Are you sure you want to withdraw this submission? This action cannot be undone.')">--}}
+{{--                                                    <i class='bx bx-trash'></i> Withdraw Submission--}}
+{{--                                                </button>--}}
+{{--                                            </form>--}}
+{{--                                        </div>--}}
+{{--                                    </div>--}}
+{{--                                @endif--}}
                             </div>
                         </div>
                     </div>
