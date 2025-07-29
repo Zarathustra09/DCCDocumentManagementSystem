@@ -60,7 +60,7 @@
                                 <th>Role Name</th>
                                 <th>Users Count</th>
                                 <th>Permissions Count</th>
-                                <th>Key Permissions</th>
+{{--                                <th>Key Permissions</th>--}}
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -109,18 +109,18 @@
                                         <small class="text-muted">permissions</small>
                                     </div>
                                 </td>
-                                <td>
-                                    @php
-                                        $keyPermissions = $role->permissions->take(2);
-                                        $remainingCount = $role->permissions->count() - 2;
-                                    @endphp
-                                    @foreach($keyPermissions as $permission)
-                                        <span class="badge bg-light text-dark me-1 mb-1 small">{{ $permission->name }}</span>
-                                    @endforeach
-                                    @if($remainingCount > 0)
-                                        <span class="text-muted small">+{{ $remainingCount }} more</span>
-                                    @endif
-                                </td>
+{{--                                <td>--}}
+{{--                                    @php--}}
+{{--                                        $keyPermissions = $role->permissions->take(2);--}}
+{{--                                        $remainingCount = $role->permissions->count() - 2;--}}
+{{--                                    @endphp--}}
+{{--                                    @foreach($keyPermissions as $permission)--}}
+{{--                                        <span class="badge bg-light text-dark me-1 mb-1 small">{{ $permission->name }}</span>--}}
+{{--                                    @endforeach--}}
+{{--                                    @if($remainingCount > 0)--}}
+{{--                                        <span class="text-muted small">+{{ $remainingCount }} more</span>--}}
+{{--                                    @endif--}}
+{{--                                </td>--}}
                                 <td>
                                     @if($role->permissions->count() > 0)
                                         <span class="badge bg-success">Active</span>
@@ -162,9 +162,6 @@ $(document).ready(function() {
         responsive: true,
         order: [[1, 'desc']],
         pageLength: 10,
-        columnDefs: [
-            { orderable: false, targets: [0, 5] }
-        ],
         language: {
             search: "Search roles:",
             lengthMenu: "Show _MENU_ roles per page",
