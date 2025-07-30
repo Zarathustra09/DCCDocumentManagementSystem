@@ -118,18 +118,18 @@
                                                             <i class="bx bx-edit-alt me-2"></i> Edit
                                                         </a>
                                                     @endif
-                                                    @if($entry->status === 'pending' &&
-                                                        $entry->submitted_by === auth()->id() &&
-                                                        auth()->user()->can('withdraw document submission'))
-                                                        <form action="{{ route('document-registry.withdraw', $entry) }}"
-                                                              method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="dropdown-item text-danger">
-                                                                <i class="bx bx-trash me-2"></i> Withdraw
-                                                            </button>
-                                                        </form>
-                                                    @endif
+{{--                                                    @if($entry->status === 'pending' &&--}}
+{{--                                                        $entry->submitted_by === auth()->id() &&--}}
+{{--                                                        auth()->user()->can('withdraw document submission'))--}}
+{{--                                                        <form action="{{ route('document-registry.withdraw', $entry) }}"--}}
+{{--                                                              method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">--}}
+{{--                                                            @csrf--}}
+{{--                                                            @method('DELETE')--}}
+{{--                                                            <button type="submit" class="dropdown-item text-danger">--}}
+{{--                                                                <i class="bx bx-trash me-2"></i> Withdraw--}}
+{{--                                                            </button>--}}
+{{--                                                        </form>--}}
+{{--                                                    @endif--}}
                                                 </div>
                                             </div>
                                         </td>

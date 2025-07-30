@@ -102,7 +102,7 @@
                                                 <thead>
                                                 <tr>
                                                     <th>File Name</th>
-                                                    <th>Type</th>
+{{--                                                    <th>Type</th>--}}
                                                     <th>Size</th>
                                                     <th>Status</th>
                                                     <th>Time Submitted</th>
@@ -113,7 +113,7 @@
                                                 @foreach($documentRegistrationEntry->files as $file)
                                                     <tr>
                                                         <td>{{ $file->original_filename }}</td>
-                                                        <td>{{ $file->mime_type }}</td>
+{{--                                                        <td>{{ $file->mime_type }}</td>--}}
                                                         <td>{{ number_format($file->file_size / 1024, 2) }} KB</td>
                                                         <td>
                                                             <span class="badge

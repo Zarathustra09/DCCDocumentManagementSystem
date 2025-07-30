@@ -86,13 +86,11 @@
                                     <label for="file_format">File Format</label>
                                     <select name="file_format" id="file_format" class="form-select">
                                         <option value="">All Formats</option>
-                                        <option value="pdf" {{ request('file_format') === 'pdf' ? 'selected' : '' }}>PDF</option>
-                                        <option value="doc" {{ request('file_format') === 'doc' ? 'selected' : '' }}>DOC</option>
-                                        <option value="docx" {{ request('file_format') === 'docx' ? 'selected' : '' }}>DOCX</option>
-                                        <option value="xls" {{ request('file_format') === 'xls' ? 'selected' : '' }}>XLS</option>
-                                        <option value="xlsx" {{ request('file_format') === 'xlsx' ? 'selected' : '' }}>XLSX</option>
-                                        <option value="csv" {{ request('file_format') === 'csv' ? 'selected' : '' }}>CSV</option>
-                                        <option value="txt" {{ request('file_format') === 'txt' ? 'selected' : '' }}>TXT</option>
+                                        @foreach($fileFormats as $format)
+                                            <option value="{{ $format }}" {{ request('file_format') === $format ? 'selected' : '' }}>
+                                                {{ strtoupper($format) }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -194,18 +192,18 @@
                                                             <i class="bx bx-edit-alt me-2"></i> Edit
                                                         </a>
                                                     @endif
-                                                    @if($entry->status === 'pending' &&
-                                                        $entry->submitted_by === auth()->id() &&
-                                                        auth()->user()->can('withdraw document submission'))
-                                                        <form action="{{ route('document-registry.withdraw', $entry) }}"
-                                                              method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="dropdown-item text-danger">
-                                                                <i class="bx bx-trash me-2"></i> Withdraw
-                                                            </button>
-                                                        </form>
-                                                    @endif
+{{--                                                    @if($entry->status === 'pending' &&--}}
+{{--                                                        $entry->submitted_by === auth()->id() &&--}}
+{{--                                                        auth()->user()->can('withdraw document submission'))--}}
+{{--                                                        <form action="{{ route('document-registry.withdraw', $entry) }}"--}}
+{{--                                                              method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">--}}
+{{--                                                            @csrf--}}
+{{--                                                            @method('DELETE')--}}
+{{--                                                            <button type="submit" class="dropdown-item text-danger">--}}
+{{--                                                                <i class="bx bx-trash me-2"></i> Withdraw--}}
+{{--                                                            </button>--}}
+{{--                                                        </form>--}}
+{{--                                                    @endif--}}
                                                 </div>
                                             </div>
                                         </td>

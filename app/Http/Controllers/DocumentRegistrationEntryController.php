@@ -615,7 +615,10 @@ class DocumentRegistrationEntryController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('document_no', 'like', "%{$search}%")
                     ->orWhere('document_title', 'like', "%{$search}%")
-                    ->orWhere('originator_name', 'like', "%{$search}%");
+                    ->orWhere('originator_name', 'like', "%{$search}%")
+                    ->orWhereHas('files', function($fileQ) use ($search) {
+                        $fileQ->where('original_filename', 'like', "%{$search}%");
+                    });
             });
         }
         if ($request->filled('customer')) {
@@ -633,11 +636,19 @@ class DocumentRegistrationEntryController extends Controller
         if ($request->filled('date_to')) {
             $query->whereDate('submitted_at', '<=', $request->date_to);
         }
-        if ($request->filled('file_format')) {
-            $query->whereHas('files', function($q) use ($request) {
-                $q->where('original_filename', 'like', '%.'.$request->file_format);
-            });
-        }
+        // Get file formats for currently filtered entries
+        $fileFormats = \App\Models\DocumentRegistrationEntryFile::whereIn(
+            'entry_id', $query->pluck('id')
+        )->get()
+            ->pluck('original_filename')
+            ->map(function($filename) {
+                return strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            })
+            ->unique()
+            ->filter()
+            ->sort()
+            ->values();
+
         $customers = DocumentRegistrationEntry::whereNotNull('customer')
             ->distinct()
             ->pluck('customer')
@@ -662,7 +673,8 @@ class DocumentRegistrationEntryController extends Controller
             'totalEntries',
             'pendingCount',
             'approvedCount',
-            'rejectedCount'
+            'rejectedCount',
+            'fileFormats'
         ));
     }
 
