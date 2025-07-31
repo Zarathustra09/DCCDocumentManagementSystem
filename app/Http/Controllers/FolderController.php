@@ -22,16 +22,16 @@ class FolderController extends Controller
         // Get base folders with their related folders
         $baseFolders = BaseFolder::with(['folders' => function($query) {
             $query->with(['children', 'documents', 'user'])
-                  ->whereNull('parent_id')
-                  ->accessibleByUser(Auth::id())
-                  ->latest();
+                ->whereNull('parent_id')
+                ->accessibleByUser(Auth::user())
+                ->latest();
         }])->get();
 
         // Get folders that don't belong to any base folder (orphaned folders)
         $orphanedFolders = Folder::with(['children', 'documents', 'user'])
             ->whereNull('parent_id')
             ->whereNull('base_folder_id')
-            ->accessibleByUser(Auth::id())
+            ->accessibleByUser(Auth::user())
             ->latest()
             ->get();
 
@@ -84,7 +84,7 @@ class FolderController extends Controller
     public function show(Folder $folder)
     {
         // Check if user can view documents for this department
-        if (!Auth::user()->can("view {$folder->department} documents") && !Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can("view {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403, 'You do not have permission to view this folder.');
         }
 

@@ -237,11 +237,13 @@
                                                                             </a>
                                                                         </li>
                                                                         @can('edit folders')
+                                                                            @if(Auth::user()->can("edit {$folder->baseFolder->name} document"))
                                                                             <li>
                                                                                 <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
                                                                                     <i class="bx bx-edit me-2"></i>Edit
                                                                                 </a>
                                                                             </li>
+                                                                            @endcan
                                                                         @endcan
                                                                         @can('delete folders')
                                                                             <li><hr class="dropdown-divider"></li>

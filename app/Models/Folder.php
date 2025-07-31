@@ -62,13 +62,18 @@ class Folder extends Model
 //        return $query->where('department', $department);
 //    }
 //
-    public function scopeAccessibleByUser(Builder $query, $userId)
-    {
-        return $query->where('user_id', $userId)
-            ->orWhereHas('baseFolder', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            });
-    }
+  public function scopeAccessibleByUser($query, $user)
+  {
+      $accessibleBaseFolders = [];
+
+      foreach (BaseFolder::all() as $baseFolder) {
+          if ($user->can("view {$baseFolder->name} documents")) {
+              $accessibleBaseFolders[] = $baseFolder->id;
+          }
+      }
+
+      return $query->whereIn('base_folder_id', $accessibleBaseFolders);
+  }
 
     public function baseFolder()
     {
