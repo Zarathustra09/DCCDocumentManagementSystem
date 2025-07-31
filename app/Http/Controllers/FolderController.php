@@ -47,42 +47,41 @@ class FolderController extends Controller
     {
         $folders = Folder::accessibleByUser(Auth::user())->get();
         $currentFolderId = $request->get('parent_id');
-        $departments = $this->getAccessibleDepartments();
+        $baseFolders = BaseFolder::all(); // Fetch all base folders
 
-        return view('folder.create', compact('folders', 'currentFolderId', 'departments'));
+        return view('folder.create', compact('folders', 'currentFolderId', 'baseFolders'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'department' => 'required|in:' . implode(',', array_keys(Folder::DEPARTMENTS)),
+            'base_folder_id' => 'required|exists:base_folders,id',
             'parent_id' => 'nullable|exists:folders,id',
             'description' => 'nullable|string|max:500',
         ]);
 
-        // Check if user can create documents for this department
-        if (!Auth::user()->can("create {$request->department} documents")) {
-            abort(403, 'You do not have permission to create folders for this department.');
-        }
+        // Check if user can create documents for this base folder
+        $baseFolder = BaseFolder::find($request->base_folder_id);
 
-        // If parent folder is specified, ensure it's in the same department
-        if ($request->parent_id) {
-            $parentFolder = Folder::find($request->parent_id);
-            if ($parentFolder->department !== $request->department) {
-                return back()->withErrors(['parent_id' => 'Parent folder must be in the same department.']);
-            }
+
+        if (!Auth::user()->can("create {$baseFolder->name} documents")) {
+            abort(403, 'You do not have permission to create folders in this base folder.');
         }
 
         $folder = Folder::create([
             'user_id' => Auth::id(),
             'parent_id' => $request->parent_id,
             'name' => $request->name,
-            'department' => $request->department,
+            'base_folder_id' => $request->base_folder_id,
             'description' => $request->description,
         ]);
 
-        return redirect()->route('folders.show', $folder)->with('success', 'Folder created successfully');
+
+
+        return redirect()->route('folders.index')->with('success', 'Folder created successfully');
+
+//        return redirect()->route('folders.show', $folder)->with('success', 'Folder created successfully');
     }
 
     public function show(Folder $folder)

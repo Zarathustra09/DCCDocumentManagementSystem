@@ -37,41 +37,19 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
-                            <select class="form-select @error('department') is-invalid @enderror" id="department" name="department" required>
-                                <option value="">Select Department</option>
-                                @foreach($departments as $key => $name)
-                                    <option value="{{ $key }}" {{ old('department') == $key ? 'selected' : '' }}>
-                                        {{ $name }}
+                            <label for="base_folder_id" class="form-label">Base Folder <span class="text-danger">*</span></label>
+                            <select class="form-select @error('base_folder_id') is-invalid @enderror" id="base_folder_id" name="base_folder_id" required>
+                                <option value="">Select Base Folder</option>
+                                @foreach($baseFolders as $baseFolder)
+                                    <option value="{{ $baseFolder->id }}" {{ old('base_folder_id') == $baseFolder->id ? 'selected' : '' }}>
+                                        {{ $baseFolder->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('department')
+                            @error('base_folder_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <div class="form-text">Select the department this folder belongs to.</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="parent_id" class="form-label">Parent Folder</label>
-                            <select class="form-select @error('parent_id') is-invalid @enderror" id="parent_id" name="parent_id">
-                                <option value="">No Parent (Root Level)</option>
-                                @foreach($folders->groupBy('department') as $dept => $deptFolders)
-                                    <optgroup label="{{ \App\Models\Folder::DEPARTMENTS[$dept] }}">
-                                        @foreach($deptFolders as $folder)
-                                            <option value="{{ $folder->id }}"
-                                                {{ old('parent_id', $currentFolderId ?? '') == $folder->id ? 'selected' : '' }}
-                                                data-department="{{ $folder->department }}">
-                                                {{ $folder->name }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                            @error('parent_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text">Select a parent folder or leave empty to create at root level. Parent must be in the same department.</div>
+                            <div class="form-text">Select the base folder this folder belongs to.</div>
                         </div>
 
                         <div class="mb-3">

@@ -16,6 +16,7 @@ class Folder extends Model
         'name',
 //        'department',
         'description',
+        'base_folder_id',
     ];
 
 //     const DEPARTMENTS = [
