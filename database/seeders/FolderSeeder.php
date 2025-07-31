@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\BaseFolder;
 use App\Models\Folder;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,7 +22,7 @@ class FolderSeeder extends Seeder
             return;
         }
 
-        // Create folders for all departments including Business Units
+        // Define departments
         $departments = [
             'IT' => 'IT Department',
             'Finance' => 'Finance Department',
@@ -36,25 +37,33 @@ class FolderSeeder extends Seeder
             'Business Unit 3' => 'Business Unit 3'
         ];
 
+        // Create BaseFolders and associated Folders
         foreach ($departments as $deptKey => $deptName) {
+            // Create BaseFolder
+            $baseFolder = BaseFolder::create([
+                'name' => $deptKey,
+                'description' => $deptName,
+            ]);
+
+            // Create Folders under the BaseFolder
             $folderNames = $this->getDepartmentFolders($deptKey);
 
             foreach ($folderNames as $folderName => $description) {
                 Folder::create([
                     'user_id' => $superAdmin->id,
                     'parent_id' => null, // Root level folders
+                    'base_folder_id' => $baseFolder->id,
                     'name' => $folderName,
-                    'department' => $deptKey,
-                    'description' => $description
+                    'description' => $description,
                 ]);
             }
         }
 
-        $this->command->info('All department folders created successfully.');
+        $this->command->info('Base folders and department folders created successfully.');
     }
 
     /**
-     * Get 5 specific folders for each department
+     * Get specific folders for each department
      */
     private function getDepartmentFolders(string $department): array
     {

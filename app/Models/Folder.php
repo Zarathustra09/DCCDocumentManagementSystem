@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,23 +14,23 @@ class Folder extends Model
         'user_id',
         'parent_id',
         'name',
-        'department',
+//        'department',
         'description',
     ];
 
-     const DEPARTMENTS = [
-         'IT' => 'IT Department',
-         'Finance' => 'Finance Department',
-         'QA' => 'QA Department',
-         'HR' => 'HR Department',
-         'Purchasing' => 'Purchasing Department',
-         'Sales' => 'Sales Department',
-         'Operations' => 'Operations Department',
-         'General' => 'General/Public',
-         'Business Unit 1' => 'Business Unit 1',
-         'Business Unit 2' => 'Business Unit 2',
-         'Business Unit 3' => 'Business Unit 3'
-     ];
+//     const DEPARTMENTS = [
+//         'IT' => 'IT Department',
+//         'Finance' => 'Finance Department',
+//         'QA' => 'QA Department',
+//         'HR' => 'HR Department',
+//         'Purchasing' => 'Purchasing Department',
+//         'Sales' => 'Sales Department',
+//         'Operations' => 'Operations Department',
+//         'General' => 'General/Public',
+//         'Business Unit 1' => 'Business Unit 1',
+//         'Business Unit 2' => 'Business Unit 2',
+//         'Business Unit 3' => 'Business Unit 3'
+//     ];
 
     public function user()
     {
@@ -51,26 +52,26 @@ class Folder extends Model
         return $this->hasMany(Folder::class, 'parent_id');
     }
 
-    public function getDepartmentNameAttribute()
+//    public function getDepartmentNameAttribute()
+//    {
+//        return self::DEPARTMENTS[$this->department] ?? $this->department;
+//    }
+
+//    public function scopeForDepartment($query, $department)
+//    {
+//        return $query->where('department', $department);
+//    }
+//
+    public function scopeAccessibleByUser(Builder $query, $userId)
     {
-        return self::DEPARTMENTS[$this->department] ?? $this->department;
+        return $query->where('user_id', $userId)
+            ->orWhereHas('baseFolder', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            });
     }
 
-    public function scopeForDepartment($query, $department)
+    public function baseFolder()
     {
-        return $query->where('department', $department);
-    }
-
-    public function scopeAccessibleByUser($query, $user)
-    {
-        $accessibleDepartments = [];
-
-        foreach (self::DEPARTMENTS as $dept => $name) {
-            if ($user->can("view {$dept} documents")) {
-                $accessibleDepartments[] = $dept;
-            }
-        }
-
-        return $query->whereIn('department', $accessibleDepartments);
+        return $this->belongsTo(BaseFolder::class, 'base_folder_id');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BaseFolder;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,17 +19,25 @@ class FolderController extends Controller
 
     public function index()
     {
-        $folders = Folder::with(['children', 'user'])
+        // Get base folders with their related folders
+        $baseFolders = BaseFolder::with(['folders' => function($query) {
+            $query->with(['children', 'documents', 'user'])
+                  ->whereNull('parent_id')
+                  ->accessibleByUser(Auth::id())
+                  ->latest();
+        }])->get();
+
+        // Get folders that don't belong to any base folder (orphaned folders)
+        $orphanedFolders = Folder::with(['children', 'documents', 'user'])
             ->whereNull('parent_id')
-            ->accessibleByUser(Auth::user())
+            ->whereNull('base_folder_id')
+            ->accessibleByUser(Auth::id())
             ->latest()
-            ->get()
-            ->groupBy('department');
+            ->get();
 
-
-
-        return view('folder.index', compact('folders'));
+        return view('folder.index', compact('baseFolders', 'orphanedFolders'));
     }
+
 
     public function create(Request $request)
     {

@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('documents', function (Blueprint $table) {
-            $table->string('department')->after('user_id')->index();
-        });
+//        Schema::table('documents', function (Blueprint $table) {
+//            $table->string('department')->after('user_id')->index();
+//        });
     }
 
     public function down()
     {
-        Schema::table('documents', function (Blueprint $table) {
-            $table->dropColumn('department');
-        });
+//        Schema::table('documents', function (Blueprint $table) {
+//            $table->dropColumn('department');
+//        });
     }
 };
