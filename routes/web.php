@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BaseFolderController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentRegistrationEntryController;
 use App\Http\Controllers\DocumentRegistrationEntryFileController;
@@ -50,6 +51,30 @@ Route::middleware(['auth', 'permission:manage users|manage roles'])->prefix('adm
 
 Route::resource('roles', RoleController::class)->only(['index', 'show']);
 Route::post('roles/{role}/update-permissions', [RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
+
+
+
+
+
+Route::get('/base-folder/create', [BaseFolderController::class, 'create'])
+    ->name('base-folder.create');
+
+Route::post('/base-folder', [BaseFolderController::class, 'store'])
+    ->name('base-folder.store');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Document Registration Entry File Routes
 Route::post('document-registry/files/{file}/approve', [DocumentRegistrationEntryFileController::class, 'approve'])

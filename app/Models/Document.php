@@ -12,32 +12,19 @@ class Document extends Model
     protected $fillable = [
         'user_id',
         'folder_id',
+        'base_folder_id',
         'filename',
         'original_filename',
-        'document_registration_entry_id',
         'file_path',
         'file_type',
         'file_size',
         'mime_type',
         'description',
         'meta_data',
-        'department',
     ];
 
     protected $casts = [
         'meta_data' => 'array',
-    ];
-
-    // Use same departments as Folder model
-    const DEPARTMENTS = [
-        'IT' => 'IT Department',
-        'Finance' => 'Finance Department',
-        'QA' => 'QA Department',
-        'HR' => 'HR Department',
-        'Purchasing' => 'Purchasing Department',
-        'Sales' => 'Sales Department',
-        'Operations' => 'Operations Department',
-        'General' => 'General/Public'
     ];
 
     public function user()
@@ -50,31 +37,21 @@ class Document extends Model
         return $this->belongsTo(Folder::class);
     }
 
-    public function documentRegistrationEntry()
+    public function baseFolder()
     {
-        return $this->belongsTo(DocumentRegistrationEntry::class);
-    }
-
-    public function getDepartmentNameAttribute()
-    {
-        return self::DEPARTMENTS[$this->department] ?? $this->department;
-    }
-
-    public function scopeForDepartment($query, $department)
-    {
-        return $query->where('department', $department);
+        return $this->belongsTo(BaseFolder::class, 'base_folder_id');
     }
 
     public function scopeAccessibleByUser($query, $user)
     {
-        $accessibleDepartments = [];
+        $accessibleBaseFolders = [];
 
-        foreach (self::DEPARTMENTS as $dept => $name) {
-            if ($user->can("view {$dept} documents")) {
-                $accessibleDepartments[] = $dept;
+        foreach (BaseFolder::all() as $baseFolder) {
+            if ($user->can("view {$baseFolder->name} documents")) {
+                $accessibleBaseFolders[] = $baseFolder->id;
             }
         }
 
-        return $query->whereIn('department', $accessibleDepartments);
+        return $query->whereIn('base_folder_id', $accessibleBaseFolders);
     }
 }

@@ -19,15 +19,19 @@ class FolderController extends Controller
 
     public function index()
     {
-        // Get base folders with their related folders
-        $baseFolders = BaseFolder::with(['folders' => function($query) {
+        // Get base folders accessible by the user
+        $baseFolders = BaseFolder::where(function ($query) {
+            $query->whereHas('folders', function ($subQuery) {
+                $subQuery->accessibleByUser(Auth::user());
+            })->orDoesntHave('folders');
+        })->with(['folders' => function ($query) {
             $query->with(['children', 'documents', 'user'])
-                ->whereNull('parent_id')
-                ->accessibleByUser(Auth::user())
-                ->latest();
+                  ->whereNull('parent_id')
+                  ->accessibleByUser(Auth::user())
+                  ->latest();
         }])->get();
 
-        // Get folders that don't belong to any base folder (orphaned folders)
+        // Get orphaned folders accessible by the user
         $orphanedFolders = Folder::with(['children', 'documents', 'user'])
             ->whereNull('parent_id')
             ->whereNull('base_folder_id')
