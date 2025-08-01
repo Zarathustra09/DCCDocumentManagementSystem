@@ -13,6 +13,9 @@ use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
+    //TODO: to add download functionality for documents
+    //TODO: to add edit functionality for documents
+    //TODO: to remove close preview in  document.show
     public function __construct()
     {
 
