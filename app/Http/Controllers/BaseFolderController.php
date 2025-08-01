@@ -9,6 +9,7 @@ use App\Models\DocumentRegistrationEntry;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -54,8 +55,19 @@ class BaseFolderController extends Controller
             $role->givePermissionTo($permissions);
         }
 
-//        dd(Auth::user()->getAllPermissions());
+        // Return JSON response for AJAX requests
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Base folder created successfully.',
+                'base_folder' => $baseFolder
+            ]);
+        }
 
-        return redirect()->route('folders.index')->with('success', 'Base folder created successfully.');
-    }
+        return response()->json([
+                    'success' => true,
+                    'message' => 'Base folder created successfully.',
+                    'base_folder' => $baseFolder
+                ]);    }
+
 }

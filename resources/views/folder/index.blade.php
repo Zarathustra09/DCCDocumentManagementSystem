@@ -16,10 +16,10 @@
                         </div>
                         @can('create folders')
                             <div>
-                                <a href="{{ route('folders.create') }}" class="btn btn-primary btn-lg shadow-sm">
+                                <button class="btn btn-primary btn-lg shadow-sm" id="createBaseFolderBtn">
                                     <i class="bx bx-plus-circle me-2"></i>
-                                    Folder
-                                </a>
+                                    Add Folder Label
+                                </button>
                             </div>
                         @endcan
                     </div>
@@ -128,6 +128,16 @@
                                                         {{ $baseFolder->folders->count() }}
                                                     </span>
                                                 </div>
+                                                @can('create folders')
+                                                    @if(Auth::user()->can("create {$baseFolder->name} documents"))
+                                                        <button class="btn btn-sm btn-outline-primary add-folder-btn"
+                                                                data-base-folder-id="{{ $baseFolder->id }}"
+                                                                data-base-folder-name="{{ $baseFolder->name }}"
+                                                                onclick="event.stopPropagation();">
+                                                            <i class="bx bx-plus"></i>
+                                                        </button>
+                                                    @endif
+                                                @endcan
                                             </div>
                                         </div>
 
@@ -197,13 +207,13 @@
                                                                             </a>
                                                                         </li>
                                                                         @can('edit folders')
-                                                                            @if(Auth::user()->can("edit {$folder->baseFolder->name} document"))
+                                                                            @if($folder->baseFolder && Auth::user()->can("edit {$folder->baseFolder->name} documents"))
                                                                             <li>
                                                                                 <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
                                                                                     <i class="bx bx-edit me-2"></i>Edit
                                                                                 </a>
                                                                             </li>
-                                                                            @endcan
+                                                                            @endif
                                                                         @endcan
                                                                         @can('delete folders')
                                                                             <li><hr class="dropdown-divider"></li>
@@ -251,19 +261,30 @@
                                 @if($baseFolder->folders->count() > 0 || $baseFolder->folders->isEmpty())
                                     <div class="department-section mb-4" data-department="{{ $baseFolder->id }}">
                                         <div class="department-header mb-3">
-                                            <div class="d-flex align-items-center">
-                                                <div class="department-icon me-3">
-                                                    <i class="bx bx-category fs-3 text-primary"></i>
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="department-icon me-3">
+                                                        <i class="bx bx-category fs-3 text-primary"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="fw-bold mb-1">{{ $baseFolder->name }}</h4>
+                                                        @if($baseFolder->description)
+                                                            <p class="text-muted mb-1">{{ $baseFolder->description }}</p>
+                                                        @endif
+                                                        <span class="badge bg-primary-subtle text-primary rounded-pill">
+                                                            {{ $baseFolder->folders->count() }} {{ Str::plural('folder', $baseFolder->folders->count()) }}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h4 class="fw-bold mb-1">{{ $baseFolder->name }}</h4>
-                                                    @if($baseFolder->description)
-                                                        <p class="text-muted mb-1">{{ $baseFolder->description }}</p>
+                                                @can('create folders')
+                                                    @if(Auth::user()->can("create {$baseFolder->name} documents"))
+                                                        <button class="btn btn-primary add-folder-btn"
+                                                                data-base-folder-id="{{ $baseFolder->id }}"
+                                                                data-base-folder-name="{{ $baseFolder->name }}">
+                                                            <i class="bx bx-plus me-2"></i>Add Folder
+                                                        </button>
                                                     @endif
-                                                    <span class="badge bg-primary-subtle text-primary rounded-pill">
-                                                        {{ $baseFolder->folders->count() }} {{ Str::plural('folder', $baseFolder->folders->count()) }}
-                                                    </span>
-                                                </div>
+                                                @endcan
                                             </div>
                                         </div>
 
@@ -493,6 +514,22 @@
                 transform: rotate(-90deg);
             }
 
+            /* Add Folder Button Styles */
+            .add-folder-btn {
+                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+
+            .add-folder-btn:hover {
+                transform: scale(1.1);
+            }
+
             /* Compact Folder Cards */
             .folder-card-compact {
                 background: white;
@@ -617,6 +654,15 @@
                 padding: 60px 20px;
             }
 
+            /* SweetAlert2 custom styles */
+            .swal2-popup {
+                border-radius: 15px;
+            }
+
+            .swal2-title {
+                color: #2c3e50;
+            }
+
             /* Responsive adjustments */
             @media (max-width: 768px) {
                 .col-xxl-2 {
@@ -671,6 +717,7 @@
     @endpush
 
     @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 // View toggle functionality
@@ -744,6 +791,101 @@
                     });
                 });
 
+                // Add Folder functionality with SweetAlert
+                document.querySelectorAll('.add-folder-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const baseFolderId = this.dataset.baseFolderId;
+                        const baseFolderName = this.dataset.baseFolderName;
+
+                        Swal.fire({
+                            title: `Add Folder to ${baseFolderName}`,
+                            html: `
+                                <div class="mb-3 text-start">
+                                    <label for="folder-name" class="form-label">Folder Name</label>
+                                    <input type="text" class="form-control" id="folder-name" placeholder="Enter folder name">
+                                </div>
+                                <div class="mb-3 text-start">
+                                    <label for="folder-description" class="form-label">Description (Optional)</label>
+                                    <textarea class="form-control" id="folder-description" rows="3" placeholder="Enter folder description"></textarea>
+                                </div>
+                            `,
+                            showCancelButton: true,
+                            confirmButtonText: 'Create Folder',
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#0d6efd',
+                            cancelButtonColor: '#6c757d',
+                            focusConfirm: false,
+                            didOpen: () => {
+                                // Focus on the name input when modal opens
+                                document.getElementById('folder-name').focus();
+                            },
+                            preConfirm: () => {
+                                // Get values from the SweetAlert modal
+                                const nameInput = Swal.getPopup().querySelector('#folder-name');
+                                const descriptionInput = Swal.getPopup().querySelector('#folder-description');
+
+                                const name = nameInput ? nameInput.value.trim() : '';
+                                const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+                                if (!name) {
+                                    Swal.showValidationMessage('Please enter a folder name');
+                                    return false;
+                                }
+
+                                if (name.length > 255) {
+                                    Swal.showValidationMessage('Folder name must be less than 255 characters');
+                                    return false;
+                                }
+
+                                return { name, description };
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                createFolder(baseFolderId, result.value.name, result.value.description);
+                            }
+                        });
+                    });
+                });
+
+                // Create folder function
+                function createFolder(baseFolderId, name, description) {
+                    const formData = new FormData();
+                    formData.append('_token', '{{ csrf_token() }}');
+                    formData.append('name', name);
+                    formData.append('description', description);
+                    formData.append('base_folder_id', baseFolderId);
+
+                    fetch('{{ route("folders.store") }}', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.text();
+                        }
+                        throw new Error('Network response was not ok');
+                    })
+                    .then(() => {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Folder created successfully',
+                            icon: 'success',
+                            confirmButtonColor: '#0d6efd'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to create folder. Please try again.',
+                            icon: 'error',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    });
+                }
+
                 // Delete modal functionality
                 const folderModal = new bootstrap.Modal(document.getElementById('deleteFolderModal'));
 
@@ -780,6 +922,94 @@
                     });
                 });
             });
+
+            // Add Base Folder functionality with SweetAlert
+            document.getElementById('createBaseFolderBtn').addEventListener('click', function() {
+                    Swal.fire({
+                        title: 'Create Base Folder',
+                        html: `
+                    <div class="mb-3 text-start">
+                        <label for="base-folder-name" class="form-label">Base Folder Name</label>
+                        <input type="text" class="form-control" id="base-folder-name" placeholder="Enter base folder name">
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label for="base-folder-description" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="base-folder-description" rows="3" placeholder="Enter base folder description"></textarea>
+                    </div>
+                `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Create Base Folder',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        focusConfirm: false,
+                        didOpen: () => {
+                            document.getElementById('base-folder-name').focus();
+                        },
+                        preConfirm: () => {
+                            const nameInput = Swal.getPopup().querySelector('#base-folder-name');
+                            const descriptionInput = Swal.getPopup().querySelector('#base-folder-description');
+
+                            const name = nameInput ? nameInput.value.trim() : '';
+                            const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+                            if (!name) {
+                                Swal.showValidationMessage('Please enter a base folder name');
+                                return false;
+                            }
+
+                            if (name.length > 255) {
+                                Swal.showValidationMessage('Base folder name must be less than 255 characters');
+                                return false;
+                            }
+
+                            return { name, description };
+                        }
+                    }).then((result) => {
+                        console.log('Swal result:', result); // Log the SweetAlert response
+                        if (result.isConfirmed) {
+                            createBaseFolder(result.value.name, result.value.description);
+                        }
+                    });
+                });
+        function createBaseFolder(name, description) {
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('name', name);
+            formData.append('description', description);
+
+            fetch('{{ route("base-folder.store") }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) { // status 200
+                    return response.json();
+                }
+                return response.json().then(data => Promise.reject(data));
+            })
+            .then(data => {
+                // Success: data.base_folder contains the new base folder
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Base folder created successfully',
+                    icon: 'success',
+                    confirmButtonColor: '#0d6efd'
+                }).then(() => {
+                    window.location.reload();
+                });
+            })
+            .catch(error => {
+                // Handle error
+                console.error('Fetch error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'Failed to create base folder.',
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        }
         </script>
     @endpush
 @endsection
