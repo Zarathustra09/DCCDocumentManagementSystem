@@ -7,6 +7,7 @@ use App\Models\DocumentRegistrationEntry;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -26,25 +27,25 @@ class DocumentController extends Controller
 
         if ($currentFolderId) {
             $currentFolder = Folder::find($currentFolderId);
-            if ($currentFolder && Auth::user()->can("create {$currentFolder->department} documents")) {
-                $preselectedDepartment = $currentFolder->department;
+            if ($currentFolder && $currentFolder->baseFolder && Auth::user()->can("create {$currentFolder->baseFolder->name} documents")) {
+                $preselectedDepartment = $currentFolder->baseFolder->name;
             }
         }
 
-        $availableDepartments = [];
-        foreach (Document::DEPARTMENTS as $dept => $name) {
-            if (Auth::user()->can("create {$dept} documents")) {
-                $availableDepartments[$dept] = $name;
+        // Get available base folders instead of departments
+        $availableBaseFolders = [];
+        foreach (\App\Models\BaseFolder::all() as $baseFolder) {
+            if (Auth::user()->can("create {$baseFolder->name} documents")) {
+                $availableBaseFolders[$baseFolder->name] = $baseFolder->name;
             }
         }
 
-        if (empty($availableDepartments)) {
+        if (empty($availableBaseFolders)) {
             abort(403, 'You do not have permission to create documents for any department.');
         }
 
         $folders = Folder::accessibleByUser(Auth::user())->get();
 
-        // Get approved registration entries that user can access
         $registrationEntries = DocumentRegistrationEntry::where('status', 'approved')
             ->orderBy('document_title')
             ->get();
@@ -54,40 +55,52 @@ class DocumentController extends Controller
             'currentFolderId',
             'currentFolder',
             'preselectedDepartment',
-            'availableDepartments',
+            'availableBaseFolders',
             'registrationEntries'
         ));
     }
-
     public function show(Document $document)
     {
         // Check if user can view documents for this department
-        if (!Auth::user()->can("view {$document->department} documents")) {
+        if (!Auth::user()->can("view {$document->baseFolder->name} documents")) {
             abort(403, 'You do not have permission to view this document.');
         }
 
         return view('document.show', compact('document'));
     }
 
-    // Rest of your methods remain the same as they already have proper permission checks
-   // In app/Http/Controllers/DocumentController.php - update store method validation
     public function store(Request $request)
     {
+
+        Log::info('Document upload request received', [
+            'user_id' => Auth::id(),
+            'base_folder_name' => $request->base_folder_name,
+            'folder_id' => $request->folder_id,
+            'document_registration_entry_id' => $request->document_registration_entry_id,
+            'description' => $request->description
+        ]);
+        // Get available base folder names for validation
+
+
         $request->validate([
             'file' => 'required|file|mimes:pdf,doc,docx,txt,jpg,jpeg,png,gif,xls,xlsx|max:10240',
-            'department' => 'required|in:' . implode(',', array_keys(Document::DEPARTMENTS)),
             'folder_id' => 'nullable|exists:folders,id',
             'document_registration_entry_id' => 'nullable|exists:document_registration_entries,id',
             'description' => 'nullable|string|max:500',
         ]);
 
-        if (!Auth::user()->can("create {$request->department} documents")) {
+        $base_folder_name = Folder::find($request->folder_id)->baseFolder->name ?? null;
+
+        if (!Auth::user()->can("create {$base_folder_name} documents")) {
             abort(403, 'You do not have permission to create documents for this department.');
         }
 
+        // Get the base folder ID
+        $baseFolder = \App\Models\BaseFolder::where('name', $base_folder_name)->first();
+
         if ($request->folder_id) {
             $folder = Folder::find($request->folder_id);
-            if ($folder->department !== $request->department) {
+            if ($folder->base_folder_id !== $baseFolder->id) {
                 return back()->withErrors(['folder_id' => 'Selected folder must be in the same department.']);
             }
         }
@@ -95,11 +108,12 @@ class DocumentController extends Controller
         $file = $request->file('file');
         $originalName = $file->getClientOriginalName();
         $filename = time() . '_' . $originalName;
-        $filePath = $file->store('documents', 'public');
+        $filePath = $file->store('documents', 'local');
 
         $document = Document::create([
             'user_id' => Auth::id(),
             'folder_id' => $request->folder_id,
+            'base_folder_id' => $baseFolder->id,
             'document_registration_entry_id' => $request->document_registration_entry_id,
             'filename' => $filename,
             'original_filename' => $originalName,
@@ -108,7 +122,6 @@ class DocumentController extends Controller
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
             'description' => $request->description,
-            'department' => $request->department,
         ]);
 
         if ($request->folder_id) {
@@ -117,67 +130,65 @@ class DocumentController extends Controller
 
         return redirect()->route('folders.index')->with('success', 'Document uploaded successfully');
     }
-
     public function edit(Document $document)
     {
-        // Check if user can edit documents for this department
-        if (!Auth::user()->can("edit {$document->department} documents")) {
+        if (!Auth::user()->can("edit {$document->baseFolder->name} documents")) {
             abort(403, 'You do not have permission to edit this document.');
         }
 
-        // Get available departments (only those user can edit documents for)
-        $departments = [];
-        foreach (Document::DEPARTMENTS as $dept => $name) {
-            if (Auth::user()->can("edit {$dept} documents")) {
-                $departments[$dept] = $name;
+        // Get available base folders
+        $baseFolders = [];
+        foreach (\App\Models\BaseFolder::all() as $baseFolder) {
+            if (Auth::user()->can("edit {$baseFolder->name} documents")) {
+                $baseFolders[$baseFolder->name] = $baseFolder->name;
             }
         }
 
-        // Get folders user can access for the document's department
         $folders = Folder::accessibleByUser(Auth::user())
-            ->where('department', $document->department)
+            ->where('base_folder_id', $document->base_folder_id)
             ->get();
 
-        // Get approved registration entries that user can access
         $registrationEntries = DocumentRegistrationEntry::where('status', 'approved')
             ->orderBy('document_title')
             ->get();
 
-        return view('document.edit', compact('document', 'folders', 'departments', 'registrationEntries'));
+        return view('document.edit', compact('document', 'folders', 'baseFolders', 'registrationEntries'));
     }
 
     public function update(Request $request, Document $document)
     {
-        // Check if user can edit documents for this department
-        if (!Auth::user()->can("edit {$document->department} documents")) {
+        if (!Auth::user()->can("edit {$document->baseFolder->name} documents")) {
             abort(403);
         }
 
+        $baseFolderNames = \App\Models\BaseFolder::pluck('name')->toArray();
+
         $request->validate([
-            'department' => 'required|in:' . implode(',', array_keys(Document::DEPARTMENTS)),
+            'base_folder_name' => 'required|in:' . implode(',', $baseFolderNames),
             'folder_id' => 'nullable|exists:folders,id',
             'document_registration_entry_id' => 'nullable|exists:document_registration_entries,id',
             'description' => 'nullable|string|max:500',
         ]);
 
-        // Check if user can edit documents for the new department
-        if (!Auth::user()->can("edit {$request->department} documents")) {
+        if (!Auth::user()->can("edit {$request->base_folder_name} documents")) {
             abort(403, 'You do not have permission to move documents to this department.');
         }
 
-        // If folder is specified, ensure it's in the same department
+        // Get the base folder ID
+        $baseFolder = \App\Models\BaseFolder::where('name', $request->base_folder_name)->first();
+
         if ($request->folder_id) {
             $folder = Folder::find($request->folder_id);
-            if ($folder->department !== $request->department) {
+            if ($folder->base_folder_id !== $baseFolder->id) {
                 return back()->withErrors(['folder_id' => 'Selected folder must be in the same department.']);
             }
         }
 
         $document->update([
             'folder_id' => $request->folder_id,
+            'base_folder_id' => $baseFolder->id,
             'document_registration_entry_id' => $request->document_registration_entry_id,
             'description' => $request->description,
-            'department' => $request->department,
         ]);
 
         if ($document->folder_id) {
@@ -213,264 +224,44 @@ class DocumentController extends Controller
         );
     }
 
+    /**
+     * Preview a document.
+     *
+     * @param Document $document
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function move(Request $request, Document $document)
-    {
-        $request->validate([
-            'folder_id' => 'nullable|exists:folders,id'
-        ]);
+     {
+         $request->validate([
+             'folder_id' => 'nullable|exists:folders,id'
+         ]);
 
-        // Check if user can edit documents for this department
-        if (!Auth::user()->can("edit {$document->department} documents")) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to move this document.'
-            ], 403);
-        }
+         if (!Auth::user()->can("edit {$document->baseFolder->name} documents")) {
+             return response()->json([
+                 'success' => false,
+                 'message' => 'You do not have permission to move this document.'
+             ], 403);
+         }
 
-        // If moving to a folder, ensure it's in the same department
-        if ($request->folder_id) {
-            $folder = Folder::findOrFail($request->folder_id);
-            if ($folder->department !== $document->department) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot move document to a folder in a different department.'
-                ], 400);
-            }
-        }
+         if ($request->folder_id) {
+             $folder = Folder::findOrFail($request->folder_id);
+             if ($folder->base_folder_id !== $document->base_folder_id) {
+                 return response()->json([
+                     'success' => false,
+                     'message' => 'Cannot move document to a folder in a different department.'
+                 ], 400);
+             }
+         }
 
-        $document->update(['folder_id' => $request->folder_id]);
+         $document->update(['folder_id' => $request->folder_id]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Document moved successfully.'
-        ]);
-    }
+         return response()->json([
+             'success' => true,
+             'message' => 'Document moved successfully.'
+         ]);
+     }
 
-    public function preview(Document $document)
-    {
-        \Log::info('Document preview requested', [
-            'document_id' => $document->id,
-            'user_id' => Auth::id(),
-            'filename' => $document->original_filename,
-            'file_type' => $document->file_type,
-            'file_size' => $document->file_size,
-            'department' => $document->department
-        ]);
 
-        // Check if it's a Word document
-        if (!in_array($document->file_type, ['doc', 'docx'])) {
-            \Log::info('Preview not available for file type', [
-                'document_id' => $document->id,
-                'file_type' => $document->file_type,
-                'user_id' => Auth::id()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Preview not available for this file type'
-            ], 400);
-        }
-
-        try {
-            $filePath = storage_path('app/public/' . $document->file_path);
-
-            \Log::info('Processing document preview', [
-                'document_id' => $document->id,
-                'file_path' => $filePath,
-                'file_exists' => file_exists($filePath),
-                'user_id' => Auth::id()
-            ]);
-
-            if (!file_exists($filePath)) {
-                \Log::error('Document file not found', [
-                    'document_id' => $document->id,
-                    'file_path' => $filePath,
-                    'user_id' => Auth::id()
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'File not found'
-                ], 404);
-            }
-
-            // Validate file size (limit to 10MB for preview)
-            $fileSize = filesize($filePath);
-            if ($fileSize > 10 * 1024 * 1024) {
-                \Log::warning('Document too large for preview', [
-                    'document_id' => $document->id,
-                    'file_size' => $fileSize,
-                    'user_id' => Auth::id()
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'File too large for preview. Please download to view.'
-                ], 400);
-            }
-
-            // Validate file is actually a Word document by checking mime type
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mimeType = finfo_file($finfo, $filePath);
-            finfo_close($finfo);
-
-            \Log::info('Document mime type validation', [
-                'document_id' => $document->id,
-                'detected_mime_type' => $mimeType,
-                'stored_mime_type' => $document->mime_type,
-                'user_id' => Auth::id()
-            ]);
-
-            $validMimeTypes = [
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-                'application/msword', // .doc
-                'application/zip', // Sometimes .docx appears as zip
-            ];
-
-            if (!in_array($mimeType, $validMimeTypes)) {
-                \Log::warning('Invalid Word document format', [
-                    'document_id' => $document->id,
-                    'detected_mime_type' => $mimeType,
-                    'user_id' => Auth::id()
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid Word document format'
-                ], 400);
-            }
-
-            // Try to load the document with better error handling
-            try {
-                \Log::info('Loading Word document with PHPWord', [
-                    'document_id' => $document->id,
-                    'user_id' => Auth::id()
-                ]);
-                $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
-            } catch (\PhpOffice\PhpWord\Exception\Exception $e) {
-                \Log::error('PHPWord document loading failed', [
-                    'document_id' => $document->id,
-                    'error' => $e->getMessage(),
-                    'user_id' => Auth::id()
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Document appears to be corrupted or uses an unsupported format'
-                ], 400);
-            } catch (\Exception $e) {
-                \Log::error('General document loading error', [
-                    'document_id' => $document->id,
-                    'error' => $e->getMessage(),
-                    'user_id' => Auth::id()
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unable to read document: ' . $e->getMessage()
-                ], 500);
-            }
-
-            // Convert to HTML with error handling
-            try {
-                \Log::info('Converting document to HTML', [
-                    'document_id' => $document->id,
-                    'user_id' => Auth::id()
-                ]);
-
-                $htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
-
-                // Use temporary file instead of output buffer
-                $tempFile = tempnam(sys_get_temp_dir(), 'phpword_preview_');
-                $htmlWriter->save($tempFile);
-
-                $htmlContent = file_get_contents($tempFile);
-                unlink($tempFile); // Clean up temp file
-
-                \Log::info('Document conversion completed', [
-                    'document_id' => $document->id,
-                    'html_length' => strlen($htmlContent),
-                    'temp_file' => $tempFile,
-                    'user_id' => Auth::id()
-                ]);
-
-                if (empty($htmlContent)) {
-                    \Log::warning('Document conversion resulted in empty content', [
-                        'document_id' => $document->id,
-                        'user_id' => Auth::id()
-                    ]);
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Document appears to be empty or could not be converted'
-                    ], 400);
-                }
-
-                // Clean up the HTML content
-                $htmlContent = $this->cleanWordHtml($htmlContent);
-
-                \Log::info('Document preview generated successfully', [
-                    'document_id' => $document->id,
-                    'final_html_length' => strlen($htmlContent),
-                    'user_id' => Auth::id()
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'content' => $htmlContent
-                ]);
-
-            } catch (\Exception $e) {
-                \Log::error('Document HTML conversion failed', [
-                    'document_id' => $document->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'user_id' => Auth::id()
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error converting document to preview format'
-                ], 500);
-            }
-
-        } catch (\Exception $e) {
-            \Log::error('Document preview error', [
-                'document_id' => $document->id,
-                'file_path' => $filePath ?? 'unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => Auth::id()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'An unexpected error occurred while loading the preview'
-            ], 500);
-        }
-    }
-
-    private function cleanWordHtml($html)
-    {
-        // Remove XML declaration and DOCTYPE
-        $html = preg_replace('/<\?xml[^>]*>/', '', $html);
-        $html = preg_replace('/<!DOCTYPE[^>]*>/', '', $html);
-
-        // Replace html tags with div container
-        $html = preg_replace('/<html[^>]*>/', '<div class="word-document">', $html);
-        $html = str_replace('</html>', '</div>', $html);
-
-        // Remove head section entirely
-        $html = preg_replace('/<head[^>]*>.*?<\/head>/s', '', $html);
-
-        // Clean body tags
-        $html = preg_replace('/<body[^>]*>/', '', $html);
-        $html = str_replace('</body>', '', $html);
-
-        // Remove problematic inline styles but keep basic formatting
-        $html = preg_replace('/style="[^"]*?(font-family|color|text-align|font-weight|font-style)[^"]*?"/', '', $html);
-
-        // Clean up multiple spaces and line breaks
-        $html = preg_replace('/\s+/', ' ', $html);
-        $html = str_replace('> <', '><', $html);
-
-        // Ensure proper paragraph spacing
-        $html = str_replace('<p></p>', '', $html);
-
-        return trim($html);
-    }
 
     public function search(Request $request)
     {
@@ -505,5 +296,250 @@ class DocumentController extends Controller
                 'more' => $morePages
             ]
         ]);
+    }
+
+
+    public function preview(Document $document)
+    {
+        if (!Auth::user()->can("view {$document->baseFolder->name} documents")) {
+            abort(403, 'You do not have permission to view this file.');
+        }
+
+        if (!Storage::disk('local')->exists($document->file_path)) {
+            abort(404, 'File not found.');
+        }
+
+        $filePath = Storage::disk('local')->path($document->file_path);
+
+        if (str_contains($document->mime_type, 'pdf') || str_contains($document->mime_type, 'image')) {
+            return response()->file($filePath, [
+                'Content-Type' => $document->mime_type,
+                'Content-Disposition' => 'inline; filename="' . $document->original_filename . '"'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Preview not available for this file type'
+        ], 400);
+    }
+
+    public function previewApi(Document $document)
+    {
+        if (!Auth::user()->can("view {$document->baseFolder->name} documents")) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Permission denied'
+            ], 403);
+        }
+
+        if (!$document || !Storage::disk('local')->exists($document->file_path)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File not found'
+            ], 404);
+        }
+
+        try {
+            $filePath = Storage::disk('local')->path($document->file_path);
+
+            if (!file_exists($filePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File not found'
+                ], 404);
+            }
+
+            $fileSize = filesize($filePath);
+            if ($fileSize > 10 * 1024 * 1024) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File too large for preview. Please download to view.'
+                ], 400);
+            }
+
+            $extension = strtolower(pathinfo($document->original_filename, PATHINFO_EXTENSION));
+            $mimeType = $document->mime_type;
+
+            if (in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word')) {
+                return $this->previewWordDocument($filePath);
+            }
+
+            if (in_array($extension, ['xls', 'xlsx', 'csv']) || str_contains($mimeType, 'spreadsheet') || str_contains($mimeType, 'excel')) {
+                return $this->previewSpreadsheet($filePath);
+            }
+
+            if (in_array($extension, ['txt', 'csv']) || str_contains($mimeType, 'text')) {
+                return $this->previewTextFile($filePath);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Preview not available for this file type'
+            ], 400);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while generating the preview'
+            ], 500);
+        }
+    }
+
+    private function previewWordDocument($filePath)
+    {
+        try {
+            $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
+        } catch (\PhpOffice\PhpWord\Exception\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Document appears to be corrupted or uses an unsupported format'
+            ], 400);
+        }
+
+        try {
+            $htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
+            $tempFile = tempnam(sys_get_temp_dir(), 'phpword_preview_');
+            $htmlWriter->save($tempFile);
+            $htmlContent = file_get_contents($tempFile);
+            unlink($tempFile);
+
+            if (empty($htmlContent)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document appears to be empty'
+                ], 400);
+            }
+
+            $htmlContent = $this->cleanWordHtml($htmlContent);
+
+            return response()->json([
+                'success' => true,
+                'content' => $htmlContent,
+                'content_type' => 'word'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error converting document to preview format'
+            ], 500);
+        }
+    }
+
+    private function previewSpreadsheet($filePath)
+    {
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $highestRow = $worksheet->getHighestRow();
+            $highestColumn = $worksheet->getHighestColumn();
+            $maxColumn = min(20, \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn));
+            $limitedHighestColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($maxColumn);
+
+            $data = $worksheet->rangeToArray('A1:' . $limitedHighestColumn . min(100, $highestRow), null, true, true);
+
+            if (empty($data)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Spreadsheet appears to be empty'
+                ], 400);
+            }
+
+            $headings = array_shift($data);
+            $html = $this->generateSpreadsheetHtml($headings, $data, $highestRow);
+
+            return response()->json([
+                'success' => true,
+                'content' => $html,
+                'content_type' => 'spreadsheet'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error reading spreadsheet file'
+            ], 500);
+        }
+    }
+
+    private function previewTextFile($filePath)
+    {
+        try {
+            $content = file_get_contents($filePath);
+            if ($content === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to read text file'
+                ], 500);
+            }
+
+            if (strlen($content) > 50000) {
+                $content = substr($content, 0, 50000) . "\n\n... (content truncated for preview)";
+            }
+
+            $html = '<div class="text-preview-content">' . htmlspecialchars($content) . '</div>';
+
+            return response()->json([
+                'success' => true,
+                'content' => $html,
+                'content_type' => 'text'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error reading text file'
+            ], 500);
+        }
+    }
+
+    private function generateSpreadsheetHtml($headings, $data, $totalRows)
+    {
+        $html = '<div class="spreadsheet-preview">';
+        $html .= '<div class="table-responsive">';
+        $html .= '<table class="table table-bordered table-sm">';
+
+        if (!empty($headings)) {
+            $html .= '<thead><tr>';
+            foreach ($headings as $heading) {
+                $html .= '<th>' . htmlspecialchars($heading ?? '') . '</th>';
+            }
+            $html .= '</tr></thead>';
+        }
+
+        $html .= '<tbody>';
+        foreach ($data as $row) {
+            $html .= '<tr>';
+            foreach ($row as $cell) {
+                $html .= '<td>' . htmlspecialchars($cell ?? '') . '</td>';
+            }
+            $html .= '</tr>';
+        }
+        $html .= '</tbody>';
+        $html .= '</table>';
+        $html .= '</div>';
+
+        if ($totalRows > 100) {
+            $html .= '<div class="alert alert-info mt-2 mb-0">';
+            $html .= '<small><i class="bx bx-info-circle"></i> Showing first 100 rows of ' . $totalRows . ' total rows. Download the file to view all data.</small>';
+            $html .= '</div>';
+        }
+
+        $html .= '</div>';
+        return $html;
+    }
+
+    private function cleanWordHtml($html)
+    {
+        $html = preg_replace('/<\?xml[^>]*>/', '', $html);
+        $html = preg_replace('/<!DOCTYPE[^>]*>/', '', $html);
+        $html = preg_replace('/<html[^>]*>/', '<div class="word-document">', $html);
+        $html = str_replace('</html>', '</div>', $html);
+        $html = preg_replace('/<head[^>]*>.*?<\/head>/s', '', $html);
+        $html = preg_replace('/<body[^>]*>/', '', $html);
+        $html = str_replace('</body>', '', $html);
+        $html = preg_replace('/style="[^"]*?(font-family|color|text-align|font-weight|font-style)[^"]*?"/', '', $html);
+        $html = preg_replace('/\s+/', ' ', $html);
+        $html = str_replace('> <', '><', $html);
+        $html = str_replace('<p></p>', '', $html);
+        return trim($html);
     }
 }
