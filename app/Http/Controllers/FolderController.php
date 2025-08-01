@@ -19,8 +19,6 @@ class FolderController extends Controller
 
     public function index()
     {
-
-
         // Get base folders accessible by the user
         $baseFolders = BaseFolder::where(function ($query) {
             $query->whereHas('folders', function ($subQuery) {
@@ -44,12 +42,20 @@ class FolderController extends Controller
         return view('folder.index', compact('baseFolders', 'orphanedFolders'));
     }
 
-
     public function create(Request $request)
     {
-        $folders = Folder::accessibleByUser(Auth::user())->get();
         $currentFolderId = $request->get('parent_id');
-        $baseFolders = BaseFolder::all(); // Fetch all base folders
+        $baseFolders = BaseFolder::all()->filter(function ($baseFolder) {
+            return Auth::user()->can("create {$baseFolder->name} documents");
+        });
+
+        // Get folders for potential parent selection
+        $folders = collect();
+        if ($request->has('base_folder_id')) {
+            $folders = Folder::where('base_folder_id', $request->base_folder_id)
+                ->accessibleByUser(Auth::user())
+                ->get();
+        }
 
         return view('folder.create', compact('folders', 'currentFolderId', 'baseFolders'));
     }
@@ -63,12 +69,18 @@ class FolderController extends Controller
             'description' => 'nullable|string|max:500',
         ]);
 
-        // Check if user can create documents for this base folder
         $baseFolder = BaseFolder::find($request->base_folder_id);
-
 
         if (!Auth::user()->can("create {$baseFolder->name} documents")) {
             abort(403, 'You do not have permission to create folders in this base folder.');
+        }
+
+        // If parent folder is specified, ensure it's in the same base folder
+        if ($request->parent_id) {
+            $parentFolder = Folder::find($request->parent_id);
+            if ($parentFolder->base_folder_id != $request->base_folder_id) {
+                return back()->withErrors(['parent_id' => 'Parent folder must be in the same base folder.']);
+            }
         }
 
         $folder = Folder::create([
@@ -79,16 +91,11 @@ class FolderController extends Controller
             'description' => $request->description,
         ]);
 
-
-
         return redirect()->route('folders.index')->with('success', 'Folder created successfully');
-
-//        return redirect()->route('folders.show', $folder)->with('success', 'Folder created successfully');
     }
 
     public function show(Folder $folder)
     {
-        // Check if user can view documents for this department
         if (!Auth::user()->can("view {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403, 'You do not have permission to view this folder.');
         }
@@ -101,45 +108,45 @@ class FolderController extends Controller
 
     public function edit(Folder $folder)
     {
-        // Check if user can edit documents for this department
         if (!Auth::user()->can("edit {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403, 'You do not have permission to edit this folder.');
         }
 
         $folders = Folder::accessibleByUser(Auth::user())
             ->where('id', '!=', $folder->id)
-            ->where('department', $folder->department)
+            ->where('base_folder_id', $folder->base_folder_id)
             ->get();
 
-        $departments = $this->getAccessibleDepartments();
+        $baseFolders = BaseFolder::all()->filter(function ($baseFolder) {
+            return Auth::user()->can("edit {$baseFolder->name} documents");
+        });
 
-        return view('folder.edit', compact('folder', 'folders', 'departments'));
+        return view('folder.edit', compact('folder', 'folders', 'baseFolders'));
     }
 
     public function update(Request $request, Folder $folder)
     {
-        // Check if user can edit documents for this department
         if (!Auth::user()->can("edit {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403);
         }
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'department' => 'required|in:' . implode(',', array_keys(Folder::DEPARTMENTS)),
+            'base_folder_id' => 'required|exists:base_folders,id',
             'parent_id' => 'nullable|exists:folders,id',
             'description' => 'nullable|string|max:500',
         ]);
 
-        // Check if user can create/edit documents for the new department
-        if (!Auth::user()->can("edit {$request->department} documents")) {
-            abort(403, 'You do not have permission to move folders to this department.');
+        $newBaseFolder = BaseFolder::find($request->base_folder_id);
+        if (!Auth::user()->can("edit {$newBaseFolder->name} documents")) {
+            abort(403, 'You do not have permission to move folders to this base folder.');
         }
 
-        // If parent folder is specified, ensure it's in the same department
+        // If parent folder is specified, ensure it's in the same base folder
         if ($request->parent_id) {
             $parentFolder = Folder::find($request->parent_id);
-            if ($parentFolder->department !== $request->department) {
-                return back()->withErrors(['parent_id' => 'Parent folder must be in the same department.']);
+            if ($parentFolder->base_folder_id != $request->base_folder_id) {
+                return back()->withErrors(['parent_id' => 'Parent folder must be in the same base folder.']);
             }
 
             // Prevent circular references
@@ -155,7 +162,7 @@ class FolderController extends Controller
         $folder->update([
             'parent_id' => $request->parent_id,
             'name' => $request->name,
-            'department' => $request->department,
+            'base_folder_id' => $request->base_folder_id,
             'description' => $request->description,
         ]);
 
@@ -168,8 +175,7 @@ class FolderController extends Controller
 
     public function destroy(Folder $folder)
     {
-        // Check if user can delete documents for this department
-        if (!Auth::user()->can("delete {$folder->department} documents") && !Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can("delete {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403);
         }
 
@@ -184,8 +190,7 @@ class FolderController extends Controller
 
     public function move(Request $request, Folder $folder)
     {
-        // Check if user can edit documents for this department
-        if (!Auth::user()->can("edit {$folder->department} documents") && !Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can("edit {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403);
         }
 
@@ -196,13 +201,13 @@ class FolderController extends Controller
         if ($request->parent_id) {
             $parent = Folder::find($request->parent_id);
 
-            // Check if target folder is in the same department
-            if ($parent->department !== $folder->department) {
-                return response()->json(['success' => false, 'message' => 'Cannot move folder to a different department'], 400);
+            // Check if target folder is in the same base folder
+            if ($parent->base_folder_id !== $folder->base_folder_id) {
+                return response()->json(['success' => false, 'message' => 'Cannot move folder to a different base folder'], 400);
             }
 
             // Check if user can access target folder
-            if (!Auth::user()->can("view {$parent->department} documents") && !Auth::user()->hasRole('admin')) {
+            if (!Auth::user()->can("view {$parent->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
                 return response()->json(['success' => false, 'message' => 'Cannot move to this folder'], 403);
             }
 
@@ -222,18 +227,5 @@ class FolderController extends Controller
             'success' => true,
             'message' => 'Folder moved successfully'
         ]);
-    }
-
-    private function getAccessibleDepartments()
-    {
-        $departments = [];
-
-        foreach (Folder::DEPARTMENTS as $dept => $name) {
-            if (Auth::user()->can("create {$dept} documents")) {
-                $departments[$dept] = $name;
-            }
-        }
-
-        return $departments;
     }
 }

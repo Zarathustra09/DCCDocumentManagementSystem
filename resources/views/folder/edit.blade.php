@@ -49,19 +49,20 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
-                            <select class="form-select @error('department') is-invalid @enderror" id="department" name="department" required>
-                                @foreach($departments as $key => $name)
-                                    <option value="{{ $key }}" {{ (old('department', $folder->department) == $key) ? 'selected' : '' }}>
-                                        {{ $name }}
+                            <label for="base_folder_id" class="form-label">Base Folder <span class="text-danger">*</span></label>
+                            <select class="form-select @error('base_folder_id') is-invalid @enderror" id="base_folder_id" name="base_folder_id" required>
+                                <option value="">Select Base Folder</option>
+                                @foreach($baseFolders as $baseFolder)
+                                    <option value="{{ $baseFolder->id }}" {{ old('base_folder_id', $folder->base_folder_id) == $baseFolder->id ? 'selected' : '' }}>
+                                        {{ $baseFolder->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('department')
+                            @error('base_folder_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                             <div class="form-text">
-                                <i class="bx bx-info-circle"></i> Changing department will affect access permissions for this folder.
+                                <i class="bx bx-info-circle"></i> Changing base folder will affect access permissions for this folder.
                             </div>
                         </div>
 
@@ -72,7 +73,7 @@
                                 @foreach($folders as $parentFolder)
                                     <option value="{{ $parentFolder->id }}"
                                         {{ (old('parent_id', $folder->parent_id) == $parentFolder->id) ? 'selected' : '' }}
-                                        data-department="{{ $parentFolder->department }}">
+                                        data-base-folder="{{ $parentFolder->base_folder_id }}">
                                         {{ $parentFolder->name }}
                                     </option>
                                 @endforeach
@@ -81,7 +82,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                             <div class="form-text">
-                                <i class="bx bx-info-circle"></i> Parent folder must be in the same department.
+                                <i class="bx bx-info-circle"></i> Parent folder must be in the same base folder.
                             </div>
                         </div>
 
@@ -99,9 +100,11 @@
                             </button>
 
                             @can('delete folders')
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                                <i class="bx bx-trash"></i> Delete Folder
-                            </button>
+                                @if(Auth::user()->can("delete {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                        <i class="bx bx-trash"></i> Delete Folder
+                                    </button>
+                                @endif
                             @endcan
                         </div>
                     </form>
@@ -114,9 +117,9 @@
                 </div>
                 <div class="card-body">
                     <div class="row mb-2">
-                        <div class="col-md-4 fw-bold">Department</div>
+                        <div class="col-md-4 fw-bold">Base Folder</div>
                         <div class="col-md-8">
-                            <span class="badge bg-primary">{{ $folder->department_name }}</span>
+                            <span class="badge bg-primary">{{ $folder->baseFolder->name }}</span>
                         </div>
                     </div>
                     <div class="row mb-2">
@@ -142,69 +145,71 @@
 </div>
 
 @can('delete folders')
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete the folder <strong>"{{ $folder->name }}"</strong> and all its contents?</p>
-                <p class="mb-0 text-danger fw-bold">This action cannot be undone.</p>
+    @if(Auth::user()->can("delete {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete the folder <strong>"{{ $folder->name }}"</strong> and all its contents?</p>
+                        <p class="mb-0 text-danger fw-bold">This action cannot be undone.</p>
 
-                @if($folder->children->count() > 0 || $folder->documents->count() > 0)
-                <div class="alert alert-warning mt-3">
-                    <i class="bx bx-error-circle"></i> Warning: This folder contains:
-                    <ul class="mb-0">
-                        @if($folder->children->count() > 0)
-                        <li>{{ $folder->children->count() }} subfolder(s)</li>
+                        @if($folder->children->count() > 0 || $folder->documents->count() > 0)
+                        <div class="alert alert-warning mt-3">
+                            <i class="bx bx-error-circle"></i> Warning: This folder contains:
+                            <ul class="mb-0">
+                                @if($folder->children->count() > 0)
+                                <li>{{ $folder->children->count() }} subfolder(s)</li>
+                                @endif
+                                @if($folder->documents->count() > 0)
+                                <li>{{ $folder->documents->count() }} document(s)</li>
+                                @endif
+                            </ul>
+                            All these items will be permanently deleted.
+                        </div>
                         @endif
-                        @if($folder->documents->count() > 0)
-                        <li>{{ $folder->documents->count() }} document(s)</li>
-                        @endif
-                    </ul>
-                    All these items will be permanently deleted.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ route('folders.destroy', $folder) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bx bx-trash"></i> Delete Permanently
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                @endif
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="{{ route('folders.destroy', $folder) }}" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bx bx-trash"></i> Delete Permanently
-                    </button>
-                </form>
             </div>
         </div>
-    </div>
-</div>
+    @endif
 @endcan
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const departmentSelect = document.getElementById('department');
+    const baseFolderSelect = document.getElementById('base_folder_id');
     const parentSelect = document.getElementById('parent_id');
 
-    departmentSelect.addEventListener('change', function() {
-        const selectedDept = this.value;
-        const parentOptions = parentSelect.querySelectorAll('option[data-department]');
+    baseFolderSelect.addEventListener('change', function() {
+        const selectedBaseFolder = this.value;
+        const parentOptions = parentSelect.querySelectorAll('option[data-base-folder]');
 
-        // Reset parent selection if changing department
+        // Reset parent selection if changing base folder
         if (parentSelect.value && parentOptions.length > 0) {
-            const currentParentDept = parentSelect.querySelector(`option[value="${parentSelect.value}"]`)?.dataset.department;
-            if (currentParentDept && currentParentDept !== selectedDept) {
+            const currentParentBaseFolder = parentSelect.querySelector(`option[value="${parentSelect.value}"]`)?.dataset.baseFolder;
+            if (currentParentBaseFolder && currentParentBaseFolder !== selectedBaseFolder) {
                 parentSelect.value = '';
             }
         }
 
-        // Show/hide parent options based on department
+        // Show/hide parent options based on base folder
         parentOptions.forEach(option => {
-            if (selectedDept && option.dataset.department !== selectedDept) {
+            if (selectedBaseFolder && option.dataset.baseFolder !== selectedBaseFolder) {
                 option.style.display = 'none';
                 option.disabled = true;
             } else {
@@ -215,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Trigger on page load
-    departmentSelect.dispatchEvent(new Event('change'));
+    baseFolderSelect.dispatchEvent(new Event('change'));
 });
 </script>
 @endpush

@@ -101,17 +101,17 @@
                 </div>
 
                 <div class="action-buttons">
-                    @can('create ' . $folder->department . ' documents')
+                    @can('create ' . $folder->baseFolder->name . ' documents')
                     <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}" class="btn btn-sm btn-outline-primary">
                         <i class="bx bx-folder-plus"></i> Add
                     </a>
                     @endcan
-                    @can('create ' . $folder->department . ' documents')
+                    @can('create ' . $folder->baseFolder->name . ' documents')
                     <a href="{{ route('documents.create') }}?folder_id={{ $folder->id }}" class="btn btn-sm btn-outline-success">
                         <i class="bx bx-upload"></i> Upload
                     </a>
                     @endcan
-                    @can('edit ' . $folder->department . ' documents')
+                    @can('edit ' . $folder->baseFolder->name . ' documents')
                     <a href="{{ route('folders.edit', $folder) }}" class="btn btn-sm btn-outline-secondary">
                         <i class="bx bx-edit"></i> Edit
                     </a>
@@ -210,12 +210,12 @@
                                 <p class="mt-3 mb-3 text-muted">This folder is empty</p>
                                 <p class="small text-muted mb-3">Drag files here to upload them or move items here</p>
                                 <div>
-                                    @can('create ' . $folder->department . ' documents')
+                                    @can('create ' . $folder->baseFolder->name . ' documents')
                                     <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}" class="btn btn-sm btn-outline-primary me-2">
                                         <i class="bx bx-folder-plus"></i> Add
                                     </a>
                                     @endcan
-                                    @can('create ' . $folder->department . ' documents')
+                                    @can('create ' . $folder->baseFolder->name . ' documents')
                                     <a href="{{ route('documents.create') }}?folder_id={{ $folder->id }}" class="btn btn-sm btn-outline-success">
                                         <i class="bx bx-upload"></i> Upload
                                     </a>
