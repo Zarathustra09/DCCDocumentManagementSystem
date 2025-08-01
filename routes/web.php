@@ -24,8 +24,9 @@ Route::patch('/folders/{folder}/move', [FolderController::class, 'move'])->name(
 Route::patch('/documents/{document}/move', [DocumentController::class, 'move'])->name('documents.move');
 Route::resource('documents', DocumentController::class);
 Route::get('/download/{document}', [DocumentController::class, 'download'])->name('documents.download');
-Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
 Route::post('/documents/{document}/update-content', [DocumentController::class, 'updateContent'])->name('documents.update-content');
+Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
+Route::get('/documents/{document}/preview-api', [DocumentController::class, 'previewApi'])->name('documents.preview-api');
 // In routes/web.php
 Route::get('/document-registration-entries/search', [DocumentController::class, 'search'])
     ->name('document-registration-entries.search');
