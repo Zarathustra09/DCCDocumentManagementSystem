@@ -56,12 +56,7 @@ Route::post('roles/{role}/update-permissions', [RoleController::class, 'updatePe
 
 
 
-Route::get('/base-folder/create', [BaseFolderController::class, 'create'])
-    ->name('base-folder.create');
-
-Route::post('/base-folder', [BaseFolderController::class, 'store'])
-    ->name('base-folder.store');
-
+Route::resource('base-folder', BaseFolderController::class)->except(['index', 'show']);
 
 
 

@@ -118,16 +118,21 @@
                             @foreach($baseFolders as $baseFolder)
                                 @if($baseFolder->folders->count() > 0 || $baseFolder->folders->isEmpty())
                                     <div class="department-section mb-4" data-department="{{ $baseFolder->id }}">
+                                        <!-- Department Header with collapse toggle -->
                                         <div class="department-header-compact mb-3" data-bs-toggle="collapse" data-bs-target="#dept-{{ $baseFolder->id }}" aria-expanded="true">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bx bx-chevron-down collapse-icon me-2"></i>
-                                                    <i class="bx bx-category text-primary me-2"></i>
-                                                    <h5 class="mb-0 fw-bold">{{ $baseFolder->name }}</h5>
-                                                    <span class="badge bg-primary-subtle text-primary ms-2">
-                                                        {{ $baseFolder->folders->count() }}
-                                                    </span>
-                                                </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bx bx-chevron-down collapse-icon me-2"></i>
+                                                <i class="bx bx-category text-primary me-2"></i>
+                                                <h5 class="mb-0 fw-bold">{{ $baseFolder->name }}</h5>
+                                                <span class="badge bg-primary-subtle text-primary ms-2">
+                                                    {{ $baseFolder->folders->count() }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="collapse show" id="dept-{{ $baseFolder->id }}">
+                                            <!-- Action buttons inside collapsible area -->
+                                            <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
                                                 @can('create folders')
                                                     @if(Auth::user()->can("create {$baseFolder->name} documents"))
                                                         <button class="btn btn-sm btn-outline-primary add-folder-btn"
@@ -138,10 +143,37 @@
                                                         </button>
                                                     @endif
                                                 @endcan
-                                            </div>
-                                        </div>
 
-                                        <div class="collapse show" id="dept-{{ $baseFolder->id }}">
+                                                <!-- Base Folder Actions Dropdown -->
+                                                <div class="dropdown" onclick="event.stopPropagation();">
+                                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                                        @can('edit folders')
+                                                            <li>
+                                                                <button class="dropdown-item edit-base-folder-btn"
+                                                                        data-id="{{ $baseFolder->id }}"
+                                                                        data-name="{{ $baseFolder->name }}"
+                                                                        data-description="{{ $baseFolder->description }}">
+                                                                    <i class="bx bx-edit me-2"></i>Edit Base Folder
+                                                                </button>
+                                                            </li>
+                                                        @endcan
+                                                        @can('delete folders')
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li>
+                                                                <button class="dropdown-item text-danger delete-base-folder-btn"
+                                                                        data-id="{{ $baseFolder->id }}"
+                                                                        data-name="{{ $baseFolder->name }}"
+                                                                        data-folders="{{ $baseFolder->folders->count() }}">
+                                                                    <i class="bx bx-trash me-2"></i>Delete Base Folder
+                                                                </button>
+                                                            </li>
+                                                        @endcan
+                                                    </ul>
+                                                </div>
+                                            </div>
                                             @if($baseFolder->folders->isEmpty())
                                                 <div class="alert alert-info">
                                                     <i class="bx bx-info-circle me-2"></i>
@@ -208,11 +240,11 @@
                                                                         </li>
                                                                         @can('edit folders')
                                                                             @if($folder->baseFolder && Auth::user()->can("edit {$folder->baseFolder->name} documents"))
-                                                                            <li>
-                                                                                <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
-                                                                                    <i class="bx bx-edit me-2"></i>Edit
-                                                                                </a>
-                                                                            </li>
+                                                                                <li>
+                                                                                    <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
+                                                                                        <i class="bx bx-edit me-2"></i>Edit
+                                                                                    </a>
+                                                                                </li>
                                                                             @endif
                                                                         @endcan
                                                                         @can('delete folders')

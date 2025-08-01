@@ -56,7 +56,7 @@
             });
         });
 
-        // Category filter (updated for base folders)
+        // Category filter
         const departmentFilter = document.getElementById('departmentFilter');
         departmentFilter.addEventListener('change', function() {
             const selectedCategory = this.value;
@@ -71,7 +71,7 @@
             });
         });
 
-        // Add Folder functionality with SweetAlert
+        // Add Folder functionality
         document.querySelectorAll('.add-folder-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const baseFolderId = this.dataset.baseFolderId;
@@ -80,15 +80,15 @@
                 Swal.fire({
                     title: `Add Folder to ${baseFolderName}`,
                     html: `
-                                <div class="mb-3 text-start">
-                                    <label for="folder-name" class="form-label">Folder Name</label>
-                                    <input type="text" class="form-control" id="folder-name" placeholder="Enter folder name">
-                                </div>
-                                <div class="mb-3 text-start">
-                                    <label for="folder-description" class="form-label">Description (Optional)</label>
-                                    <textarea class="form-control" id="folder-description" rows="3" placeholder="Enter folder description"></textarea>
-                                </div>
-                            `,
+                        <div class="mb-3 text-start">
+                            <label for="folder-name" class="form-label">Folder Name</label>
+                            <input type="text" class="form-control" id="folder-name" placeholder="Enter folder name">
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label for="folder-description" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="folder-description" rows="3" placeholder="Enter folder description"></textarea>
+                        </div>
+                    `,
                     showCancelButton: true,
                     confirmButtonText: 'Create Folder',
                     cancelButtonText: 'Cancel',
@@ -96,11 +96,9 @@
                     cancelButtonColor: '#6c757d',
                     focusConfirm: false,
                     didOpen: () => {
-                        // Focus on the name input when modal opens
                         document.getElementById('folder-name').focus();
                     },
                     preConfirm: () => {
-                        // Get values from the SweetAlert modal
                         const nameInput = Swal.getPopup().querySelector('#folder-name');
                         const descriptionInput = Swal.getPopup().querySelector('#folder-description');
 
@@ -166,7 +164,7 @@
                 });
         }
 
-        // Delete modal functionality
+        // Delete folder modal functionality
         const folderModal = new bootstrap.Modal(document.getElementById('deleteFolderModal'));
 
         document.querySelectorAll('.delete-folder-btn').forEach(btn => {
@@ -201,13 +199,13 @@
                 folderModal.show();
             });
         });
-    });
 
-    // Add Base Folder functionality with SweetAlert
-    document.getElementById('createBaseFolderBtn').addEventListener('click', function() {
-        Swal.fire({
-            title: 'Create Base Folder',
-            html: `
+        // Base Folder CRUD functionality
+        // Create Base Folder
+        document.getElementById('createBaseFolderBtn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Create Base Folder',
+                html: `
                     <div class="mb-3 text-start">
                         <label for="base-folder-name" class="form-label">Base Folder Name</label>
                         <input type="text" class="form-control" id="base-folder-name" placeholder="Enter base folder name">
@@ -217,78 +215,251 @@
                         <textarea class="form-control" id="base-folder-description" rows="3" placeholder="Enter base folder description"></textarea>
                     </div>
                 `,
-            showCancelButton: true,
-            confirmButtonText: 'Create Base Folder',
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#0d6efd',
-            cancelButtonColor: '#6c757d',
-            focusConfirm: false,
-            didOpen: () => {
-                document.getElementById('base-folder-name').focus();
-            },
-            preConfirm: () => {
-                const nameInput = Swal.getPopup().querySelector('#base-folder-name');
-                const descriptionInput = Swal.getPopup().querySelector('#base-folder-description');
+                showCancelButton: true,
+                confirmButtonText: 'Create Base Folder',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                focusConfirm: false,
+                didOpen: () => {
+                    document.getElementById('base-folder-name').focus();
+                },
+                preConfirm: () => {
+                    const nameInput = Swal.getPopup().querySelector('#base-folder-name');
+                    const descriptionInput = Swal.getPopup().querySelector('#base-folder-description');
 
-                const name = nameInput ? nameInput.value.trim() : '';
-                const description = descriptionInput ? descriptionInput.value.trim() : '';
+                    const name = nameInput ? nameInput.value.trim() : '';
+                    const description = descriptionInput ? descriptionInput.value.trim() : '';
 
-                if (!name) {
-                    Swal.showValidationMessage('Please enter a base folder name');
-                    return false;
+                    if (!name) {
+                        Swal.showValidationMessage('Please enter a base folder name');
+                        return false;
+                    }
+
+                    if (name.length > 255) {
+                        Swal.showValidationMessage('Base folder name must be less than 255 characters');
+                        return false;
+                    }
+
+                    return { name, description };
                 }
-
-                if (name.length > 255) {
-                    Swal.showValidationMessage('Base folder name must be less than 255 characters');
-                    return false;
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    createBaseFolder(result.value.name, result.value.description);
                 }
-
-                return { name, description };
-            }
-        }).then((result) => {
-            console.log('Swal result:', result); // Log the SweetAlert response
-            if (result.isConfirmed) {
-                createBaseFolder(result.value.name, result.value.description);
-            }
+            });
         });
-    });
-    function createBaseFolder(name, description) {
-        const formData = new FormData();
-        formData.append('_token', '{{ csrf_token() }}');
-        formData.append('name', name);
-        formData.append('description', description);
 
-        fetch('{{ route("base-folder.store") }}', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => {
-                if (response.ok) { // status 200
-                    return response.json();
-                }
-                return response.json().then(data => Promise.reject(data));
-            })
-            .then(data => {
-                // Success: data.base_folder contains the new base folder
+        // Edit Base Folder
+        document.querySelectorAll('.edit-base-folder-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const baseFolderId = this.dataset.id;
+                const baseFolderName = this.dataset.name;
+                const baseFolderDescription = this.dataset.description || '';
+
                 Swal.fire({
-                    title: 'Success!',
-                    text: 'Base folder created successfully',
-                    icon: 'success',
-                    confirmButtonColor: '#0d6efd'
-                }).then(() => {
-                    window.location.reload();
-                });
-            })
-            .catch(error => {
-                // Handle error
-                console.error('Fetch error:', error);
-                Swal.fire({
-                    title: 'Error!',
-                    text: error.message || 'Failed to create base folder.',
-                    icon: 'error',
-                    confirmButtonColor: '#dc3545'
+                    title: 'Edit Base Folder',
+                    html: `
+                        <div class="mb-3 text-start">
+                            <label for="edit-base-folder-name" class="form-label">Base Folder Name</label>
+                            <input type="text" class="form-control" id="edit-base-folder-name" value="${baseFolderName}" placeholder="Enter base folder name">
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label for="edit-base-folder-description" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="edit-base-folder-description" rows="3" placeholder="Enter base folder description">${baseFolderDescription}</textarea>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Update Base Folder',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#0d6efd',
+                    cancelButtonColor: '#6c757d',
+                    focusConfirm: false,
+                    didOpen: () => {
+                        document.getElementById('edit-base-folder-name').focus();
+                    },
+                    preConfirm: () => {
+                        const nameInput = Swal.getPopup().querySelector('#edit-base-folder-name');
+                        const descriptionInput = Swal.getPopup().querySelector('#edit-base-folder-description');
+
+                        const name = nameInput ? nameInput.value.trim() : '';
+                        const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+                        if (!name) {
+                            Swal.showValidationMessage('Please enter a base folder name');
+                            return false;
+                        }
+
+                        if (name.length > 255) {
+                            Swal.showValidationMessage('Base folder name must be less than 255 characters');
+                            return false;
+                        }
+
+                        return { name, description };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        updateBaseFolder(baseFolderId, result.value.name, result.value.description);
+                    }
                 });
             });
-    }
+        });
 
+        // Delete Base Folder
+        document.querySelectorAll('.delete-base-folder-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const baseFolderId = this.dataset.id;
+                const baseFolderName = this.dataset.name;
+                const foldersCount = parseInt(this.dataset.folders) || 0;
+
+                let warningMessage = '';
+                if (foldersCount > 0) {
+                    warningMessage = `<div class="alert alert-warning mt-3">
+                        <i class="bx bx-error-circle me-2"></i>
+                        This base folder contains ${foldersCount} folder${foldersCount !== 1 ? 's' : ''}. You must move or delete them first.
+                    </div>`;
+                }
+
+                Swal.fire({
+                    title: 'Delete Base Folder',
+                    html: `
+                        <div class="text-center mb-3">
+                            <i class="bx bx-error-circle text-danger display-4 mb-3"></i>
+                            <p>Are you sure you want to delete the base folder <strong>"${baseFolderName}"</strong>?</p>
+                            ${warningMessage}
+                            <div class="alert alert-danger mt-3">
+                                <small><strong>This action cannot be undone.</strong></small>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: foldersCount > 0 ? 'Cannot Delete' : 'Delete Forever',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: foldersCount > 0 ? '#6c757d' : '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        if (foldersCount > 0) {
+                            Swal.getConfirmButton().disabled = true;
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed && foldersCount === 0) {
+                        deleteBaseFolder(baseFolderId);
+                    }
+                });
+            });
+        });
+
+        // Base Folder CRUD Functions
+        function createBaseFolder(name, description) {
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('name', name);
+            formData.append('description', description);
+
+            fetch('{{ route("base-folder.store") }}', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    return response.json().then(data => Promise.reject(data));
+                })
+                .then(data => {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Base folder created successfully',
+                        icon: 'success',
+                        confirmButtonColor: '#0d6efd'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'Failed to create base folder.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+        }
+
+        function updateBaseFolder(id, name, description) {
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_method', 'PUT');
+            formData.append('name', name);
+            formData.append('description', description);
+
+            fetch(`/base-folder/${id}`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    return response.json().then(data => Promise.reject(data));
+                })
+                .then(data => {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Base folder updated successfully',
+                        icon: 'success',
+                        confirmButtonColor: '#0d6efd'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'Failed to update base folder.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+        }
+
+        function deleteBaseFolder(id) {
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_method', 'DELETE');
+
+            fetch(`/base-folder/${id}`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'Base folder deleted successfully',
+                            icon: 'success',
+                            confirmButtonColor: '#0d6efd'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'Failed to delete base folder.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+        }
+    });
 </script>
