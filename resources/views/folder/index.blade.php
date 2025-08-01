@@ -185,9 +185,46 @@
                                                         <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 folder-item" data-name="{{ strtolower($folder->name) }}">
                                                             <div class="folder-card-compact h-100">
                                                                 <div class="card-body p-3">
-                                                                    <h6 class="folder-title-compact fw-bold mb-2" title="{{ $folder->name }}">
-                                                                        {{ Str::limit($folder->name, 20) }}
-                                                                    </h6>
+                                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                                        <h6 class="folder-title-compact fw-bold mb-0" title="{{ $folder->name }}">
+                                                                            {{ Str::limit($folder->name, 20) }}
+                                                                        </h6>
+                                                                        <div class="dropdown">
+                                                                            <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
+                                                                                <i class="bx bx-dots-vertical-rounded"></i>
+                                                                            </button>
+                                                                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                                                                <li>
+                                                                                    <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
+                                                                                        <i class="bx bx-show me-2"></i>View
+                                                                                    </a>
+                                                                                </li>
+                                                                                @can('edit folders')
+                                                                                    @if(Auth::user()->can("edit {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
+                                                                                        <li>
+                                                                                            <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
+                                                                                                <i class="bx bx-edit me-2"></i>Edit
+                                                                                            </a>
+                                                                                        </li>
+                                                                                    @endif
+                                                                                @endcan
+                                                                                @can('delete folders')
+                                                                                    @if(Auth::user()->can("delete {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
+                                                                                        <li><hr class="dropdown-divider"></li>
+                                                                                        <li>
+                                                                                            <button class="dropdown-item text-danger delete-folder-btn"
+                                                                                                    data-id="{{ $folder->id }}"
+                                                                                                    data-name="{{ $folder->name }}"
+                                                                                                    data-children="{{ $folder->children->count() }}"
+                                                                                                    data-documents="{{ $folder->documents->count() }}">
+                                                                                                <i class="bx bx-trash me-2"></i>Delete
+                                                                                            </button>
+                                                                                        </li>
+                                                                                    @endif
+                                                                                @endcan
+                                                                            </ul>
+                                                                        </div>
+                                                                    </div>
                                                                     <button class="btn btn-primary btn-sm w-100" onclick="window.location.href='{{ route('folders.show', $folder) }}'">
                                                                         <i class="bx bx-folder-open me-1"></i>Open
                                                                     </button>

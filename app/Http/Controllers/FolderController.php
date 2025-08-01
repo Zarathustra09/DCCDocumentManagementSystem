@@ -19,6 +19,8 @@ class FolderController extends Controller
 
     public function index()
     {
+
+
         // Get base folders accessible by the user
         $baseFolders = BaseFolder::where(function ($query) {
             $query->whereHas('folders', function ($subQuery) {
@@ -100,7 +102,7 @@ class FolderController extends Controller
     public function edit(Folder $folder)
     {
         // Check if user can edit documents for this department
-        if (!Auth::user()->can("edit {$folder->department} documents") && !Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can("edit {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403, 'You do not have permission to edit this folder.');
         }
 
@@ -117,7 +119,7 @@ class FolderController extends Controller
     public function update(Request $request, Folder $folder)
     {
         // Check if user can edit documents for this department
-        if (!Auth::user()->can("edit {$folder->department} documents") && !Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can("edit {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
             abort(403);
         }
 
