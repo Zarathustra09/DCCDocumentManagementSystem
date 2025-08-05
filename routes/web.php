@@ -4,6 +4,7 @@ use App\Http\Controllers\BaseFolderController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentRegistrationEntryController;
 use App\Http\Controllers\DocumentRegistrationEntryFileController;
+use App\Http\Controllers\ExcelExportController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PermissionController;
@@ -134,3 +135,5 @@ Route::middleware(['auth'])->prefix('document-registry')->name('document-registr
 
 });
 
+
+Route::get('/document-excel/export', [ExcelExportController::class, 'export'])->name('document-excel.export');

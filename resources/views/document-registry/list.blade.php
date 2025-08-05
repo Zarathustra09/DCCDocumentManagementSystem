@@ -113,8 +113,8 @@
                         <div class="col-md-8">
                             <p class="text-muted mb-0">
                                 <i class='bx bx-info-circle'></i>
-                                Showing {{ $entries->firstItem() ?? 0 }} to {{ $entries->lastItem() ?? 0 }} of {{ $entries->total() }} entries
-                                @if(request()->hasAny(['status', 'search', 'customer', 'device_name', 'submitted_by', 'date_from', 'date_to', 'has_file']))
+                                Showing {{ $entries->count() }} entries
+                                @if(request()->hasAny(['status', 'search', 'customer', 'device_name', 'submitted_by', 'date_from', 'date_to']))
                                     (filtered)
                                 @endif
                             </p>
@@ -222,11 +222,13 @@
                         </table>
                     </div>
                     <!-- Pagination -->
-                    @if($entries->hasPages())
-                        <div class="d-flex justify-content-center">
-                            {{ $entries->appends(request()->query())->links() }}
-                        </div>
-                    @endif
+{{--             @if($entries->hasPages())--}}
+{{--                 <nav aria-label="Document registry pagination">--}}
+{{--                     <ul class="pagination justify-content-center mb-0">--}}
+{{--                         {{ $entries->appends(request()->query())->links() }}--}}
+{{--                     </ul>--}}
+{{--                 </nav>--}}
+{{--             @endif--}}
                 </div>
             </div>
         </div>
@@ -235,23 +237,50 @@
 @endsection
 
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+@endpush
+
+
 
 @push('scripts')
-<script>
-    $(document).ready(function() {
-        $('#documentRegistry').DataTable({
-            responsive: true,
-            order: [[5, 'desc']],
-            pageLength: 10,
-            columnDefs: [
-                { orderable: false, targets: [0, 6] }
-            ],
-            language: {
-                search: "Search users:",
-                lengthMenu: "Show _MENU_ users per page",
-                info: "Showing _START_ to _END_ of _TOTAL_ users"
-            }
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#documentRegistry').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        text: '<i class="bx bx-download"></i> Export to Excel',
+                        className: 'btn btn-success btn-sm',
+                        action: function(e, dt, node, config) {
+                            // Get current form data to preserve filters
+                            const form = document.querySelector('form[action="{{ route('document-registry.list') }}"]');
+                            const formData = new FormData(form);
+
+                            // Build export URL with current filters
+                            const params = new URLSearchParams(formData);
+                            const exportUrl = '{{ route("document-excel.export") }}?' + params.toString();
+
+                            // Trigger download
+                            window.location.href = exportUrl;
+                        }
+                    }
+                ],
+                responsive: true,
+                order: [[5, 'desc']],
+                pageLength: 10,
+                columnDefs: [
+                    { orderable: false, targets: [0, 6] }
+                ],
+                language: {
+                    search: "Search entries:",
+                    lengthMenu: "Show _MENU_ Entries per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ Entries"
+                }
+            });
         });
-    });
-</script>
+    </script>
 @endpush

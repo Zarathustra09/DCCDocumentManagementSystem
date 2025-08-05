@@ -324,6 +324,7 @@
                             @endif
                         </div>
 
+
                         <!-- Detailed View (Hidden by default) -->
                         <div id="detailedView" class="folders-container" style="display: none;">
                             @foreach($baseFolders as $baseFolder)
@@ -341,19 +342,53 @@
                                                             <p class="text-muted mb-1">{{ $baseFolder->description }}</p>
                                                         @endif
                                                         <span class="badge bg-primary-subtle text-primary rounded-pill">
-                                                            {{ $baseFolder->folders->count() }} {{ Str::plural('folder', $baseFolder->folders->count()) }}
-                                                        </span>
+                                    {{ $baseFolder->folders->count() }} {{ Str::plural('folder', $baseFolder->folders->count()) }}
+                                </span>
                                                     </div>
                                                 </div>
-                                                @can('create folders')
-                                                    @if(Auth::user()->can("create {$baseFolder->name} documents"))
-                                                        <button class="btn btn-primary add-folder-btn"
-                                                                data-base-folder-id="{{ $baseFolder->id }}"
-                                                                data-base-folder-name="{{ $baseFolder->name }}">
-                                                            <i class="bx bx-plus me-2"></i>Add Folder
+
+                                                <!-- Action buttons for detailed view -->
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @can('create folders')
+                                                        @if(Auth::user()->can("create {$baseFolder->name} documents"))
+                                                            <button class="btn btn-primary add-folder-btn"
+                                                                    data-base-folder-id="{{ $baseFolder->id }}"
+                                                                    data-base-folder-name="{{ $baseFolder->name }}">
+                                                                <i class="bx bx-plus"></i>
+                                                            </button>
+                                                        @endif
+                                                    @endcan
+
+                                                    <!-- Base Folder Actions Dropdown -->
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                                            <i class="bx bx-dots-vertical-rounded"></i>
                                                         </button>
-                                                    @endif
-                                                @endcan
+                                                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                                                            @can('edit folders')
+                                                                <li>
+                                                                    <button class="dropdown-item edit-base-folder-btn"
+                                                                            data-id="{{ $baseFolder->id }}"
+                                                                            data-name="{{ $baseFolder->name }}"
+                                                                            data-description="{{ $baseFolder->description }}">
+                                                                        <i class="bx bx-edit me-2"></i>Edit Base Folder
+                                                                    </button>
+                                                                </li>
+                                                            @endcan
+                                                            @can('delete folders')
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li>
+                                                                    <button class="dropdown-item text-danger delete-base-folder-btn"
+                                                                            data-id="{{ $baseFolder->id }}"
+                                                                            data-name="{{ $baseFolder->name }}"
+                                                                            data-folders="{{ $baseFolder->folders->count() }}">
+                                                                        <i class="bx bx-trash me-2"></i>Delete Base Folder
+                                                                    </button>
+                                                                </li>
+                                                            @endcan
+                                                        </ul>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -368,12 +403,79 @@
                                                     <div class="col-xl-4 col-lg-6 folder-item" data-name="{{ strtolower($folder->name) }}">
                                                         <div class="folder-card h-100 position-relative">
                                                             <div class="card-body p-4">
+                                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                                    <div class="folder-icon">
+                                                                        <i class="bx bx-folder fs-1 text-primary"></i>
+                                                                    </div>
+                                                                    <div class="dropdown">
+                                                                        <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
+                                                                            <i class="bx bx-dots-vertical-rounded fs-5"></i>
+                                                                        </button>
+                                                                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                                                                            <li>
+                                                                                <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
+                                                                                    <i class="bx bx-show me-2"></i>View
+                                                                                </a>
+                                                                            </li>
+                                                                            @can('edit folders')
+                                                                                @if(Auth::user()->can("edit {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
+                                                                                    <li>
+                                                                                        <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
+                                                                                            <i class="bx bx-edit me-2"></i>Edit
+                                                                                        </a>
+                                                                                    </li>
+                                                                                @endif
+                                                                            @endcan
+                                                                            @can('delete folders')
+                                                                                @if(Auth::user()->can("delete {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
+                                                                                    <li><hr class="dropdown-divider"></li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item text-danger delete-folder-btn"
+                                                                                                data-id="{{ $folder->id }}"
+                                                                                                data-name="{{ $folder->name }}"
+                                                                                                data-children="{{ $folder->children->count() }}"
+                                                                                                data-documents="{{ $folder->documents->count() }}">
+                                                                                            <i class="bx bx-trash me-2"></i>Delete
+                                                                                        </button>
+                                                                                    </li>
+                                                                                @endif
+                                                                            @endcan
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+
                                                                 <h5 class="folder-title fw-bold mb-2">{{ $folder->name }}</h5>
                                                                 @if($folder->description)
                                                                     <p class="folder-description text-muted small mb-3">
                                                                         {{ Str::limit($folder->description, 80) }}
                                                                     </p>
                                                                 @endif
+
+                                                                <!-- Added folder stats like in orphaned folders -->
+                                                                <div class="folder-stats mb-3">
+                                                                    <div class="row g-2">
+                                                                        <div class="col-6">
+                                                                            <div class="stat-item text-center p-2 bg-light rounded">
+                                                                                <i class="bx bx-folder text-primary"></i>
+                                                                                <div class="fw-bold">{{ $folder->children->count() }}</div>
+                                                                                <div class="small text-muted">Subfolders</div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-6">
+                                                                            <div class="stat-item text-center p-2 bg-light rounded">
+                                                                                <i class="bx bx-file text-success"></i>
+                                                                                <div class="fw-bold">{{ $folder->documents->count() }}</div>
+                                                                                <div class="small text-muted">Documents</div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="folder-meta text-muted small mb-3">
+                                                                    <i class="bx bx-time-five me-1"></i>
+                                                                    Updated {{ $folder->updated_at->diffForHumans() }}
+                                                                </div>
+
                                                                 <button class="btn btn-primary w-100" onclick="window.location.href='{{ route('folders.show', $folder) }}'">
                                                                     <i class="bx bx-folder-open me-2"></i>Open Folder
                                                                 </button>
@@ -399,8 +501,8 @@
                                                 <h4 class="fw-bold mb-1 text-secondary">Uncategorized</h4>
                                                 <p class="text-muted mb-1">Folders not assigned to any category</p>
                                                 <span class="badge bg-secondary-subtle text-secondary rounded-pill">
-                                            {{ $orphanedFolders->count() }} {{ Str::plural('folder', $orphanedFolders->count()) }}
-                                        </span>
+                            {{ $orphanedFolders->count() }} {{ Str::plural('folder', $orphanedFolders->count()) }}
+                        </span>
                                             </div>
                                         </div>
                                     </div>
@@ -425,11 +527,13 @@
                                                                         </a>
                                                                     </li>
                                                                     @can('edit folders')
-                                                                        <li>
-                                                                            <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
-                                                                                <i class="bx bx-edit me-2"></i>Edit Folder
-                                                                            </a>
-                                                                        </li>
+                                                                        @if($folder->baseFolder && Auth::user()->can("edit {$folder->baseFolder->name} documents"))
+                                                                            <li>
+                                                                                <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
+                                                                                    <i class="bx bx-edit me-2"></i>Edit Folder
+                                                                                </a>
+                                                                            </li>
+                                                                        @endif
                                                                     @endcan
                                                                     @can('delete folders')
                                                                         <li><hr class="dropdown-divider"></li>

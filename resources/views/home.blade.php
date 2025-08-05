@@ -46,7 +46,7 @@
                             Pending Document Registrations
                             <span class="badge bg-warning text-dark">{{ $pendingRegistrations->count() }}</span>
                         </h4>
-                        <a href="{{ route('document-registry.index', ['status' => 'pending']) }}" class="btn btn-outline-primary btn-sm">
+                        <a href="{{ route('document-registry.list') }}" class="btn btn-outline-primary btn-sm">
                             <i class='bx bx-show'></i> View All Pending
                         </a>
                     </div>
@@ -141,7 +141,7 @@
 
                         @if($pendingRegistrations->count() >= 10)
                             <div class="text-center mt-3">
-                                <a href="{{ route('document-registry.index', ['status' => 'pending']) }}" class="btn btn-primary">
+                                <a href="{{ route('document-registry.list')}}" class="btn btn-primary">
                                     <i class='bx bx-show'></i> View All Pending Registrations
                                 </a>
                             </div>

@@ -13,9 +13,7 @@ use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
-    //TODO: to add download functionality for documents
     //TODO: to add edit functionality for documents
-    //TODO: to remove close preview in  document.show
     public function __construct()
     {
 
@@ -221,7 +219,7 @@ class DocumentController extends Controller
 
     public function download(Document $document)
     {
-        return Storage::disk('public')->download(
+        return Storage::disk('local')->download(
             $document->file_path,
             $document->original_filename
         );

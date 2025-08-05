@@ -100,9 +100,9 @@
                         <div class="card" id="preview-card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0"><i class='bx bx-show'></i> Document Preview</h5>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="hidePreview()">
-                                    <i class='bx bx-x'></i> Close Preview
-                                </button>
+                               <a href="{{ route('folders.show', $document->folder) }}" class="btn btn-sm btn-outline-secondary">
+                                   <i class='bx bx-x'></i> Back to Folder
+                               </a>
                             </div>
                             <div class="card-body">
                                 <div id="document-preview">
