@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Exports\DocumentRegistryExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DocumentRegistrationEntryController extends Controller
 {
