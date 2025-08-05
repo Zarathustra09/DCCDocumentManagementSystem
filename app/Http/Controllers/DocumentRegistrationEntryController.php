@@ -602,75 +602,78 @@ class DocumentRegistrationEntryController extends Controller
     public function list(Request $request)
     {
         $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy']);
+
         if (Auth::user()->can('view all document registrations')) {
-            // User can see all entries
+            // User can view all entries
         } else {
+            // Restrict to user's own entries
             $query->where('submitted_by', Auth::id());
         }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('document_no', 'like', "%{$search}%")
                     ->orWhere('document_title', 'like', "%{$search}%")
-                    ->orWhere('originator_name', 'like', "%{$search}%")
-                    ->orWhereHas('files', function($fileQ) use ($search) {
-                        $fileQ->where('original_filename', 'like', "%{$search}%");
-                    });
+                    ->orWhere('device_name', 'like', "%{$search}%")
+                    ->orWhere('originator_name', 'like', "%{$search}%");
             });
         }
+
         if ($request->filled('customer')) {
             $query->where('customer', 'like', "%{$request->customer}%");
         }
+
         if ($request->filled('device_name')) {
             $query->where('device_name', 'like', "%{$request->device_name}%");
         }
+
         if ($request->filled('submitted_by')) {
             $query->where('submitted_by', $request->submitted_by);
         }
+
         if ($request->filled('date_from')) {
             $query->whereDate('submitted_at', '>=', $request->date_from);
         }
+
         if ($request->filled('date_to')) {
             $query->whereDate('submitted_at', '<=', $request->date_to);
         }
-        // Get file formats for currently filtered entries
-        $fileFormats = \App\Models\DocumentRegistrationEntryFile::whereIn(
-            'entry_id', $query->pluck('id')
-        )->get()
-            ->pluck('original_filename')
-            ->map(function($filename) {
-                return strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            })
-            ->unique()
-            ->filter()
-            ->sort()
-            ->values();
 
+        // Get all entries without pagination
+        $entries = $query->latest('submitted_at')->get();
+
+        // Calculate counts
+        $pendingCount = DocumentRegistrationEntry::where('status', 'pending')->count();
+        $approvedCount = DocumentRegistrationEntry::where('status', 'approved')->count();
+        $rejectedCount = DocumentRegistrationEntry::where('status', 'rejected')->count();
+
+        // Get filter options
         $customers = DocumentRegistrationEntry::whereNotNull('customer')
             ->distinct()
             ->pluck('customer')
             ->sort();
+
         $deviceNames = DocumentRegistrationEntry::whereNotNull('device_name')
             ->distinct()
             ->pluck('device_name')
             ->sort();
+
         $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
             ->orderBy('name')
             ->get();
-        $entries = $query->latest('submitted_at')->paginate(15);
-        $totalEntries = $query->count();
-        $pendingCount = (clone $query)->where('status', 'pending')->count();
-        $approvedCount = (clone $query)->where('status', 'approved')->count();
-        $rejectedCount = (clone $query)->where('status', 'rejected')->count();
+
+        $fileFormats = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv'];
+
         return view('document-registry.list', compact(
             'entries',
             'customers',
             'deviceNames',
             'submitters',
-            'totalEntries',
             'pendingCount',
             'approvedCount',
             'rejectedCount',
