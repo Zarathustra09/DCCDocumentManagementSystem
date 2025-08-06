@@ -156,7 +156,7 @@
                                                                         data-id="{{ $baseFolder->id }}"
                                                                         data-name="{{ $baseFolder->name }}"
                                                                         data-description="{{ $baseFolder->description }}">
-                                                                    <i class="bx bx-edit me-2"></i>Edit Base Folder
+                                                                    <i class="bx bx-edit me-2"></i>Edit Folder Label
                                                                 </button>
                                                             </li>
                                                         @endcan
@@ -371,7 +371,7 @@
                                                                             data-id="{{ $baseFolder->id }}"
                                                                             data-name="{{ $baseFolder->name }}"
                                                                             data-description="{{ $baseFolder->description }}">
-                                                                        <i class="bx bx-edit me-2"></i>Edit Base Folder
+                                                                        <i class="bx bx-edit me-2"></i>Edit Folder Label
                                                                     </button>
                                                                 </li>
                                                             @endcan
