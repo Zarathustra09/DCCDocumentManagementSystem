@@ -39,7 +39,6 @@ class HomeController extends Controller
             $pendingRegistrations = DocumentRegistrationEntry::with(['submittedBy'])
                 ->where('status', 'pending')
                 ->latest('submitted_at')
-                ->limit(10)
                 ->get();
         }
 
