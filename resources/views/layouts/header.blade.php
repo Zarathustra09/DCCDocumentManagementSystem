@@ -18,7 +18,7 @@
         <li class="menu-item {{Route::is('home*') ? 'active' : ''}}">
             <a href="{{route('home')}}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-alt"></i>
-                <div data-i18n="Analytics">Overview</div>
+                <div data-i18n="Analytics">Home</div>
             </a>
         </li>
 
