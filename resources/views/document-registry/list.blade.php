@@ -58,7 +58,7 @@
                                 <div class="form-group mb-3">
                                     <label for="submitted_by">Submitted By</label>
                                     <select name="submitted_by" id="submitted_by" class="form-select">
-                                        <option value="">All Submitters</option>
+                                        <option value="">All Originators</option>
                                         @foreach($submitters as $submitter)
                                             <option value="{{ $submitter->id }}" {{ request('submitted_by') == $submitter->id ? 'selected' : '' }}>
                                                 {{ $submitter->name }}
