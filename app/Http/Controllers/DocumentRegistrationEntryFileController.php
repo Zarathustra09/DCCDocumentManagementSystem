@@ -23,6 +23,11 @@ class DocumentRegistrationEntryFileController extends Controller
             'approved_at' => now(),
             'rejection_reason' => null,
         ]);
+        $file->registrationEntry->update([
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
         return back()->with('success', 'File approved successfully.');
     }
 
@@ -39,6 +44,11 @@ class DocumentRegistrationEntryFileController extends Controller
             'status' => 'rejected',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        $file->registrationEntry->update([
+            'status' => 'rejected',
             'rejection_reason' => $request->rejection_reason,
         ]);
         return back()->with('success', 'File rejected.');

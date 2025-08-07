@@ -25,10 +25,11 @@ class DocumentRegistrationEntryFile extends Model
         'approved_at' => 'datetime',
     ];
 
+//    TODO: To convert this into a maintenance table
     const STATUSES = [
         'pending' => 'Pending',
-        'approved' => 'Approved',
-        'rejected' => 'Rejected',
+        'approved' => 'Implemented',
+        'rejected' => 'Cancelled',
     ];
 
     public function registrationEntry()
