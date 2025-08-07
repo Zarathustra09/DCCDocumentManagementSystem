@@ -17,18 +17,18 @@
                     <!-- Advanced Filters -->
                     <form method="GET" action="{{ route('document-registry.list') }}" class="mb-4">
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="status">Status</label>
                                     <select name="status" id="status" class="form-select">
                                         <option value="">All Statuses</option>
                                         <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+{{--                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>--}}
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="search">Search</label>
                                     <input type="text" name="search" id="search" class="form-control"
@@ -36,25 +36,25 @@
                                            placeholder="Document number, title, originator...">
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group mb-3">
-                                    <label for="customer">Customer</label>
-                                    <input type="text" name="customer" id="customer" class="form-control"
-                                           value="{{ request('customer') }}"
-                                           placeholder="Customer name...">
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group mb-3">
-                                    <label for="device_name">Device Name</label>
-                                    <input type="text" name="device_name" id="device_name" class="form-control"
-                                           value="{{ request('device_name') }}"
-                                           placeholder="Device name...">
-                                </div>
-                            </div>
+{{--                            <div class="col-md-3">--}}
+{{--                                <div class="form-group mb-3">--}}
+{{--                                    <label for="customer">Customer</label>--}}
+{{--                                    <input type="text" name="customer" id="customer" class="form-control"--}}
+{{--                                           value="{{ request('customer') }}"--}}
+{{--                                           placeholder="Customer name...">--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
+{{--                            <div class="col-md-3">--}}
+{{--                                <div class="form-group mb-3">--}}
+{{--                                    <label for="device_name">Device Name</label>--}}
+{{--                                    <input type="text" name="device_name" id="device_name" class="form-control"--}}
+{{--                                           value="{{ request('device_name') }}"--}}
+{{--                                           placeholder="Device name...">--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
                         </div>
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label for="submitted_by">Submitted By</label>
                                     <select name="submitted_by" id="submitted_by" class="form-select">
@@ -67,33 +67,33 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label for="date_from">Date From</label>
                                     <input type="date" name="date_from" id="date_from" class="form-control"
                                            value="{{ request('date_from') }}">
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label for="date_to">Date To</label>
                                     <input type="date" name="date_to" id="date_to" class="form-control"
                                            value="{{ request('date_to') }}">
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group mb-3">
-                                    <label for="file_format">File Format</label>
-                                    <select name="file_format" id="file_format" class="form-select">
-                                        <option value="">All Formats</option>
-                                        @foreach($fileFormats as $format)
-                                            <option value="{{ $format }}" {{ request('file_format') === $format ? 'selected' : '' }}>
-                                                {{ strtoupper($format) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
+{{--                            <div class="col-md-3">--}}
+{{--                                <div class="form-group mb-3">--}}
+{{--                                    <label for="file_format">File Format</label>--}}
+{{--                                    <select name="file_format" id="file_format" class="form-select">--}}
+{{--                                        <option value="">All Formats</option>--}}
+{{--                                        @foreach($fileFormats as $format)--}}
+{{--                                            <option value="{{ $format }}" {{ request('file_format') === $format ? 'selected' : '' }}>--}}
+{{--                                                {{ strtoupper($format) }}--}}
+{{--                                            </option>--}}
+{{--                                        @endforeach--}}
+{{--                                    </select>--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
                         </div>
                         <div class="row">
                             <div class="col-12">
