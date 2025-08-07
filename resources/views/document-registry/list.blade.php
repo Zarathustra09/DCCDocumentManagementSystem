@@ -7,11 +7,6 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title"><i class='bx bx-folder-open'></i> Document Registry - Advanced List</h3>
-                    @can('submit document for approval')
-                        <a href="{{ route('document-registry.create') }}" class="btn btn-primary">
-                            <i class='bx bx-plus'></i> Register New Document
-                        </a>
-                    @endcan
                 </div>
                 <div class="card-body">
                     <!-- Advanced Filters -->
