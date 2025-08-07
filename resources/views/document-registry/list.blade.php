@@ -21,10 +21,10 @@
                                 <div class="form-group mb-3">
                                     <label for="status">Status</label>
                                     <select name="status" id="status" class="form-select">
-                                        <option value="">All Statuses</option>
+                                        <option value="">All Categories</option>
                                         <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-{{--                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>--}}
+                                        <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Implemented</option>
+{{--                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Cancelled</option>--}}
                                     </select>
                                 </div>
                             </div>
@@ -122,8 +122,8 @@
                         <div class="col-md-4 text-end">
                             <div class="d-flex justify-content-end gap-2">
                                 <span class="badge bg-warning">{{ $pendingCount }} Pending</span>
-                                <span class="badge bg-success">{{ $approvedCount }} Approved</span>
-                                <span class="badge bg-danger">{{ $rejectedCount }} Rejected</span>
+                                <span class="badge bg-success">{{ $approvedCount }} Implemented</span>
+                                <span class="badge bg-danger">{{ $rejectedCount }} Cancelled</span>
                             </div>
                         </div>
                     </div>
@@ -160,11 +160,14 @@
                                                 <span class="badge bg-warning text-dark">
                                                     <i class='bx bx-time'></i> {{ $entry->status_name }}
                                                 </span>
+                                                {{--}}TODO: To refractor the status approved to implemented--}}
                                             @elseif($entry->status === 'approved')
                                                 <span class="badge bg-success text-white">
                                                     <i class='bx bx-check'></i> {{ $entry->status_name }}
                                                 </span>
                                             @else
+{{--                                                TODO: To refractor the status rejected to cancelled--}}
+                                                {{-- <span class="badge bg-danger text-white"> --}}
                                                 <span class="badge bg-danger text-white">
                                                     <i class='bx bx-x'></i> {{ $entry->status_name }}
                                                 </span>

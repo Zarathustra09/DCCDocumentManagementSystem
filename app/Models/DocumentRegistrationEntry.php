@@ -35,11 +35,11 @@ class DocumentRegistrationEntry extends Model
         'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
     ];
-
+    //TODO: to add edit functionality for documents
     const STATUSES = [
         'pending' => 'Pending Registration',
-        'approved' => 'Approved',
-        'rejected' => 'Rejected',
+        'approved' => 'Implemented',
+        'rejected' => 'Cancelled',
     ];
 
     public function documents()
