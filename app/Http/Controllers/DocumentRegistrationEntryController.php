@@ -171,12 +171,7 @@ class DocumentRegistrationEntryController extends Controller
             'rejection_reason' => $request->rejection_reason,
             'revision_notes' => null,
         ]);
-        $documentRegistrationEntry->files()->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-            'rejection_reason' => $request->rejection_reason,
-        ]);
+
         return back()->with('success', 'Document registration rejected.');
     }
 

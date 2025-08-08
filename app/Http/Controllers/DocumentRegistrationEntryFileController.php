@@ -40,6 +40,8 @@ class DocumentRegistrationEntryFileController extends Controller
         $request->validate([
             'rejection_reason' => 'required|string'
         ]);
+
+        // Only update the file status, not the entire entry
         $file->update([
             'status' => 'rejected',
             'approved_by' => auth()->id(),
@@ -47,10 +49,6 @@ class DocumentRegistrationEntryFileController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
 
-        $file->registrationEntry->update([
-            'status' => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
-        ]);
         return back()->with('success', 'File rejected.');
     }
 

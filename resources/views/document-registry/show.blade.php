@@ -244,35 +244,22 @@
                                                 </div>
                                             </div>
                                         @endif
+
+                                        <!-- Inside the Status Card (at the end of .card-body, before closing .card) -->
+                                        @if($documentRegistrationEntry->status === 'pending' && auth()->user()->can('reject document registration'))
+                                            <div class="d-flex justify-content-end mt-3">
+                                                <button type="button"
+                                                        class="btn btn-danger"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#rejectModal">
+                                                    <i class="bx bx-x"></i> Cancel Registration
+                                                </button>
+                                            </div>
+                                        @endif
                                     </div>
+
+
                                 </div>
-
-                                <!-- Actions Card for Approvers -->
-{{--                                @if($documentRegistrationEntry->status === 'pending' && (auth()->user()->can('approve document registration') || auth()->user()->can('reject document registration')))--}}
-{{--                                    <div class="card">--}}
-{{--                                        <div class="card-header">--}}
-{{--                                            <h5 class="mb-0"><i class='bx bx-cog'></i> Actions</h5>--}}
-{{--                                        </div>--}}
-{{--                                        <div class="card-body">--}}
-{{--                                            @can('approve document registration')--}}
-{{--                                                <form action="{{ route('document-registry.approve', $documentRegistrationEntry) }}" method="POST" class="d-inline">--}}
-{{--                                                    @csrf--}}
-{{--                                                    <button type="submit" class="btn btn-success btn-sm w-100 mb-2"--}}
-{{--                                                            onclick="return confirm('Are you sure you want to approve this document registration?')">--}}
-{{--                                                        <i class='bx bx-check'></i> Approve--}}
-{{--                                                    </button>--}}
-{{--                                                </form>--}}
-{{--                                            @endcan--}}
-
-{{--                                            @can('reject document registration')--}}
-{{--                                                <button type="button" class="btn btn-danger btn-sm w-100 mb-2"--}}
-{{--                                                        data-bs-toggle="modal" data-bs-target="#rejectModal">--}}
-{{--                                                    <i class='bx bx-x'></i> Reject--}}
-{{--                                                </button>--}}
-{{--                                            @endcan--}}
-{{--                                        </div>--}}
-{{--                                    </div>--}}
-{{--                                @endif--}}
 
                                 @if($documentRegistrationEntry->status === 'pending' && auth()->user()->can('submit document for approval'))
                                     <div class="card mb-3">
@@ -295,23 +282,28 @@
                                     </div>
                                 @endif
 
-                                <!-- Withdraw Action for Submitter -->
-{{--                                @if($documentRegistrationEntry->status === 'pending' &&--}}
-{{--                                    $documentRegistrationEntry->submitted_by === auth()->id() &&--}}
-{{--                                    auth()->user()->can('withdraw document submission'))--}}
-{{--                                    <div class="card mt-3">--}}
-{{--                                        <div class="card-body">--}}
-{{--                                            <form action="{{ route('document-registry.withdraw', $documentRegistrationEntry) }}" method="POST">--}}
-{{--                                                @csrf--}}
-{{--                                                @method('DELETE')--}}
-{{--                                                <button type="submit" class="btn btn-outline-danger btn-sm w-100"--}}
-{{--                                                        onclick="return confirm('Are you sure you want to withdraw this submission? This action cannot be undone.')">--}}
-{{--                                                    <i class='bx bx-trash'></i> Withdraw Submission--}}
-{{--                                                </button>--}}
-{{--                                            </form>--}}
-{{--                                        </div>--}}
-{{--                                    </div>--}}
-{{--                                @endif--}}
+
+                                @if($documentRegistrationEntry->status !== 'pending')
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="bx bx-block"></i> Upload Disabled</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            @if($documentRegistrationEntry->status === 'approved')
+                                                <div class="alert alert-success mb-0">
+                                                    <i class="bx bx-check"></i>
+                                                    This document has been implemented. You cannot upload new files.
+                                                </div>
+                                            @elseif($documentRegistrationEntry->status === 'rejected')
+                                                <div class="alert alert-danger mb-0">
+                                                    <i class="bx bx-x"></i>
+                                                    This document registration has been cancelled. You cannot upload new files.
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
                             </div>
                         </div>
                     </div>
