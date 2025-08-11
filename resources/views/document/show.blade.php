@@ -75,7 +75,7 @@
                             </button>
                         @endcan
                         @can('edit ' . $document->baseFolder->name . ' documents')
-                            <a href="{{ route('documents.edit', $document) }}" class="btn btn-sm btn-outline-secondary">
+                            <a class="btn btn-sm btn-outline-secondary" onclick="showEditSwal()">
                                 <i class="bx bx-edit"></i> Edit
                             </a>
                         @endcan
@@ -474,6 +474,54 @@
                 shareLink.select();
                 shareLink.setSelectionRange(0, 99999);
                 navigator.clipboard.writeText(shareLink.value);
+            }
+
+
+            function showEditSwal() {
+                Swal.fire({
+                    title: 'Edit Document',
+                    html: `
+            <div class="mb-3 text-start">
+                <label for="swal-doc-name" class="form-label fw-bold">Name</label>
+                <input id="swal-doc-name" class="form-control" placeholder="Name" value="{{ addslashes($document->original_filename) }}">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="swal-doc-desc" class="form-label fw-bold">Description</label>
+                <textarea id="swal-doc-desc" class="form-control" placeholder="Description" rows="3">{{ addslashes($document->description ?? '') }}</textarea>
+            </div>
+        `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Save',
+                    customClass: {
+                        popup: 'swal2-edit-modal'
+                    },
+                    preConfirm: () => {
+                        return {
+                            name: document.getElementById('swal-doc-name').value,
+                            description: document.getElementById('swal-doc-desc').value
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('{{ route("documents.quick-update", $document) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(result.value)
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Saved!', 'Document updated.', 'success').then(() => location.reload());
+                                } else {
+                                    Swal.fire('Error', data.message || 'Update failed.', 'error');
+                                }
+                            })
+                            .catch(() => Swal.fire('Error', 'Update failed.', 'error'));
+                    }
+                });
             }
         </script>
     @endpush

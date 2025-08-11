@@ -543,4 +543,23 @@ class DocumentController extends Controller
         $html = str_replace('<p></p>', '', $html);
         return trim($html);
     }
+
+
+    public function quickUpdate(Request $request, Document $document)
+    {
+        if (!Auth::user()->can("edit {$document->baseFolder->name} documents")) {
+            return response()->json(['success' => false, 'message' => 'Permission denied'], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $document->original_filename = $request->name;
+        $document->description = $request->description;
+        $document->save();
+
+        return response()->json(['success' => true]);
+    }
 }

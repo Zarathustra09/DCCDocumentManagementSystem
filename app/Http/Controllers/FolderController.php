@@ -228,4 +228,23 @@ class FolderController extends Controller
             'message' => 'Folder moved successfully'
         ]);
     }
+
+
+    public function quickUpdate(Request $request, Folder $folder)
+    {
+        if (!Auth::user()->can("edit {$folder->baseFolder->name} documents")) {
+            return response()->json(['success' => false, 'message' => 'Permission denied'], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $folder->name = $request->name;
+        $folder->description = $request->description;
+        $folder->save();
+
+        return response()->json(['success' => true]);
+    }
 }

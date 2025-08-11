@@ -137,3 +137,5 @@ Route::middleware(['auth'])->prefix('document-registry')->name('document-registr
 
 
 Route::get('/document-excel/export', [ExcelExportController::class, 'export'])->name('document-excel.export');
+Route::post('documents/{document}/quick-update', [DocumentController::class, 'quickUpdate'])->name('documents.quick-update');
+Route::post('folders/{folder}/quick-update', [FolderController::class, 'quickUpdate'])->name('folders.quick-update');
