@@ -139,13 +139,13 @@
                             </table>
                         </div>
 
-                        @if($pendingRegistrations->count() >= 10)
-                            <div class="text-center mt-3">
-                                <a href="{{ route('document-registry.list')}}" class="btn btn-primary">
-                                    <i class='bx bx-show'></i> View All Pending Registrations
-                                </a>
-                            </div>
-                        @endif
+{{--                        @if($pendingRegistrations->count() >= 10)--}}
+{{--                            <div class="text-center mt-3">--}}
+{{--                                <a href="{{ route('document-registry.list')}}" class="btn btn-primary">--}}
+{{--                                    <i class='bx bx-show'></i> View All Pending Registrations--}}
+{{--                                </a>--}}
+{{--                            </div>--}}
+{{--                        @endif--}}
                     </div>
                 </div>
             </div>

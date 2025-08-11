@@ -540,4 +540,52 @@
             }
         });
     });
+
+
+    function showEditFolderSwal() {
+        Swal.fire({
+            title: 'Edit Folder',
+            html: `
+            <div class="mb-3 text-start">
+                <label for="swal-folder-name" class="form-label fw-bold">Name</label>
+                <input id="swal-folder-name" class="form-control" placeholder="Name" value="{{ addslashes($folder->name) }}">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="swal-folder-desc" class="form-label fw-bold">Description</label>
+                <textarea id="swal-folder-desc" class="form-control" placeholder="Description" rows="3">{{ addslashes($folder->description ?? '') }}</textarea>
+            </div>
+        `,
+            showCancelButton: true,
+            confirmButtonText: 'Save',
+            customClass: {
+                popup: 'swal2-edit-modal'
+            },
+            preConfirm: () => {
+                return {
+                    name: document.getElementById('swal-folder-name').value,
+                    description: document.getElementById('swal-folder-desc').value
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('{{ route("folders.quick-update", $folder) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(result.value)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Saved!', 'Folder updated.', 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Error', data.message || 'Update failed.', 'error');
+                        }
+                    })
+                    .catch(() => Swal.fire('Error', 'Update failed.', 'error'));
+            }
+        });
+    }
 </script>

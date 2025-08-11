@@ -6,10 +6,6 @@
         <!-- Sidebar / Folder Tree -->
         <div class="col-md-3 col-lg-2 d-none d-md-block sidebar" style="min-height: calc(100vh - 60px); background-color: #f8f9fa; border-right: 1px solid #e9ecef;">
             <div class="position-sticky pt-3">
-                <div class="px-3 mb-4 d-flex align-items-center">
-                    <i class="bx bxs-folder-open text-primary" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2 fw-medium">Explorer</span>
-                </div>
 
                 <ul class="nav flex-column mb-4">
                     <li class="nav-item">
@@ -112,7 +108,7 @@
                             </button>
                         @endcan
                     @can('edit ' . $folder->baseFolder->name . ' documents')
-                    <a href="{{ route('folders.edit', $folder) }}" class="btn btn-sm btn-outline-secondary">
+                    <a class="btn btn-sm btn-outline-secondary" onclick="showEditFolderSwal()">
                         <i class="bx bx-edit"></i> Edit
                     </a>
                     @endcan
@@ -237,7 +233,7 @@
                                 <th>Type</th>
                                 <th>Size</th>
                                 <th>Modified</th>
-                                <th class="text-end">Actions</th>
+{{--                                <th class="text-end">Actions</th>--}}
                             </tr>
                         </thead>
                         <tbody>
@@ -257,21 +253,21 @@
                                     <td><span class="badge bg-light text-dark">Folder</span></td>
                                     <td>-</td>
                                     <td><small>{{ $subfolder->updated_at->format('M d, Y') }}</small></td>
-                                    <td class="text-end">
-                                        <div class="btn-group btn-group-sm">
-                                            @can('edit ' . $subfolder->department . ' documents')
-                                            <a href="{{ route('folders.edit', $subfolder) }}" class="btn btn-outline-secondary btn-sm" title="Edit">
-                                                <i class="bx bx-edit"></i>
-                                            </a>
-                                            @endcan
-                                            @can('delete ' . $subfolder->department . ' documents')
-                                            <button type="button" class="btn btn-outline-danger btn-sm delete-btn"
-                                                   data-id="{{ $subfolder->id }}" data-name="{{ $subfolder->name }}" title="Delete">
-                                                <i class="bx bx-trash"></i>
-                                            </button>
-                                            @endcan
-                                        </div>
-                                    </td>
+{{--                                    <td class="text-end">--}}
+{{--                                        <div class="btn-group btn-group-sm">--}}
+{{--                                            @can('edit ' . $subfolder->department . ' documents')--}}
+{{--                                            <a href="{{ route('folders.edit', $subfolder) }}" class="btn btn-outline-secondary btn-sm" title="Edit">--}}
+{{--                                                <i class="bx bx-edit"></i>--}}
+{{--                                            </a>--}}
+{{--                                            @endcan--}}
+{{--                                            @can('delete ' . $subfolder->department . ' documents')--}}
+{{--                                            <button type="button" class="btn btn-outline-danger btn-sm delete-btn"--}}
+{{--                                                   data-id="{{ $subfolder->id }}" data-name="{{ $subfolder->name }}" title="Delete">--}}
+{{--                                                <i class="bx bx-trash"></i>--}}
+{{--                                            </button>--}}
+{{--                                            @endcan--}}
+{{--                                        </div>--}}
+{{--                                    </td>--}}
                                 </tr>
                             @endforeach
 

@@ -7,6 +7,7 @@ use App\Models\DocumentRegistrationEntryFile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Exports\DocumentRegistryExport;
@@ -133,6 +134,7 @@ class DocumentRegistrationEntryController extends Controller
 
     public function approve(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
+        Log::info(Auth::user()->can('approve document registration'));
         if (!Auth::user()->can('approve document registration') ||
             $documentRegistrationEntry->status !== 'pending') {
             abort(403);
@@ -169,12 +171,7 @@ class DocumentRegistrationEntryController extends Controller
             'rejection_reason' => $request->rejection_reason,
             'revision_notes' => null,
         ]);
-        $documentRegistrationEntry->files()->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-            'rejection_reason' => $request->rejection_reason,
-        ]);
+
         return back()->with('success', 'Document registration rejected.');
     }
 
