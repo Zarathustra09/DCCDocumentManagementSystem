@@ -98,9 +98,9 @@
 
                 <div class="action-buttons">
                     @can('create folders')
-                    <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bx bx-folder-plus"></i> Add
-                    </a>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showCreateFolderSwal()">
+                            <i class="bx bx-folder-plus"></i> Add
+                        </button>
                     @endcan
                         @can('create ' . $folder->baseFolder->name . ' documents')
                             <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">
@@ -207,15 +207,15 @@
                                 <p class="small text-muted mb-3">Drag files here to upload them or move items here</p>
                                 <div>
                                     @can('create folders')
-                                    <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}" class="btn btn-sm btn-outline-primary me-2">
+                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="showCreateFolderSwal()">
                                         <i class="bx bx-folder-plus"></i> Add
-                                    </a>
+                                    </button>
                                     @endcan
-                                        @can('create ' . $folder->baseFolder->name . ' documents')
-                                            <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">
-                                                <i class="bx bx-upload"></i> Upload
-                                            </button>
-                                        @endcan
+                                    @can('create ' . $folder->baseFolder->name . ' documents')
+                                        <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">
+                                            <i class="bx bx-upload"></i> Upload
+                                        </button>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
@@ -411,6 +411,7 @@
 </div>
 
 @push('scripts')
+    @include('folder.scripts.moveScript')
     @include('folder.scripts.showScript')
 @endpush
 @endsection

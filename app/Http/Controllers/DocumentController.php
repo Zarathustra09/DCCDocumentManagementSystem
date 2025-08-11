@@ -232,36 +232,35 @@ class DocumentController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function move(Request $request, Document $document)
-     {
-         $request->validate([
-             'folder_id' => 'nullable|exists:folders,id'
-         ]);
+    {
+        $request->validate([
+            'folder_id' => 'nullable|exists:folders,id'
+        ]);
 
-         if (!Auth::user()->can("edit {$document->baseFolder->name} documents")) {
-             return response()->json([
-                 'success' => false,
-                 'message' => 'You do not have permission to move this document.'
-             ], 403);
-         }
+        if (!Auth::user()->can("edit {$document->baseFolder->name} documents")) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to move this document.'
+            ], 403);
+        }
 
-         if ($request->folder_id) {
-             $folder = Folder::findOrFail($request->folder_id);
-             if ($folder->base_folder_id !== $document->base_folder_id) {
-                 return response()->json([
-                     'success' => false,
-                     'message' => 'Cannot move document to a folder in a different department.'
-                 ], 400);
-             }
-         }
+        if ($request->folder_id) {
+            $folder = Folder::findOrFail($request->folder_id);
+            if ($folder->base_folder_id !== $document->base_folder_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot move document to a folder in a different department.'
+                ], 400);
+            }
+        }
 
-         $document->update(['folder_id' => $request->folder_id]);
+        $document->update(['folder_id' => $request->folder_id]);
 
-         return response()->json([
-             'success' => true,
-             'message' => 'Document moved successfully.'
-         ]);
-     }
-
+        return response()->json([
+            'success' => true,
+            'message' => 'Document moved successfully.'
+        ]);
+    }
 
 
     public function search(Request $request)
