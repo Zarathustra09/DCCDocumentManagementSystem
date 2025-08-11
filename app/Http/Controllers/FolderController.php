@@ -64,34 +64,62 @@ class FolderController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'base_folder_id' => 'required|exists:base_folders,id',
             'parent_id' => 'nullable|exists:folders,id',
+            'base_folder_id' => 'required|exists:base_folders,id',
             'description' => 'nullable|string|max:500',
         ]);
 
+        // Check permissions
         $baseFolder = BaseFolder::find($request->base_folder_id);
-
         if (!Auth::user()->can("create {$baseFolder->name} documents")) {
-            abort(403, 'You do not have permission to create folders in this base folder.');
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to create folders in this department.'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to create folders in this department.');
         }
 
-        // If parent folder is specified, ensure it's in the same base folder
+        // Validate parent folder belongs to same base folder
         if ($request->parent_id) {
             $parentFolder = Folder::find($request->parent_id);
-            if ($parentFolder->base_folder_id != $request->base_folder_id) {
-                return back()->withErrors(['parent_id' => 'Parent folder must be in the same base folder.']);
+            if ($parentFolder->base_folder_id !== $request->base_folder_id) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Parent folder must be in the same department.'
+                    ], 400);
+                }
+                return back()->withErrors(['parent_id' => 'Parent folder must be in the same department.']);
             }
         }
 
         $folder = Folder::create([
             'user_id' => Auth::id(),
-            'parent_id' => $request->parent_id,
             'name' => $request->name,
+            'parent_id' => $request->parent_id,
             'base_folder_id' => $request->base_folder_id,
             'description' => $request->description,
         ]);
 
-        return redirect()->route('folders.index')->with('success', 'Folder created successfully');
+        // Return JSON for AJAX requests
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Folder created successfully',
+                'folder' => $folder
+            ]);
+        }
+
+        // Regular form submission redirect
+        if ($request->parent_id) {
+            return redirect()->route('folders.show', $request->parent_id)
+                ->with('success', 'Folder created successfully');
+        }
+
+        return redirect()->route('folders.index')
+            ->with('success', 'Folder created successfully');
     }
 
     public function show(Folder $folder)
@@ -190,34 +218,35 @@ class FolderController extends Controller
 
     public function move(Request $request, Folder $folder)
     {
-        if (!Auth::user()->can("edit {$folder->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
-            abort(403);
-        }
-
         $request->validate([
-            'parent_id' => 'nullable|exists:folders,id',
+            'parent_id' => 'nullable|exists:folders,id'
         ]);
 
+        if (!Auth::user()->can("edit {$folder->baseFolder->name} documents")) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to move this folder.'
+            ], 403);
+        }
+
+        // Prevent moving folder into itself or its descendants
         if ($request->parent_id) {
-            $parent = Folder::find($request->parent_id);
+            $targetFolder = Folder::findOrFail($request->parent_id);
 
             // Check if target folder is in the same base folder
-            if ($parent->base_folder_id !== $folder->base_folder_id) {
-                return response()->json(['success' => false, 'message' => 'Cannot move folder to a different base folder'], 400);
+            if ($targetFolder->base_folder_id !== $folder->base_folder_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot move folder to a different department.'
+                ], 400);
             }
 
-            // Check if user can access target folder
-            if (!Auth::user()->can("view {$parent->baseFolder->name} documents") && !Auth::user()->hasRole('admin')) {
-                return response()->json(['success' => false, 'message' => 'Cannot move to this folder'], 403);
-            }
-
-            // Check for circular reference
-            $current = $parent;
-            while ($current) {
-                if ($current->id == $folder->id) {
-                    return response()->json(['success' => false, 'message' => 'Cannot move folder into itself or its subfolder'], 400);
-                }
-                $current = $current->parent;
+            // Check if trying to move into itself or a descendant
+            if ($this->isDescendantOf($targetFolder, $folder)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot move folder into itself or its descendants.'
+                ], 400);
             }
         }
 
@@ -225,8 +254,20 @@ class FolderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Folder moved successfully'
+            'message' => 'Folder moved successfully.'
         ]);
+    }
+
+    private function isDescendantOf($folder, $ancestor)
+    {
+        $current = $folder;
+        while ($current) {
+            if ($current->id === $ancestor->id) {
+                return true;
+            }
+            $current = $current->parent;
+        }
+        return false;
     }
 
 
@@ -247,4 +288,6 @@ class FolderController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+
 }

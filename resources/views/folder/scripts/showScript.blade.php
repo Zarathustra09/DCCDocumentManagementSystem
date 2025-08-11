@@ -56,7 +56,6 @@
         });
 
         // Drag and drop for moving items
-        // Drag and drop for moving items
         document.querySelectorAll('[draggable="true"]').forEach(item => {
             item.addEventListener('dragstart', function(e) {
                 isDraggingItem = true;
@@ -74,9 +73,9 @@
                 const dragPreview = document.createElement('div');
                 dragPreview.className = 'drag-preview';
                 dragPreview.innerHTML = `
-            <i class="bx ${draggedItem.type === 'folder' ? 'bx-folder' : 'bx-file'}" style="margin-right: 0.5rem; color: ${draggedItem.type === 'folder' ? '#ffc107' : '#6c757d'};"></i>
-            <span>${draggedItem.name}</span>
-        `;
+                    <i class="bx ${draggedItem.type === 'folder' ? 'bx-folder' : 'bx-file'}" style="margin-right: 0.5rem; color: ${draggedItem.type === 'folder' ? '#ffc107' : '#6c757d'};"></i>
+                    <span>${draggedItem.name}</span>
+                `;
                 document.body.appendChild(dragPreview);
 
                 // Set custom drag image
@@ -92,15 +91,15 @@
                 // Add overlay to potential drop zones
                 setTimeout(() => {
                     document.querySelectorAll('.drop-zone').forEach(zone => {
-                        if (zone.dataset.id !== draggedItem.id) {
+                        if (zone.dataset.folderId !== draggedItem.id) {
                             const overlay = document.createElement('div');
                             overlay.className = 'drag-move-overlay d-none';
                             overlay.innerHTML = `
-                        <div class="move-message">
-                            <i class="bx bx-move"></i>
-                            Drop to move here
-                        </div>
-                    `;
+                                <div class="move-message">
+                                    <i class="bx bx-move"></i>
+                                    Drop to move here
+                                </div>
+                            `;
                             zone.style.position = 'relative';
                             zone.appendChild(overlay);
                         }
@@ -125,12 +124,12 @@
             });
         });
 
-// Drop zone events for moving items
+        // Drop zone events for moving items
         document.querySelectorAll('.drop-zone').forEach(zone => {
             zone.addEventListener('dragover', function(e) {
                 e.preventDefault();
 
-                if (isDraggingItem && this.dataset.id !== draggedItem.id) {
+                if (isDraggingItem && this.dataset.folderId !== draggedItem.id) {
                     e.dataTransfer.dropEffect = 'move';
                     this.classList.add('drag-over');
 
@@ -164,8 +163,8 @@
                     overlay.remove();
                 }
 
-                if (isDraggingItem && this.dataset.id !== draggedItem.id) {
-                    const targetFolderId = this.dataset.id;
+                if (isDraggingItem && this.dataset.folderId !== draggedItem.id) {
+                    const targetFolderId = this.dataset.folderId || null;
 
                     // Prevent dropping folder into itself or its children
                     if (draggedItem.type === 'folder' && targetFolderId === draggedItem.id) {
@@ -175,51 +174,6 @@
 
                     moveItem(draggedItem, targetFolderId);
                 } else if (!isDraggingItem) {
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0) {
-                        handleFileUploads(files);
-                    }
-                }
-            });
-        });
-
-        // Drop zone events for moving items
-        document.querySelectorAll('.drop-zone').forEach(zone => {
-            zone.addEventListener('dragover', function(e) {
-                e.preventDefault();
-
-                if (isDraggingItem) {
-                    e.dataTransfer.dropEffect = 'move';
-                    this.classList.add('drag-over');
-                } else {
-                    e.dataTransfer.dropEffect = 'copy';
-                }
-            });
-
-            zone.addEventListener('dragleave', function(e) {
-                // Only remove drag-over if we're leaving the element and not entering a child
-                if (!this.contains(e.relatedTarget)) {
-                    this.classList.remove('drag-over');
-                }
-            });
-
-            zone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('drag-over');
-
-                if (isDraggingItem) {
-                    // Handle moving items
-                    const targetFolderId = this.dataset.folderId || null;
-                    const item = JSON.parse(e.dataTransfer.getData('application/json'));
-
-                    // Don't allow dropping on self
-                    if (item.type === 'folder' && item.id == targetFolderId) {
-                        return;
-                    }
-
-                    moveItem(item, targetFolderId);
-                } else {
-                    // Handle file uploads
                     const files = e.dataTransfer.files;
                     if (files.length > 0) {
                         handleFileUploads(files);
@@ -270,16 +224,17 @@
         });
 
         function moveItem(item, targetFolderId) {
-            const url = item.type === 'folder'
-                ? `/folders/${item.id}/move`
-                : `/documents/${item.id}/move`;
+            // Only handle folder moves
+            if (item.type !== 'folder') {
+                console.error('Document moves not supported in this context');
+                return;
+            }
 
-            const data = item.type === 'folder'
-                ? { parent_id: targetFolderId }
-                : { folder_id: targetFolderId };
+            const url = `/folders/${item.id}/move`;
+            const data = { parent_id: targetFolderId };
 
             fetch(url, {
-                method: 'PATCH',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -293,9 +248,9 @@
                         const alert = document.createElement('div');
                         alert.className = 'alert alert-success alert-dismissible fade show mt-3';
                         alert.innerHTML = `
-                        ${data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    `;
+                            ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
 
                         const container = document.querySelector('.my-3');
                         container.parentNode.insertBefore(alert, container.nextSibling);
@@ -310,7 +265,7 @@
                 })
                 .catch(error => {
                     console.error('Move error:', error);
-                    alert('An error occurred while moving the item.');
+                    alert('An error occurred while moving the folder.');
                 });
         }
 
@@ -469,14 +424,14 @@
         });
     });
 
-
+    // Upload button functionality
     document.getElementById('swal-upload-btn')?.addEventListener('click', function() {
         Swal.fire({
             title: 'Upload Document',
             html: `
-            <input type="file" id="swal-file-input" class="swal2-input" style="width:100%" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx">
-            <textarea id="swal-desc-input" class="swal2-textarea" placeholder="Description (optional)"></textarea>
-        `,
+                <input type="file" id="swal-file-input" class="swal2-input" style="width:100%" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx">
+                <textarea id="swal-desc-input" class="swal2-textarea" placeholder="Description (optional)"></textarea>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Upload',
             preConfirm: () => {
@@ -541,20 +496,19 @@
         });
     });
 
-
     function showEditFolderSwal() {
         Swal.fire({
             title: 'Edit Folder',
             html: `
-            <div class="mb-3 text-start">
-                <label for="swal-folder-name" class="form-label fw-bold">Name</label>
-                <input id="swal-folder-name" class="form-control" placeholder="Name" value="{{ addslashes($folder->name) }}">
-            </div>
-            <div class="mb-3 text-start">
-                <label for="swal-folder-desc" class="form-label fw-bold">Description</label>
-                <textarea id="swal-folder-desc" class="form-control" placeholder="Description" rows="3">{{ addslashes($folder->description ?? '') }}</textarea>
-            </div>
-        `,
+                <div class="mb-3 text-start">
+                    <label for="swal-folder-name" class="form-label fw-bold">Name</label>
+                    <input id="swal-folder-name" class="form-control" placeholder="Name" value="{{ addslashes($folder->name) }}">
+                </div>
+                <div class="mb-3 text-start">
+                    <label for="swal-folder-desc" class="form-label fw-bold">Description</label>
+                    <textarea id="swal-folder-desc" class="form-control" placeholder="Description" rows="3">{{ addslashes($folder->description ?? '') }}</textarea>
+                </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Save',
             customClass: {
@@ -576,15 +530,79 @@
                     },
                     body: JSON.stringify(result.value)
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        console.log('Response headers:', response.headers);
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Response data:', data);
                         if (data.success) {
                             Swal.fire('Saved!', 'Folder updated.', 'success').then(() => location.reload());
                         } else {
                             Swal.fire('Error', data.message || 'Update failed.', 'error');
                         }
                     })
-                    .catch(() => Swal.fire('Error', 'Update failed.', 'error'));
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        Swal.fire('Error', 'Update failed.', 'error');
+                    });
+            }
+        });
+    }
+
+    function showCreateFolderSwal() {
+        Swal.fire({
+            title: 'Create New Folder',
+            html: `
+                <div class="mb-3 text-start">
+                    <label for="swal-folder-name" class="form-label fw-bold">Folder Name</label>
+                    <input id="swal-folder-name" class="form-control" placeholder="Enter folder name" required>
+                </div>
+                <div class="mb-3 text-start">
+                    <label for="swal-folder-desc" class="form-label fw-bold">Description (Optional)</label>
+                    <textarea id="swal-folder-desc" class="form-control" placeholder="Enter description" rows="3"></textarea>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Create Folder',
+            preConfirm: () => {
+                const name = document.getElementById('swal-folder-name').value;
+                if (!name.trim()) {
+                    Swal.showValidationMessage('Folder name is required');
+                    return false;
+                }
+                return {
+                    name: name.trim(),
+                    description: document.getElementById('swal-folder-desc').value.trim(),
+                    parent_id: {{ $folder->id }}, // Current folder as parent
+                    base_folder_id: {{ $folder->base_folder_id }} // Use current folder's base folder
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('{{ route("folders.store") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(result.value)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Created!', 'Folder created successfully.', 'success')
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to create folder.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Failed to create folder.', 'error');
+                });
             }
         });
     }

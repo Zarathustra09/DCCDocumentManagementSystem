@@ -21,8 +21,6 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 
-Route::patch('/folders/{folder}/move', [FolderController::class, 'move'])->name('folders.move');
-Route::patch('/documents/{document}/move', [DocumentController::class, 'move'])->name('documents.move');
 Route::resource('documents', DocumentController::class);
 Route::get('/download/{document}', [DocumentController::class, 'download'])->name('documents.download');
 Route::post('/documents/{document}/update-content', [DocumentController::class, 'updateContent'])->name('documents.update-content');
@@ -33,6 +31,8 @@ Route::get('/document-registration-entries/search', [DocumentController::class, 
     ->name('document-registration-entries.search');
 
 Route::resource('folders', FolderController::class);
+Route::post('folders/{folder}/move', [FolderController::class, 'move'])->name('folders.move');
+Route::post('/documents/{document}/move', [DocumentController::class, 'move'])->name('documents.move');
 
 
 
