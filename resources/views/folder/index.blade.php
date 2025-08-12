@@ -562,4 +562,9 @@ function showCreateFolderSwal() {
     border-radius: 0.375rem;
 }
 </style>
+
+
+@push('scripts')
+    @include('folder.scripts.indexScript')
+@endpush
 @endsection
