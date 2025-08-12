@@ -33,7 +33,7 @@ Route::get('/document-registration-entries/search', [DocumentController::class, 
 Route::resource('folders', FolderController::class);
 Route::post('folders/{folder}/move', [FolderController::class, 'move'])->name('folders.move');
 Route::post('/documents/{document}/move', [DocumentController::class, 'move'])->name('documents.move');
-
+Route::post('/folders/{folder}/move-to-category', [FolderController::class, 'moveToCategory'])->name('folders.move-to-category');
 
 
 // Fix the routes order to prioritize named routes before parameter routes

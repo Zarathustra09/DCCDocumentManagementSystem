@@ -17,30 +17,23 @@ class FolderController extends Controller
         $this->middleware('permission:delete folders')->only('destroy');
     }
 
-    public function index()
-    {
-        // Get base folders accessible by the user
-        $baseFolders = BaseFolder::where(function ($query) {
-            $query->whereHas('folders', function ($subQuery) {
-                $subQuery->accessibleByUser(Auth::user());
-            })->orDoesntHave('folders');
-        })->with(['folders' => function ($query) {
-            $query->with(['children', 'documents', 'user'])
-                  ->whereNull('parent_id')
-                  ->accessibleByUser(Auth::user())
-                  ->latest();
-        }])->get();
+   public function index(Request $request)
+   {
+       $selectedBaseFolder = null;
+       $baseFolders = BaseFolder::all();
 
-        // Get orphaned folders accessible by the user
-        $orphanedFolders = Folder::with(['children', 'documents', 'user'])
-            ->whereNull('parent_id')
-            ->whereNull('base_folder_id')
-            ->accessibleByUser(Auth::user())
-            ->latest()
-            ->get();
+       $foldersQuery = Folder::whereNull('parent_id')
+           ->with('baseFolder');
 
-        return view('folder.index', compact('baseFolders', 'orphanedFolders'));
-    }
+       if ($request->has('base_folder') && $request->base_folder) {
+           $selectedBaseFolder = BaseFolder::findOrFail($request->base_folder);
+           $foldersQuery->where('base_folder_id', $request->base_folder);
+       }
+
+       $folders = $foldersQuery->get();
+
+       return view('folder.index', compact('folders', 'baseFolders', 'selectedBaseFolder'));
+   }
 
     public function create(Request $request)
     {
@@ -287,6 +280,26 @@ class FolderController extends Controller
         $folder->save();
 
         return response()->json(['success' => true]);
+    }
+
+    public function moveToCategory(Request $request, Folder $folder)
+    {
+        $request->validate([
+            'base_folder_id' => 'nullable|exists:base_folders,id'
+        ]);
+
+        $folder->update([
+            'base_folder_id' => $request->base_folder_id
+        ]);
+
+        $categoryName = $request->base_folder_id
+            ? BaseFolder::find($request->base_folder_id)->name
+            : 'Uncategorized';
+
+        return response()->json([
+            'success' => true,
+            'message' => "Folder '{$folder->name}' moved to '{$categoryName}'"
+        ]);
     }
 
 
