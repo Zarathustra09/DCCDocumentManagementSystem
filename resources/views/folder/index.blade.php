@@ -1,673 +1,565 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container-xxl pt-4">
-        <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 15px;">
-            <!-- Header Section -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="fw-bold text-dark mb-1">
-                                <i class="bx bx-folder-open text-primary me-2"></i>
-                                Document Folders
-                            </h2>
-                            <p class="text-muted mb-0">Organize and manage your top-level document folders by category</p>
-                        </div>
-                        @can('create folders')
-                            <div>
-                                <button class="btn btn-primary btn-lg shadow-sm" id="createBaseFolderBtn">
-                                    <i class="bx bx-plus-circle me-2"></i>
-                                    Add Folder Label
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar / Folder Tree -->
+        <div class="col-md-3 col-lg-2 d-none d-md-block sidebar" style="min-height: calc(100vh - 60px); background-color: #f8f9fa; border-right: 1px solid #e9ecef;">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {{ request()->routeIs('folders.index') ? 'active text-primary' : 'text-dark' }} drop-zone"
+                           href="{{ route('folders.index') }}" data-folder-id="">
+                            <i class="bx bxs-home me-2"></i> All Documents
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="px-3 mb-2 d-flex justify-content-between align-items-center">
+                    <span class="small text-muted text-uppercase" style="letter-spacing: 0.5px;">Categories</span>
+                    @can('create folders')
+                    <button class="btn btn-link btn-sm p-0" onclick="showCreateCategorySwal()" title="Add Category">
+                        <i class="bx bx-plus text-primary"></i>
+                    </button>
+                    @endcan
+                </div>
+
+                <ul class="nav flex-column">
+                    @foreach($baseFolders as $baseFolder)
+                    <li class="nav-item position-relative">
+                        <div class="d-flex align-items-center justify-content-between category-item">
+                            <a class="nav-link d-flex align-items-center text-dark drop-zone flex-grow-1"
+                               href="{{ route('folders.index', ['base_folder' => $baseFolder->id]) }}"
+                               data-folder-id="">
+                                <i class="bx bx-folder me-2 text-warning"></i>
+                                <span class="flex-grow-1">{{ $baseFolder->name }}</span>
+                            </a>
+                            @can('edit folders')
+                            <div class="category-actions d-none">
+                                <button class="btn btn-link btn-sm p-0 me-1"
+                                        onclick="showEditCategorySwal({{ $baseFolder->id }}, '{{ addslashes($baseFolder->name) }}', '{{ addslashes($baseFolder->description ?? '') }}')"
+                                        title="Edit">
+                                    <i class="bx bx-edit text-secondary"></i>
+                                </button>
+                                <button class="btn btn-link btn-sm p-0"
+                                        onclick="deleteCategory({{ $baseFolder->id }}, '{{ addslashes($baseFolder->name) }}')"
+                                        title="Delete">
+                                    <i class="bx bx-trash text-danger"></i>
                                 </button>
                             </div>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filters and View Toggle -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                <!-- Base Folder Filter -->
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="filter-group">
-                                        <label class="form-label small text-muted mb-1">Category</label>
-                                        <select class="form-select form-select-sm" id="departmentFilter">
-                                            <option value="">All Categories</option>
-                                            @foreach($baseFolders as $baseFolder)
-                                                <option value="{{ $baseFolder->id }}">{{ $baseFolder->name }}</option>
-                                            @endforeach
-                                            @if($orphanedFolders->count() > 0)
-                                                <option value="orphaned">Uncategorized</option>
-                                            @endif
-                                        </select>
-                                    </div>
-
-                                    <!-- Collapse/Expand Controls -->
-                                    <div class="collapse-controls">
-                                        <label class="form-label small text-muted mb-1">Sections</label>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="collapseAllBtn">
-                                                <i class="bx bx-collapse-vertical"></i> Collapse All
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="expandAllBtn">
-                                                <i class="bx bx-expand-vertical"></i> Expand All
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- View Toggle -->
-                                <div class="view-toggle">
-                                    <label class="form-label small text-muted mb-1">View</label>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-outline-secondary btn-sm view-btn active" data-view="compact">
-                                            <i class="bx bx-grid-alt"></i> Compact
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm view-btn" data-view="detailed">
-                                            <i class="bx bx-list-ul"></i> Detailed
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            @endcan
                         </div>
+                    </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="main-content">
+            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                <div class="d-flex align-items-center">
+                    <h4 class="mb-0">
+                        @if($selectedBaseFolder)
+                            {{ $selectedBaseFolder->name }}
+                        @else
+                            All Documents
+                        @endif
+                    </h4>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="btn-group btn-group-sm me-2">
+                        <button type="button" class="btn btn-outline-secondary active" data-view="icons" id="icon-view-btn">
+                            <i class="bx bx-grid-alt"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-view="list" id="list-view-btn">
+                            <i class="bx bx-list-ul"></i>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Success Alert -->
             @if (session('success'))
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
-                            <i class="bx bx-check-circle me-2"></i>
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    </div>
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
-            <!-- Main Content -->
-            <div class="row">
-                <div class="col-12">
-                    @if($baseFolders->isEmpty() && $orphanedFolders->isEmpty())
-                        <!-- Empty State -->
-                        <div class="empty-state text-center py-5">
-                            <div class="empty-state-icon mb-4">
-                                <i class="bx bx-folder-open display-1 text-muted"></i>
-                            </div>
-                            <h3 class="text-muted mb-3">No Folders Yet</h3>
-                            <p class="text-muted fs-5 mb-4">
-                                Start organizing your documents by creating your first folder
-                            </p>
-                            @can('create folders')
-                                <a href="{{ route('folders.create') }}" class="btn btn-primary btn-lg">
-                                    <i class="bx bx-folder-plus me-2"></i>
-                                    Create Your First Folder
+            <div class="my-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bx bxs-folder-open text-primary me-2" style="font-size: 1.5rem;"></i>
+                    <span class="text-muted">
+                        @if($selectedBaseFolder)
+                            {{ $selectedBaseFolder->description ?? 'No description' }}
+                        @else
+                            Browse all documents and folders
+                        @endif
+                    </span>
+                </div>
+
+                <div class="action-buttons">
+                    @can('create folders')
+                        <button class="btn btn-sm btn-outline-primary" onclick="showCreateFolderSwal()">
+                            <i class="bx bx-folder-plus"></i> Add Folder
+                        </button>
+                    @endcan
+{{--                    @if($selectedBaseFolder)--}}
+{{--                        @can('create ' . $selectedBaseFolder->name . ' documents')--}}
+{{--                            <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">--}}
+{{--                                <i class="bx bx-upload"></i> Upload--}}
+{{--                            </button>--}}
+{{--                        @endcan--}}
+{{--                    @endif--}}
+                </div>
+            </div>
+
+            <!-- Icon View -->
+            <div class="icon-view" id="icon-view">
+                <div class="row g-3">
+                    @foreach($folders as $folder)
+                        <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+                            <div class="folder-item position-relative rounded shadow-sm drop-zone"
+                                 data-folder-id="{{ $folder->id }}"
+                                 draggable="true"
+                                 data-type="folder"
+                                 data-id="{{ $folder->id }}"
+                                 data-name="{{ $folder->name }}">
+                                <a href="{{ route('folders.show', $folder) }}" class="text-decoration-none">
+                                    <div class="p-3 d-flex flex-column align-items-center" style="background-color: rgba(255, 193, 7, 0.05); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 0.375rem;">
+                                        <i class="bx bxs-folder text-warning" style="font-size: 2.5rem;"></i>
+                                        <p class="mt-2 mb-0 text-truncate w-100 text-center small">{{ $folder->name }}</p>
+                                    </div>
                                 </a>
-                            @endcan
-                        </div>
-                    @else
-                        <!-- Compact View (Default) -->
-                        <div id="compactView" class="folders-container">
-                            @foreach($baseFolders as $baseFolder)
-                                @if($baseFolder->folders->count() > 0 || $baseFolder->folders->isEmpty())
-                                    <div class="department-section mb-4" data-department="{{ $baseFolder->id }}">
-                                        <!-- Department Header with collapse toggle -->
-                                        <div class="department-header-compact mb-3" data-bs-toggle="collapse" data-bs-target="#dept-{{ $baseFolder->id }}" aria-expanded="true">
-                                            <div class="d-flex align-items-center">
-                                                <i class="bx bx-chevron-down collapse-icon me-2"></i>
-                                                <i class="bx bx-category text-primary me-2"></i>
-                                                <h5 class="mb-0 fw-bold">{{ $baseFolder->name }}</h5>
-                                                <span class="badge bg-primary-subtle text-primary ms-2">
-                                                    {{ $baseFolder->folders->count() }}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div class="collapse show" id="dept-{{ $baseFolder->id }}">
-                                            <!-- Action buttons inside collapsible area -->
-                                            <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
-                                                @can('create folders')
-                                                    @if(Auth::user()->can("create {$baseFolder->name} documents"))
-                                                        <button class="btn btn-sm btn-outline-primary add-folder-btn"
-                                                                data-base-folder-id="{{ $baseFolder->id }}"
-                                                                data-base-folder-name="{{ $baseFolder->name }}"
-                                                                onclick="event.stopPropagation();">
-                                                            <i class="bx bx-plus"></i>
-                                                        </button>
-                                                    @endif
-                                                @endcan
-
-                                                <!-- Base Folder Actions Dropdown -->
-                                                <div class="dropdown" onclick="event.stopPropagation();">
-                                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                                        <i class="bx bx-dots-vertical-rounded"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow">
-                                                        @can('edit folders')
-                                                            <li>
-                                                                <button class="dropdown-item edit-base-folder-btn"
-                                                                        data-id="{{ $baseFolder->id }}"
-                                                                        data-name="{{ $baseFolder->name }}"
-                                                                        data-description="{{ $baseFolder->description }}">
-                                                                    <i class="bx bx-edit me-2"></i>Edit Folder Label
-                                                                </button>
-                                                            </li>
-                                                        @endcan
-                                                        @can('delete folders')
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li>
-                                                                <button class="dropdown-item text-danger delete-base-folder-btn"
-                                                                        data-id="{{ $baseFolder->id }}"
-                                                                        data-name="{{ $baseFolder->name }}"
-                                                                        data-folders="{{ $baseFolder->folders->count() }}">
-                                                                    <i class="bx bx-trash me-2"></i>Delete Base Folder
-                                                                </button>
-                                                            </li>
-                                                        @endcan
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                            @if($baseFolder->folders->isEmpty())
-                                                <div class="alert alert-info">
-                                                    <i class="bx bx-info-circle me-2"></i>
-                                                    This folder is empty. You can upload or create subfolders inside.
-                                                </div>
-                                            @else
-                                                <div class="row g-3">
-                                                    @foreach($baseFolder->folders as $folder)
-                                                        <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 folder-item" data-name="{{ strtolower($folder->name) }}">
-                                                            <div class="folder-card-compact h-100">
-                                                                <div class="card-body p-3">
-                                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                                        <h6 class="folder-title-compact fw-bold mb-0" title="{{ $folder->name }}">
-                                                                            {{ Str::limit($folder->name, 20) }}
-                                                                        </h6>
-                                                                        <div class="dropdown">
-                                                                            <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
-                                                                                <i class="bx bx-dots-vertical-rounded"></i>
-                                                                            </button>
-                                                                            <ul class="dropdown-menu dropdown-menu-end shadow">
-                                                                                <li>
-                                                                                    <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
-                                                                                        <i class="bx bx-show me-2"></i>View
-                                                                                    </a>
-                                                                                </li>
-                                                                                @can('edit folders')
-                                                                                    @if(Auth::user()->can("edit {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
-                                                                                        <li>
-                                                                                            <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
-                                                                                                <i class="bx bx-edit me-2"></i>Edit
-                                                                                            </a>
-                                                                                        </li>
-                                                                                    @endif
-                                                                                @endcan
-                                                                                @can('delete folders')
-                                                                                    @if(Auth::user()->can("delete {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
-                                                                                        <li><hr class="dropdown-divider"></li>
-                                                                                        <li>
-                                                                                            <button class="dropdown-item text-danger delete-folder-btn"
-                                                                                                    data-id="{{ $folder->id }}"
-                                                                                                    data-name="{{ $folder->name }}"
-                                                                                                    data-children="{{ $folder->children->count() }}"
-                                                                                                    data-documents="{{ $folder->documents->count() }}">
-                                                                                                <i class="bx bx-trash me-2"></i>Delete
-                                                                                            </button>
-                                                                                        </li>
-                                                                                    @endif
-                                                                                @endcan
-                                                                            </ul>
-                                                                        </div>
-                                                                    </div>
-                                                                    <button class="btn btn-primary btn-sm w-100" onclick="window.location.href='{{ route('folders.show', $folder) }}'">
-                                                                        <i class="bx bx-folder-open me-1"></i>Open
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-
-                            <!-- Orphaned Folders (folders without base_folder_id) -->
-                            @if($orphanedFolders->count() > 0)
-                                <div class="department-section mb-4" data-department="orphaned">
-                                    <div class="department-header-compact mb-3" data-bs-toggle="collapse" data-bs-target="#dept-orphaned" aria-expanded="true">
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <div class="d-flex align-items-center">
-                                                <i class="bx bx-chevron-down collapse-icon me-2"></i>
-                                                <i class="bx bx-folder-open text-secondary me-2"></i>
-                                                <h5 class="mb-0 fw-bold text-secondary">Uncategorized</h5>
-                                                <span class="badge bg-secondary-subtle text-secondary ms-2">
-                                            {{ $orphanedFolders->count() }}
-                                        </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="collapse show" id="dept-orphaned">
-                                        <div class="row g-3">
-                                            @foreach($orphanedFolders as $folder)
-                                                <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 folder-item" data-name="{{ strtolower($folder->name) }}">
-                                                    <div class="folder-card-compact h-100">
-                                                        <div class="card-body p-3">
-                                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                                <div class="folder-icon-small">
-                                                                    <i class="bx bx-folder text-warning fs-2"></i>
-                                                                </div>
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
-                                                                        <i class="bx bx-dots-vertical-rounded"></i>
-                                                                    </button>
-                                                                    <ul class="dropdown-menu dropdown-menu-end shadow">
-                                                                        <li>
-                                                                            <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
-                                                                                <i class="bx bx-show me-2"></i>View
-                                                                            </a>
-                                                                        </li>
-                                                                        @can('edit folders')
-                                                                            @if($folder->baseFolder && Auth::user()->can("edit {$folder->baseFolder->name} documents"))
-                                                                                <li>
-                                                                                    <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
-                                                                                        <i class="bx bx-edit me-2"></i>Edit
-                                                                                    </a>
-                                                                                </li>
-                                                                            @endif
-                                                                        @endcan
-                                                                        @can('delete folders')
-                                                                            <li><hr class="dropdown-divider"></li>
-                                                                            <li>
-                                                                                <button class="dropdown-item text-danger delete-folder-btn"
-                                                                                        data-id="{{ $folder->id }}"
-                                                                                        data-name="{{ $folder->name }}"
-                                                                                        data-children="{{ $folder->children->count() }}"
-                                                                                        data-documents="{{ $folder->documents->count() }}">
-                                                                                    <i class="bx bx-trash me-2"></i>Delete
-                                                                                </button>
-                                                                            </li>
-                                                                        @endcan
-                                                                    </ul>
-                                                                </div>
-                                                            </div>
-
-                                                            <h6 class="folder-title-compact fw-bold mb-2" title="{{ $folder->name }}">
-                                                                {{ Str::limit($folder->name, 20) }}
-                                                            </h6>
-
-                                                            <div class="folder-stats-compact mb-2">
-                                                                <div class="d-flex justify-content-between text-muted small">
-                                                                    <span><i class="bx bx-folder"></i> {{ $folder->children->count() }}</span>
-                                                                    <span><i class="bx bx-file"></i> {{ $folder->documents->count() }}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <button class="btn btn-primary btn-sm w-100" onclick="window.location.href='{{ route('folders.show', $folder) }}'">
-                                                                <i class="bx bx-folder-open me-1"></i>Open
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
+                                <div class="item-actions position-absolute top-0 end-0 p-1 d-none">
+                                    <div class="btn-group btn-group-sm">
+                                        @can('edit ' . $folder->baseFolder->name . ' documents')
+                                        <a href="{{ route('folders.edit', $folder) }}" class="btn btn-light btn-sm rounded-circle" title="Edit">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        @endcan
+                                        @can('delete ' . $folder->baseFolder->name . ' documents')
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle delete-btn"
+                                               data-id="{{ $folder->id }}" data-name="{{ $folder->name }}" title="Delete">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                        @endcan
                                     </div>
                                 </div>
-                            @endif
+                            </div>
                         </div>
+                    @endforeach
 
-
-                        <!-- Detailed View (Hidden by default) -->
-                        <div id="detailedView" class="folders-container" style="display: none;">
-                            @foreach($baseFolders as $baseFolder)
-                                @if($baseFolder->folders->count() > 0 || $baseFolder->folders->isEmpty())
-                                    <div class="department-section mb-4" data-department="{{ $baseFolder->id }}">
-                                        <div class="department-header mb-3">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="department-icon me-3">
-                                                        <i class="bx bx-category fs-3 text-primary"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h4 class="fw-bold mb-1">{{ $baseFolder->name }}</h4>
-                                                        @if($baseFolder->description)
-                                                            <p class="text-muted mb-1">{{ $baseFolder->description }}</p>
-                                                        @endif
-                                                        <span class="badge bg-primary-subtle text-primary rounded-pill">
-                                    {{ $baseFolder->folders->count() }} {{ Str::plural('folder', $baseFolder->folders->count()) }}
-                                </span>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Action buttons for detailed view -->
-                                                <div class="d-flex align-items-center gap-2">
-                                                    @can('create folders')
-                                                        @if(Auth::user()->can("create {$baseFolder->name} documents"))
-                                                            <button class="btn btn-primary add-folder-btn"
-                                                                    data-base-folder-id="{{ $baseFolder->id }}"
-                                                                    data-base-folder-name="{{ $baseFolder->name }}">
-                                                                <i class="bx bx-plus"></i>
-                                                            </button>
-                                                        @endif
-                                                    @endcan
-
-                                                    <!-- Base Folder Actions Dropdown -->
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                                            <i class="bx bx-dots-vertical-rounded"></i>
-                                                        </button>
-                                                        <ul class="dropdown-menu dropdown-menu-end shadow">
-                                                            @can('edit folders')
-                                                                <li>
-                                                                    <button class="dropdown-item edit-base-folder-btn"
-                                                                            data-id="{{ $baseFolder->id }}"
-                                                                            data-name="{{ $baseFolder->name }}"
-                                                                            data-description="{{ $baseFolder->description }}">
-                                                                        <i class="bx bx-edit me-2"></i>Edit Folder Label
-                                                                    </button>
-                                                                </li>
-                                                            @endcan
-                                                            @can('delete folders')
-                                                                <li><hr class="dropdown-divider"></li>
-                                                                <li>
-                                                                    <button class="dropdown-item text-danger delete-base-folder-btn"
-                                                                            data-id="{{ $baseFolder->id }}"
-                                                                            data-name="{{ $baseFolder->name }}"
-                                                                            data-folders="{{ $baseFolder->folders->count() }}">
-                                                                        <i class="bx bx-trash me-2"></i>Delete Base Folder
-                                                                    </button>
-                                                                </li>
-                                                            @endcan
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        @if($baseFolder->folders->isEmpty())
-                                            <div class="alert alert-info">
-                                                <i class="bx bx-info-circle me-2"></i>
-                                                This folder is empty. You can upload or create subfolders inside.
-                                            </div>
-                                        @else
-                                            <div class="row g-4">
-                                                @foreach($baseFolder->folders as $folder)
-                                                    <div class="col-xl-4 col-lg-6 folder-item" data-name="{{ strtolower($folder->name) }}">
-                                                        <div class="folder-card h-100 position-relative">
-                                                            <div class="card-body p-4">
-                                                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                                                    <div class="folder-icon">
-                                                                        <i class="bx bx-folder fs-1 text-primary"></i>
-                                                                    </div>
-                                                                    <div class="dropdown">
-                                                                        <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
-                                                                            <i class="bx bx-dots-vertical-rounded fs-5"></i>
-                                                                        </button>
-                                                                        <ul class="dropdown-menu dropdown-menu-end shadow">
-                                                                            <li>
-                                                                                <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
-                                                                                    <i class="bx bx-show me-2"></i>View
-                                                                                </a>
-                                                                            </li>
-                                                                            @can('edit folders')
-                                                                                @if(Auth::user()->can("edit {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
-                                                                                    <li>
-                                                                                        <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
-                                                                                            <i class="bx bx-edit me-2"></i>Edit
-                                                                                        </a>
-                                                                                    </li>
-                                                                                @endif
-                                                                            @endcan
-                                                                            @can('delete folders')
-                                                                                @if(Auth::user()->can("delete {$folder->baseFolder->name} documents") || Auth::user()->hasRole('Admin'))
-                                                                                    <li><hr class="dropdown-divider"></li>
-                                                                                    <li>
-                                                                                        <button class="dropdown-item text-danger delete-folder-btn"
-                                                                                                data-id="{{ $folder->id }}"
-                                                                                                data-name="{{ $folder->name }}"
-                                                                                                data-children="{{ $folder->children->count() }}"
-                                                                                                data-documents="{{ $folder->documents->count() }}">
-                                                                                            <i class="bx bx-trash me-2"></i>Delete
-                                                                                        </button>
-                                                                                    </li>
-                                                                                @endif
-                                                                            @endcan
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-
-                                                                <h5 class="folder-title fw-bold mb-2">{{ $folder->name }}</h5>
-                                                                @if($folder->description)
-                                                                    <p class="folder-description text-muted small mb-3">
-                                                                        {{ Str::limit($folder->description, 80) }}
-                                                                    </p>
-                                                                @endif
-
-                                                                <!-- Added folder stats like in orphaned folders -->
-                                                                <div class="folder-stats mb-3">
-                                                                    <div class="row g-2">
-                                                                        <div class="col-6">
-                                                                            <div class="stat-item text-center p-2 bg-light rounded">
-                                                                                <i class="bx bx-folder text-primary"></i>
-                                                                                <div class="fw-bold">{{ $folder->children->count() }}</div>
-                                                                                <div class="small text-muted">Subfolders</div>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-6">
-                                                                            <div class="stat-item text-center p-2 bg-light rounded">
-                                                                                <i class="bx bx-file text-success"></i>
-                                                                                <div class="fw-bold">{{ $folder->documents->count() }}</div>
-                                                                                <div class="small text-muted">Documents</div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="folder-meta text-muted small mb-3">
-                                                                    <i class="bx bx-time-five me-1"></i>
-                                                                    Updated {{ $folder->updated_at->diffForHumans() }}
-                                                                </div>
-
-                                                                <button class="btn btn-primary w-100" onclick="window.location.href='{{ route('folders.show', $folder) }}'">
-                                                                    <i class="bx bx-folder-open me-2"></i>Open Folder
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endif
-                            @endforeach
-
-                            <!-- Orphaned Folders in Detailed View -->
-                            @if($orphanedFolders->count() > 0)
-                                <div class="department-section mb-4" data-department="orphaned">
-                                    <div class="department-header mb-3">
-                                        <div class="d-flex align-items-center">
-                                            <div class="department-icon me-3">
-                                                <i class="bx bx-folder-open fs-3 text-secondary"></i>
-                                            </div>
-                                            <div>
-                                                <h4 class="fw-bold mb-1 text-secondary">Uncategorized</h4>
-                                                <p class="text-muted mb-1">Folders not assigned to any category</p>
-                                                <span class="badge bg-secondary-subtle text-secondary rounded-pill">
-                            {{ $orphanedFolders->count() }} {{ Str::plural('folder', $orphanedFolders->count()) }}
-                        </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-4">
-                                        @foreach($orphanedFolders as $folder)
-                                            <div class="col-xl-4 col-lg-6 folder-item" data-name="{{ strtolower($folder->name) }}">
-                                                <div class="folder-card h-100 position-relative">
-                                                    <div class="card-body p-4">
-                                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                                            <div class="folder-icon">
-                                                                <i class="bx bx-folder fs-1 text-warning"></i>
-                                                            </div>
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="dropdown">
-                                                                    <i class="bx bx-dots-vertical-rounded fs-5"></i>
-                                                                </button>
-                                                                <ul class="dropdown-menu dropdown-menu-end shadow">
-                                                                    <li>
-                                                                        <a class="dropdown-item" href="{{ route('folders.show', $folder) }}">
-                                                                            <i class="bx bx-show me-2"></i>View Folder
-                                                                        </a>
-                                                                    </li>
-                                                                    @can('edit folders')
-                                                                        @if($folder->baseFolder && Auth::user()->can("edit {$folder->baseFolder->name} documents"))
-                                                                            <li>
-                                                                                <a class="dropdown-item" href="{{ route('folders.edit', $folder) }}">
-                                                                                    <i class="bx bx-edit me-2"></i>Edit Folder
-                                                                                </a>
-                                                                            </li>
-                                                                        @endif
-                                                                    @endcan
-                                                                    @can('delete folders')
-                                                                        <li><hr class="dropdown-divider"></li>
-                                                                        <li>
-                                                                            <button class="dropdown-item text-danger delete-folder-btn"
-                                                                                    data-id="{{ $folder->id }}"
-                                                                                    data-name="{{ $folder->name }}"
-                                                                                    data-children="{{ $folder->children->count() }}"
-                                                                                    data-documents="{{ $folder->documents->count() }}">
-                                                                                <i class="bx bx-trash me-2"></i>Delete Folder
-                                                                            </button>
-                                                                        </li>
-                                                                    @endcan
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="folder-info">
-                                                            <h5 class="folder-title fw-bold mb-2">{{ $folder->name }}</h5>
-
-                                                            @if($folder->description)
-                                                                <p class="folder-description text-muted small mb-3">
-                                                                    {{ Str::limit($folder->description, 80) }}
-                                                                </p>
-                                                            @endif
-
-                                                            <div class="folder-stats mb-3">
-                                                                <div class="row g-2">
-                                                                    <div class="col-6">
-                                                                        <div class="stat-item text-center p-2 bg-light rounded">
-                                                                            <i class="bx bx-folder text-primary"></i>
-                                                                            <div class="fw-bold">{{ $folder->children->count() }}</div>
-                                                                            <div class="small text-muted">Subfolders</div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-6">
-                                                                        <div class="stat-item text-center p-2 bg-light rounded">
-                                                                            <i class="bx bx-file text-success"></i>
-                                                                            <div class="fw-bold">{{ $folder->documents->count() }}</div>
-                                                                            <div class="small text-muted">Documents</div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="folder-meta text-muted small">
-                                                                <i class="bx bx-time-five me-1"></i>
-                                                                Updated {{ $folder->updated_at->diffForHumans() }}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="card-footer bg-transparent border-0 p-4 pt-0">
-                                                        <a href="{{ route('folders.show', $folder) }}" class="btn btn-primary w-100">
-                                                            <i class="bx bx-folder-open me-2"></i>
-                                                            Open Folder
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
+                    @if($folders->isEmpty())
+                        <div class="col-12 text-center py-5">
+                            <div class="empty-state p-4 rounded drop-zone" style="background-color: #f8f9fa;" data-folder-id="">
+                                <i class="bx bx-folder-open text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-3 mb-3 text-muted">No folders found</p>
+                                <p class="small text-muted mb-3">Create your first folder to organize documents</p>
+                                <div>
+                                    @can('create folders')
+                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="showCreateFolderSwal()">
+                                        <i class="bx bx-folder-plus"></i> Add Folder
+                                    </button>
+                                    @endcan
                                 </div>
-                            @endif
+                            </div>
                         </div>
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Delete Modal -->
-    @can('delete folders')
-        <div class="modal fade" id="deleteFolderModal" tabindex="-1" aria-labelledby="deleteFolderModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header bg-danger text-white border-0">
-                        <h5 class="modal-title">
-                            <i class="bx bx-trash me-2"></i>
-                            Delete Folder
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-4">
-                        <div class="text-center mb-4">
-                            <i class="bx bx-error-circle text-danger display-4 mb-3"></i>
-                            <h6 class="mb-3">Are you sure you want to delete this folder?</h6>
-                            <div class="folder-name-display bg-light p-3 rounded mb-3">
-                                <strong id="folder-name"></strong>
-                            </div>
-                        </div>
+            <!-- List View -->
+            <div class="list-view d-none" id="list-view">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Modified</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($folders as $folder)
+                                <tr class="drop-zone"
+                                    data-folder-id="{{ $folder->id }}"
+                                    draggable="true"
+                                    data-type="folder"
+                                    data-id="{{ $folder->id }}"
+                                    data-name="{{ $folder->name }}">
+                                    <td>
+                                        <a href="{{ route('folders.show', $folder) }}" class="d-flex align-items-center text-decoration-none text-dark">
+                                            <i class="bx bxs-folder text-warning me-2" style="font-size: 1.25rem;"></i>
+                                            <span>{{ $folder->name }}</span>
+                                        </a>
+                                    </td>
+                                    <td><span class="badge bg-light text-dark">{{ $folder->baseFolder->name }}</span></td>
+                                    <td><small>{{ $folder->updated_at->format('M d, Y') }}</small></td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            @can('edit ' . $folder->baseFolder->name . ' documents')
+                                            <a href="{{ route('folders.edit', $folder) }}" class="btn btn-outline-secondary btn-sm" title="Edit">
+                                                <i class="bx bx-edit"></i>
+                                            </a>
+                                            @endcan
+                                            @can('delete ' . $folder->baseFolder->name . ' documents')
+                                            <button type="button" class="btn btn-outline-danger btn-sm delete-btn"
+                                                   data-id="{{ $folder->id }}" data-name="{{ $folder->name }}" title="Delete">
+                                                <i class="bx bx-trash"></i>
+                                            </button>
+                                            @endcan
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
 
-                        <div id="folder-contents" class="alert alert-warning border-0" style="display: none;">
-                            <div class="d-flex align-items-start">
-                                <i class="bx bx-error-circle text-warning me-2 mt-1"></i>
-                                <div>
-                                    <strong>Warning:</strong> This folder contains:
-                                    <ul class="mb-0 mt-2" id="contents-list"></ul>
-                                    <small class="text-muted d-block mt-2">All contents will be permanently deleted.</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-danger border-0 mb-0">
-                            <i class="bx bx-info-circle me-2"></i>
-                            <small><strong>This action cannot be undone.</strong></small>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                            <i class="bx bx-x me-2"></i>Cancel
-                        </button>
-                        <form id="delete-folder-form" action="" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bx bx-trash me-2"></i>Delete Forever
-                            </button>
-                        </form>
-                    </div>
+                            @if($folders->isEmpty())
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="bx bx-folder-open text-muted" style="font-size: 2rem;"></i>
+                                        <p class="mt-2 mb-0 text-muted">No folders found</p>
+                                        <p class="small text-muted">Create your first folder to get started</p>
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    @endcan
+    </div>
+</div>
 
-    @push('styles')
-        <style>
-            .container-fluid {
-                max-width: 1400px;
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const iconViewBtn = document.getElementById('icon-view-btn');
+    const listViewBtn = document.getElementById('list-view-btn');
+    const iconView = document.getElementById('icon-view');
+    const listView = document.getElementById('list-view');
+
+    iconViewBtn.addEventListener('click', function() {
+        iconView.classList.remove('d-none');
+        listView.classList.add('d-none');
+        iconViewBtn.classList.add('active');
+        listViewBtn.classList.remove('active');
+        localStorage.setItem('folder-view', 'icons');
+    });
+
+    listViewBtn.addEventListener('click', function() {
+        listView.classList.remove('d-none');
+        iconView.classList.add('d-none');
+        listViewBtn.classList.add('active');
+        iconViewBtn.classList.remove('active');
+        localStorage.setItem('folder-view', 'list');
+    });
+
+    // Load saved preference
+    if (localStorage.getItem('folder-view') === 'list') {
+        listViewBtn.click();
+    }
+
+    // Hover effects for items
+    document.querySelectorAll('.folder-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.querySelector('.item-actions').classList.remove('d-none');
+        });
+
+        item.addEventListener('mouseleave', function() {
+            this.querySelector('.item-actions').classList.add('d-none');
+        });
+    });
+
+    // Category hover effects
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            const actions = this.querySelector('.category-actions');
+            if (actions) actions.classList.remove('d-none');
+        });
+
+        item.addEventListener('mouseleave', function() {
+            const actions = this.querySelector('.category-actions');
+            if (actions) actions.classList.add('d-none');
+        });
+    });
+
+    // Delete folder modal functionality
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteFolderModal'));
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('folder-name').textContent = this.dataset.name;
+            document.getElementById('delete-folder-form').action = `/folders/${this.dataset.id}`;
+            deleteModal.show();
+        });
+    });
+});
+
+// Category management functions
+function showCreateCategorySwal() {
+    Swal.fire({
+        title: 'Create New Category',
+        html: `
+            <div class="mb-3 text-start">
+                <label for="swal-category-name" class="form-label fw-bold">Category Name</label>
+                <input id="swal-category-name" class="form-control" placeholder="Enter category name" required>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="swal-category-desc" class="form-label fw-bold">Description (Optional)</label>
+                <textarea id="swal-category-desc" class="form-control" placeholder="Enter description" rows="3"></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Create Category',
+        preConfirm: () => {
+            const name = document.getElementById('swal-category-name').value;
+            if (!name.trim()) {
+                Swal.showValidationMessage('Category name is required');
+                return false;
             }
-        </style>
-    @endpush
+            return {
+                name: name.trim(),
+                description: document.getElementById('swal-category-desc').value.trim()
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ route("base-folder.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Created!', 'Category created successfully.', 'success')
+                        .then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to create category.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to create category.', 'error');
+            });
+        }
+    });
+}
 
-    @push('scripts')
-        @include('folder.scripts.indexScript')
-    @endpush
+function showEditCategorySwal(id, name, description) {
+    Swal.fire({
+        title: 'Edit Category',
+        html: `
+            <div class="mb-3 text-start">
+                <label for="swal-category-name" class="form-label fw-bold">Category Name</label>
+                <input id="swal-category-name" class="form-control" placeholder="Enter category name" value="${name}" required>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="swal-category-desc" class="form-label fw-bold">Description (Optional)</label>
+                <textarea id="swal-category-desc" class="form-control" placeholder="Enter description" rows="3">${description}</textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Update Category',
+        preConfirm: () => {
+            const name = document.getElementById('swal-category-name').value;
+            if (!name.trim()) {
+                Swal.showValidationMessage('Category name is required');
+                return false;
+            }
+            return {
+                name: name.trim(),
+                description: document.getElementById('swal-category-desc').value.trim()
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/base-folder/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Updated!', 'Category updated successfully.', 'success')
+                        .then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to update category.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to update category.', 'error');
+            });
+        }
+    });
+}
+
+function deleteCategory(id, name) {
+    Swal.fire({
+        title: 'Delete Category',
+        text: `Are you sure you want to delete "${name}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/base-folder/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Deleted!', 'Category deleted successfully.', 'success')
+                        .then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to delete category.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to delete category.', 'error');
+            });
+        }
+    });
+}
+
+function showCreateFolderSwal() {
+    const baseFolders = @json($baseFolders);
+    const selectedBaseFolderId = {{ $selectedBaseFolder->id ?? 'null' }};
+
+    let baseFolderOptions = '';
+    baseFolders.forEach(folder => {
+        const selected = selectedBaseFolderId === folder.id ? 'selected' : '';
+        baseFolderOptions += `<option value="${folder.id}" ${selected}>${folder.name}</option>`;
+    });
+
+    Swal.fire({
+        title: 'Create New Folder',
+        html: `
+            <div class="mb-3 text-start">
+                <label for="swal-folder-name" class="form-label fw-bold">Folder Name</label>
+                <input id="swal-folder-name" class="form-control" placeholder="Enter folder name" required>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="swal-base-folder" class="form-label fw-bold">Category</label>
+                <select id="swal-base-folder" class="form-select" required>
+                    <option value="">Select a category</option>
+                    ${baseFolderOptions}
+                </select>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="swal-folder-desc" class="form-label fw-bold">Description (Optional)</label>
+                <textarea id="swal-folder-desc" class="form-control" placeholder="Enter description" rows="3"></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Create Folder',
+        preConfirm: () => {
+            const name = document.getElementById('swal-folder-name').value;
+            const baseFolderId = document.getElementById('swal-base-folder').value;
+
+            if (!name.trim()) {
+                Swal.showValidationMessage('Folder name is required');
+                return false;
+            }
+            if (!baseFolderId) {
+                Swal.showValidationMessage('Please select a category');
+                return false;
+            }
+
+            return {
+                name: name.trim(),
+                base_folder_id: baseFolderId,
+                description: document.getElementById('swal-folder-desc').value.trim(),
+                parent_id: null
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ route("folders.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Created!', 'Folder created successfully.', 'success')
+                        .then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to create folder.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to create folder.', 'error');
+            });
+        }
+    });
+}
+</script>
+
+<!-- Delete Folder Modal -->
+<div class="modal fade" id="deleteFolderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">Delete folder "<span id="folder-name" class="fw-medium"></span>"?</p>
+                <p class="mb-0 small text-danger">This cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="delete-folder-form" action="" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endpush
+
+<style>
+.category-item:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 0.375rem;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-radius: 0.375rem;
+}
+
+.sidebar .nav-link.active {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-radius: 0.375rem;
+}
+</style>
 @endsection
