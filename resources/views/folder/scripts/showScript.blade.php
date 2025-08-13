@@ -223,51 +223,51 @@
             }
         });
 
-        function moveItem(item, targetFolderId) {
-            // Only handle folder moves
-            if (item.type !== 'folder') {
-                console.error('Document moves not supported in this context');
-                return;
-            }
+        {{--function moveItem(item, targetFolderId) {--}}
+        {{--    // Only handle folder moves--}}
+        {{--    if (item.type !== 'folder') {--}}
+        {{--        console.error('Document moves not supported in this context');--}}
+        {{--        return;--}}
+        {{--    }--}}
 
-            const url = `/folders/${item.id}/move`;
-            const data = { parent_id: targetFolderId };
+        {{--    const url = `/folders/${item.id}/move`;--}}
+        {{--    const data = { parent_id: targetFolderId };--}}
 
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(data)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show success message
-                        const alert = document.createElement('div');
-                        alert.className = 'alert alert-success alert-dismissible fade show mt-3';
-                        alert.innerHTML = `
-                            ${data.message}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        `;
+        {{--    fetch(url, {--}}
+        {{--        method: 'POST',--}}
+        {{--        headers: {--}}
+        {{--            'Content-Type': 'application/json',--}}
+        {{--            'X-CSRF-TOKEN': '{{ csrf_token() }}'--}}
+        {{--        },--}}
+        {{--        body: JSON.stringify(data)--}}
+        {{--    })--}}
+        {{--        .then(response => response.json())--}}
+        {{--        .then(data => {--}}
+        {{--            if (data.success) {--}}
+        {{--                // Show success message--}}
+        {{--                const alert = document.createElement('div');--}}
+        {{--                alert.className = 'alert alert-success alert-dismissible fade show mt-3';--}}
+        {{--                alert.innerHTML = `--}}
+        {{--                    ${data.message}--}}
+        {{--                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>--}}
+        {{--                `;--}}
 
-                        const container = document.querySelector('.my-3');
-                        container.parentNode.insertBefore(alert, container.nextSibling);
+        {{--                const container = document.querySelector('.my-3');--}}
+        {{--                container.parentNode.insertBefore(alert, container.nextSibling);--}}
 
-                        // Reload page after short delay
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Move error:', error);
-                    alert('An error occurred while moving the folder.');
-                });
-        }
+        {{--                // Reload page after short delay--}}
+        {{--                setTimeout(() => {--}}
+        {{--                    window.location.reload();--}}
+        {{--                }, 1500);--}}
+        {{--            } else {--}}
+        {{--                alert('Error: ' + data.message);--}}
+        {{--            }--}}
+        {{--        })--}}
+        {{--        .catch(error => {--}}
+        {{--            console.error('Move error:', error);--}}
+        {{--            alert('An error occurred while moving the folder.');--}}
+        {{--        });--}}
+        {{--}--}}
 
         function handleFileUploads(files) {
             const validFiles = [];
