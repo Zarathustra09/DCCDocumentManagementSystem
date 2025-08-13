@@ -10,7 +10,7 @@
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-center {{ request()->routeIs('folders.index') ? 'active text-primary' : 'text-dark' }} drop-zone"
                            href="{{ route('folders.index') }}" data-folder-id="">
-                            <i class="bx bxs-home me-2"></i> All Documents
+                            <i class="bx bxs-home me-2"></i> All Main Folders
                         </a>
                     </li>
                 </ul>
@@ -99,11 +99,13 @@
                 </div>
 
                 <div class="action-buttons">
-                    @can('create folders')
-                        <button class="btn btn-sm btn-outline-primary" onclick="showCreateFolderSwal()">
-                            <i class="bx bx-folder-plus"></i> Add Folder
-                        </button>
-                    @endcan
+                   @if($selectedBaseFolder)
+                       @can('create folders')
+                           <button class="btn btn-sm btn-outline-primary" onclick="showCreateFolderSwal()">
+                               <i class="bx bx-folder-plus"></i> Add Folder
+                           </button>
+                       @endcan
+                   @endif
 {{--                    @if($selectedBaseFolder)--}}
 {{--                        @can('create ' . $selectedBaseFolder->name . ' documents')--}}
 {{--                            <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">--}}
