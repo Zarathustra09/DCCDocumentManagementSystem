@@ -6,6 +6,7 @@ use App\Models\BaseFolder;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class FolderController extends Controller
 {
@@ -191,7 +192,7 @@ class FolderController extends Controller
             return redirect()->route('folders.show', $folder->parent)->with('success', 'Folder updated successfully');
         }
 
-        return redirect()->route('folders.index')->with('success', 'Folder updated successfully');
+        return back()->with('success', 'Folder updated successfully');
     }
 
     public function destroy(Folder $folder)
@@ -206,7 +207,7 @@ class FolderController extends Controller
             return redirect()->route('folders.show', $folder->parent)->with('success', 'Folder deleted successfully');
         }
 
-        return redirect()->route('folders.index')->with('success', 'Folder deleted successfully');
+        return back()->with('success', 'Folder deleted successfully');
     }
 
     public function move(Request $request, Folder $folder)
@@ -291,6 +292,8 @@ class FolderController extends Controller
         $folder->update([
             'base_folder_id' => $request->base_folder_id
         ]);
+
+        Log::info("Folder {$folder->id} moved to base folder {$request->base_folder_id} by user " . Auth::id());
 
         $categoryName = $request->base_folder_id
             ? BaseFolder::find($request->base_folder_id)->name

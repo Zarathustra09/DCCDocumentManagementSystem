@@ -8,8 +8,10 @@
             <div class="position-sticky pt-3">
                 <ul class="nav flex-column mb-4">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {{ request()->routeIs('folders.index') ? 'active text-primary' : 'text-dark' }} drop-zone"
-                           href="{{ route('folders.index') }}" data-folder-id="">
+                        <a class="nav-link d-flex align-items-center {{ request()->routeIs('folders.index') && !request('base_folder') ? 'active text-primary' : 'text-dark' }} drop-zone"
+                           href="{{ route('folders.index') }}"
+                           data-folder-id=""
+                           data-base-folder-id="">
                             <i class="bx bxs-home me-2"></i> All Main Folders
                         </a>
                     </li>
@@ -28,9 +30,10 @@
                     @foreach($baseFolders as $baseFolder)
                     <li class="nav-item position-relative">
                         <div class="d-flex align-items-center justify-content-between category-item">
-                            <a class="nav-link d-flex align-items-center text-dark drop-zone flex-grow-1"
+                            <a class="nav-link d-flex align-items-center text-dark drop-zone flex-grow-1 {{ request('base_folder') == $baseFolder->id ? 'active text-primary' : '' }}"
                                href="{{ route('folders.index', ['base_folder' => $baseFolder->id]) }}"
-                               data-folder-id="">
+                               data-folder-id=""
+                               data-base-folder-id="{{ $baseFolder->id }}">
                                 <i class="bx bx-folder me-2 text-warning"></i>
                                 <span class="flex-grow-1">{{ $baseFolder->name }}</span>
                             </a>
@@ -106,13 +109,6 @@
                            </button>
                        @endcan
                    @endif
-{{--                    @if($selectedBaseFolder)--}}
-{{--                        @can('create ' . $selectedBaseFolder->name . ' documents')--}}
-{{--                            <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">--}}
-{{--                                <i class="bx bx-upload"></i> Upload--}}
-{{--                            </button>--}}
-{{--                        @endcan--}}
-{{--                    @endif--}}
                 </div>
             </div>
 
@@ -123,6 +119,7 @@
                         <div class="col-6 col-sm-4 col-md-3 col-xl-2">
                             <div class="folder-item position-relative rounded shadow-sm drop-zone"
                                  data-folder-id="{{ $folder->id }}"
+                                 data-base-folder-id="{{ $folder->base_folder_id }}"
                                  draggable="true"
                                  data-type="folder"
                                  data-id="{{ $folder->id }}"
@@ -154,7 +151,9 @@
 
                     @if($folders->isEmpty())
                         <div class="col-12 text-center py-5">
-                            <div class="empty-state p-4 rounded drop-zone" style="background-color: #f8f9fa;" data-folder-id="">
+                            <div class="empty-state p-4 rounded drop-zone" style="background-color: #f8f9fa;"
+                                 data-folder-id=""
+                                 data-base-folder-id="{{ $selectedBaseFolder->id ?? '' }}">
                                 <i class="bx bx-folder-open text-muted" style="font-size: 3rem;"></i>
                                 <p class="mt-3 mb-3 text-muted">No folders found</p>
                                 <p class="small text-muted mb-3">Create your first folder to organize documents</p>
@@ -187,6 +186,7 @@
                             @foreach($folders as $folder)
                                 <tr class="drop-zone"
                                     data-folder-id="{{ $folder->id }}"
+                                    data-base-folder-id="{{ $folder->base_folder_id }}"
                                     draggable="true"
                                     data-type="folder"
                                     data-id="{{ $folder->id }}"
@@ -234,319 +234,7 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // View toggle functionality
-    const iconViewBtn = document.getElementById('icon-view-btn');
-    const listViewBtn = document.getElementById('list-view-btn');
-    const iconView = document.getElementById('icon-view');
-    const listView = document.getElementById('list-view');
 
-    iconViewBtn.addEventListener('click', function() {
-        iconView.classList.remove('d-none');
-        listView.classList.add('d-none');
-        iconViewBtn.classList.add('active');
-        listViewBtn.classList.remove('active');
-        localStorage.setItem('folder-view', 'icons');
-    });
-
-    listViewBtn.addEventListener('click', function() {
-        listView.classList.remove('d-none');
-        iconView.classList.add('d-none');
-        listViewBtn.classList.add('active');
-        iconViewBtn.classList.remove('active');
-        localStorage.setItem('folder-view', 'list');
-    });
-
-    // Load saved preference
-    if (localStorage.getItem('folder-view') === 'list') {
-        listViewBtn.click();
-    }
-
-    // Hover effects for items
-    document.querySelectorAll('.folder-item').forEach(item => {
-        item.addEventListener('mouseenter', function() {
-            this.querySelector('.item-actions').classList.remove('d-none');
-        });
-
-        item.addEventListener('mouseleave', function() {
-            this.querySelector('.item-actions').classList.add('d-none');
-        });
-    });
-
-    // Category hover effects
-    document.querySelectorAll('.category-item').forEach(item => {
-        item.addEventListener('mouseenter', function() {
-            const actions = this.querySelector('.category-actions');
-            if (actions) actions.classList.remove('d-none');
-        });
-
-        item.addEventListener('mouseleave', function() {
-            const actions = this.querySelector('.category-actions');
-            if (actions) actions.classList.add('d-none');
-        });
-    });
-
-    // Delete folder modal functionality
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteFolderModal'));
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.getElementById('folder-name').textContent = this.dataset.name;
-            document.getElementById('delete-folder-form').action = `/folders/${this.dataset.id}`;
-            deleteModal.show();
-        });
-    });
-});
-
-// Category management functions
-function showCreateCategorySwal() {
-    Swal.fire({
-        title: 'Create New Category',
-        html: `
-            <div class="mb-3 text-start">
-                <label for="swal-category-name" class="form-label fw-bold">Category Name</label>
-                <input id="swal-category-name" class="form-control" placeholder="Enter category name" required>
-            </div>
-            <div class="mb-3 text-start">
-                <label for="swal-category-desc" class="form-label fw-bold">Description (Optional)</label>
-                <textarea id="swal-category-desc" class="form-control" placeholder="Enter description" rows="3"></textarea>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Create Category',
-        preConfirm: () => {
-            const name = document.getElementById('swal-category-name').value;
-            if (!name.trim()) {
-                Swal.showValidationMessage('Category name is required');
-                return false;
-            }
-            return {
-                name: name.trim(),
-                description: document.getElementById('swal-category-desc').value.trim()
-            }
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('{{ route("base-folder.store") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(result.value)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Created!', 'Category created successfully.', 'success')
-                        .then(() => location.reload());
-                } else {
-                    Swal.fire('Error', data.message || 'Failed to create category.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'Failed to create category.', 'error');
-            });
-        }
-    });
-}
-
-function showEditCategorySwal(id, name, description) {
-    Swal.fire({
-        title: 'Edit Category',
-        html: `
-            <div class="mb-3 text-start">
-                <label for="swal-category-name" class="form-label fw-bold">Category Name</label>
-                <input id="swal-category-name" class="form-control" placeholder="Enter category name" value="${name}" required>
-            </div>
-            <div class="mb-3 text-start">
-                <label for="swal-category-desc" class="form-label fw-bold">Description (Optional)</label>
-                <textarea id="swal-category-desc" class="form-control" placeholder="Enter description" rows="3">${description}</textarea>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Update Category',
-        preConfirm: () => {
-            const name = document.getElementById('swal-category-name').value;
-            if (!name.trim()) {
-                Swal.showValidationMessage('Category name is required');
-                return false;
-            }
-            return {
-                name: name.trim(),
-                description: document.getElementById('swal-category-desc').value.trim()
-            }
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/base-folder/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(result.value)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Updated!', 'Category updated successfully.', 'success')
-                        .then(() => location.reload());
-                } else {
-                    Swal.fire('Error', data.message || 'Failed to update category.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'Failed to update category.', 'error');
-            });
-        }
-    });
-}
-
-function deleteCategory(id, name) {
-    Swal.fire({
-        title: 'Delete Category',
-        text: `Are you sure you want to delete "${name}"?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/base-folder/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Deleted!', 'Category deleted successfully.', 'success')
-                        .then(() => location.reload());
-                } else {
-                    Swal.fire('Error', data.message || 'Failed to delete category.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'Failed to delete category.', 'error');
-            });
-        }
-    });
-}
-
-function showCreateFolderSwal() {
-    const baseFolders = @json($baseFolders);
-    const selectedBaseFolderId = {{ $selectedBaseFolder->id ?? 'null' }};
-
-    let baseFolderOptions = '';
-    baseFolders.forEach(folder => {
-        const selected = selectedBaseFolderId === folder.id ? 'selected' : '';
-        baseFolderOptions += `<option value="${folder.id}" ${selected}>${folder.name}</option>`;
-    });
-
-    Swal.fire({
-        title: 'Create New Folder',
-        html: `
-            <div class="mb-3 text-start">
-                <label for="swal-folder-name" class="form-label fw-bold">Folder Name</label>
-                <input id="swal-folder-name" class="form-control" placeholder="Enter folder name" required>
-            </div>
-            <div class="mb-3 text-start">
-                <label for="swal-base-folder" class="form-label fw-bold">Category</label>
-                <select id="swal-base-folder" class="form-select" required>
-                    <option value="">Select a category</option>
-                    ${baseFolderOptions}
-                </select>
-            </div>
-            <div class="mb-3 text-start">
-                <label for="swal-folder-desc" class="form-label fw-bold">Description (Optional)</label>
-                <textarea id="swal-folder-desc" class="form-control" placeholder="Enter description" rows="3"></textarea>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Create Folder',
-        preConfirm: () => {
-            const name = document.getElementById('swal-folder-name').value;
-            const baseFolderId = document.getElementById('swal-base-folder').value;
-
-            if (!name.trim()) {
-                Swal.showValidationMessage('Folder name is required');
-                return false;
-            }
-            if (!baseFolderId) {
-                Swal.showValidationMessage('Please select a category');
-                return false;
-            }
-
-            return {
-                name: name.trim(),
-                base_folder_id: baseFolderId,
-                description: document.getElementById('swal-folder-desc').value.trim(),
-                parent_id: null
-            }
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('{{ route("folders.store") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(result.value)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Created!', 'Folder created successfully.', 'success')
-                        .then(() => location.reload());
-                } else {
-                    Swal.fire('Error', data.message || 'Failed to create folder.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire('Error', 'Failed to create folder.', 'error');
-            });
-        }
-    });
-}
-</script>
-
-<!-- Delete Folder Modal -->
-<div class="modal fade" id="deleteFolderModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Delete</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-1">Delete folder "<span id="folder-name" class="fw-medium"></span>"?</p>
-                <p class="mb-0 small text-danger">This cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="delete-folder-form" action="" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-@endpush
 
 <style>
 .category-item:hover {
@@ -564,7 +252,6 @@ function showCreateFolderSwal() {
     border-radius: 0.375rem;
 }
 </style>
-
 
 @push('scripts')
     @include('folder.scripts.indexScript')
