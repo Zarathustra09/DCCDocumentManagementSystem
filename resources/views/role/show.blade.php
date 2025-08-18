@@ -33,7 +33,31 @@
                                 @endif
                             </div>
                         </div>
-                        <h5 class="mb-1">{{ $role->name }}</h5>
+
+                        <!-- Editable Role Name -->
+                        <div class="mb-3">
+                            <div id="role-name-display">
+                                <h5 class="mb-1" id="role-name-text">{{ $role->name }}</h5>
+                                <button type="button" class="btn btn-xs btn-outline-primary" id="edit-role-name">
+                                    <i class="bx bx-edit"></i> Edit Name
+                                </button>
+                            </div>
+                            <div id="role-name-edit" style="display: none;">
+                                <div class="mb-2">
+                                    <input type="text" class="form-control form-control-sm" id="role-name-input" value="{{ $role->name }}">
+                                    <div class="invalid-feedback" id="role-name-error"></div>
+                                </div>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <button type="button" class="btn btn-xs btn-success" id="save-role-name">
+                                        <i class="bx bx-check"></i> Save
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-secondary" id="cancel-role-name">
+                                        <i class="bx bx-x"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         @if($role->name === 'SuperAdmin')
                             <span class="badge bg-danger mb-3">Super Administrator</span>
                         @elseif(str_contains($role->name, 'Admin'))
@@ -200,6 +224,96 @@ $(document).ready(function() {
     const originalPermissions = $('.permission-checkbox:checked').map(function() { return parseInt(this.value); }).get();
     let hasPermissionChanges = false;
 
+    // Role name editing functionality
+    $('#edit-role-name').click(function() {
+        $('#role-name-display').hide();
+        $('#role-name-edit').show();
+        $('#role-name-input').focus().select();
+    });
+
+    $('#cancel-role-name').click(function() {
+        $('#role-name-input').val('{{ $role->name }}').removeClass('is-invalid');
+        $('#role-name-edit').hide();
+        $('#role-name-display').show();
+    });
+
+    $('#save-role-name').click(function() {
+        saveRoleName();
+    });
+
+    $('#role-name-input').keypress(function(e) {
+        if (e.which === 13) { // Enter key
+            saveRoleName();
+        } else if (e.which === 27) { // Escape key
+            $('#cancel-role-name').click();
+        }
+    });
+
+    function saveRoleName() {
+        const newName = $('#role-name-input').val().trim();
+        const currentName = '{{ $role->name }}';
+
+        if (!newName) {
+            $('#role-name-input').addClass('is-invalid');
+            $('#role-name-error').text('Role name is required.');
+            return;
+        }
+
+        if (newName === currentName) {
+            $('#cancel-role-name').click();
+            return;
+        }
+
+        $('#role-name-input').removeClass('is-invalid');
+
+        const saveBtn = $('#save-role-name');
+        const originalText = saveBtn.html();
+        saveBtn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i>');
+
+        $.ajax({
+            url: '{{ route("roles.update-name", $role) }}',
+            method: 'PUT',
+            data: {
+                _token: '{{ csrf_token() }}',
+                name: newName
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#role-name-text').text(newName);
+                    $('#role-name-edit').hide();
+                    $('#role-name-display').show();
+
+                    // Update page title
+                    $('h4.fw-bold span:last-child').text(newName);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire('Error!', response.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'An error occurred while updating the role name.';
+                if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.name) {
+                    $('#role-name-input').addClass('is-invalid');
+                    $('#role-name-error').text(xhr.responseJSON.errors.name[0]);
+                    errorMessage = xhr.responseJSON.errors.name[0];
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                Swal.fire('Error!', errorMessage, 'error');
+            },
+            complete: function() {
+                saveBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    }
+
     // Select All functionality
     $('#select-all').click(function() {
         $('.permission-checkbox').prop('checked', true);
@@ -277,7 +391,7 @@ $(document).ready(function() {
 
         // Build change summary HTML
         let changesHtml = '<div class="text-start">';
-        changesHtml += `<p class="mb-3">You are about to update permissions for <strong>{{ $role->name }}</strong>.</p>`;
+        changesHtml += `<p class="mb-3">You are about to update permissions for <strong>${$('#role-name-text').text()}</strong>.</p>`;
         if (permissionsToAdd.length > 0) {
             changesHtml += `
                 <div class="alert alert-success small mb-2">

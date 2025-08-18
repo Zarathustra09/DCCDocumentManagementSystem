@@ -49,10 +49,14 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Roles & Permissions Overview</h5>
                 <div class="d-flex gap-2">
+                    <a href="{{ route('roles.create') }}" class="btn btn-primary">
+                        <i class="bx bx-plus"></i> Create Role
+                    </a>
                     <span class="badge bg-success">{{ $roles->count() }} Total Roles</span>
                 </div>
             </div>
             <div class="card-body">
+
                 <div class="table-responsive">
                     <table id="rolesTable" class="table table-striped table-hover">
                         <thead class="table-dark">
