@@ -55,7 +55,7 @@ Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.crea
 Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
 Route::resource('roles', RoleController::class)->only(['index', 'show']);
 Route::post('roles/{role}/update-permissions', [RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
-
+Route::put('roles/{role}/update-name', [RoleController::class, 'updateName'])->name('roles.update-name');
 
 
 

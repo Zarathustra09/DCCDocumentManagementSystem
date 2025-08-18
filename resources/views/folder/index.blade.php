@@ -30,7 +30,7 @@
 
 
                     @foreach($baseFolders as $baseFolder)
-                        @can('view IT documents')
+                        @can('view ' . $baseFolder->name . ' documents')
                         <li class="nav-item position-relative">
                             <div class="d-flex align-items-center justify-content-between category-item">
                                 <a class="nav-link d-flex align-items-center text-dark drop-zone flex-grow-1 {{ request('base_folder') == $baseFolder->id ? 'active text-primary' : '' }}"

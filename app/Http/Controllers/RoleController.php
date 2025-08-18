@@ -115,4 +115,28 @@ class RoleController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update the name of the specified role.
+     */
+    public function updateName(Request $request, Role $role)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name,' . $role->id
+        ]);
+
+        try {
+            $role->update(['name' => $request->name]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role name updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update role name: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
