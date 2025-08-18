@@ -143,25 +143,25 @@
 
 
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-search-alt"></i>
-                <div data-i18n="Patient Records">Search</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-search-alt"></i>--}}
+{{--                <div data-i18n="Patient Records">Search</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-cog"></i>
-                <div data-i18n="Patient Records">Settings</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-cog"></i>--}}
+{{--                <div data-i18n="Patient Records">Settings</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-chart"></i>
-                <div data-i18n="Patient Records">Analytics</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-chart"></i>--}}
+{{--                <div data-i18n="Patient Records">Analytics</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
     </ul>
 </aside>
