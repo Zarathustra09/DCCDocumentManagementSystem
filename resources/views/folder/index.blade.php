@@ -27,32 +27,38 @@
                 </div>
 
                 <ul class="nav flex-column">
+
+
                     @foreach($baseFolders as $baseFolder)
-                    <li class="nav-item position-relative">
-                        <div class="d-flex align-items-center justify-content-between category-item">
-                            <a class="nav-link d-flex align-items-center text-dark drop-zone flex-grow-1 {{ request('base_folder') == $baseFolder->id ? 'active text-primary' : '' }}"
-                               href="{{ route('folders.index', ['base_folder' => $baseFolder->id]) }}"
-                               data-folder-id=""
-                               data-base-folder-id="{{ $baseFolder->id }}">
-                                <i class="bx bx-folder me-2 text-warning"></i>
-                                <span class="flex-grow-1">{{ $baseFolder->name }}</span>
-                            </a>
-                            @can('edit folders')
-                            <div class="category-actions d-none">
-                                <button class="btn btn-link btn-sm p-0 me-1"
-                                        onclick="showEditCategorySwal({{ $baseFolder->id }}, '{{ addslashes($baseFolder->name) }}', '{{ addslashes($baseFolder->description ?? '') }}')"
-                                        title="Edit">
-                                    <i class="bx bx-edit text-secondary"></i>
-                                </button>
-                                <button class="btn btn-link btn-sm p-0"
-                                        onclick="deleteCategory({{ $baseFolder->id }}, '{{ addslashes($baseFolder->name) }}')"
-                                        title="Delete">
-                                    <i class="bx bx-trash text-danger"></i>
-                                </button>
+                        @can('view IT documents')
+                        <li class="nav-item position-relative">
+                            <div class="d-flex align-items-center justify-content-between category-item">
+                                <a class="nav-link d-flex align-items-center text-dark drop-zone flex-grow-1 {{ request('base_folder') == $baseFolder->id ? 'active text-primary' : '' }}"
+                                   href="{{ route('folders.index', ['base_folder' => $baseFolder->id]) }}"
+                                   data-folder-id=""
+                                   data-base-folder-id="{{ $baseFolder->id }}">
+                                    <i class="bx bx-folder me-2 text-warning"></i>
+                                    <span class="flex-grow-1">{{ $baseFolder->name }}</span>
+                                </a>
+                                @can('edit ' . $baseFolder->name . ' documents')
+                                <div class="category-actions d-none">
+                                    <button class="btn btn-link btn-sm p-0 me-1"
+                                            onclick="showEditCategorySwal({{ $baseFolder->id }}, '{{ addslashes($baseFolder->name) }}', '{{ addslashes($baseFolder->description ?? '') }}')"
+                                            title="Edit">
+                                        <i class="bx bx-edit text-secondary"></i>
+                                    </button>
+                                    @can('delete ' . $baseFolder->name . ' documents')
+                                    <button class="btn btn-link btn-sm p-0"
+                                            onclick="deleteCategory({{ $baseFolder->id }}, '{{ addslashes($baseFolder->name) }}')"
+                                            title="Delete">
+                                        <i class="bx bx-trash text-danger"></i>
+                                    </button>
+                                    @endcan
+                                </div>
+                                @endcan
                             </div>
-                            @endcan
-                        </div>
-                    </li>
+                        </li>
+                        @endcan
                     @endforeach
                 </ul>
             </div>
@@ -103,7 +109,7 @@
 
                 <div class="action-buttons">
                    @if($selectedBaseFolder)
-                       @can('create folders')
+                       @can('create ' . $selectedBaseFolder->name . ' documents')
                            <button class="btn btn-sm btn-outline-primary" onclick="showCreateFolderSwal()">
                                <i class="bx bx-folder-plus"></i> Add Folder
                            </button>
@@ -116,6 +122,7 @@
             <div class="icon-view" id="icon-view">
                 <div class="row g-3">
                     @foreach($folders as $folder)
+                        @can('view ' . $folder->baseFolder->name . ' documents')
                         <div class="col-6 col-sm-4 col-md-3 col-xl-2">
                             <div class="folder-item position-relative rounded shadow-sm drop-zone"
                                  data-folder-id="{{ $folder->id }}"
@@ -147,22 +154,31 @@
                                 </div>
                             </div>
                         </div>
+                        @endcan
                     @endforeach
 
-                    @if($folders->isEmpty())
+                    @if($folders->isEmpty() || $folders->filter(fn($folder) => auth()->user()->can('view ' . $folder->baseFolder->name . ' documents'))->isEmpty())
                         <div class="col-12 text-center py-5">
                             <div class="empty-state p-4 rounded drop-zone" style="background-color: #f8f9fa;"
                                  data-folder-id=""
                                  data-base-folder-id="{{ $selectedBaseFolder->id ?? '' }}">
                                 <i class="bx bx-folder-open text-muted" style="font-size: 3rem;"></i>
                                 <p class="mt-3 mb-3 text-muted">No folders found</p>
-                                <p class="small text-muted mb-3">Create your first folder to organize documents</p>
+                                <p class="small text-muted mb-3">
+                                    @if($selectedBaseFolder && auth()->user()->can('create ' . $selectedBaseFolder->name . ' documents'))
+                                        Create your first folder to organize documents
+                                    @else
+                                        No accessible folders available
+                                    @endif
+                                </p>
                                 <div>
-                                    @can('create folders')
-                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="showCreateFolderSwal()">
-                                        <i class="bx bx-folder-plus"></i> Add Folder
-                                    </button>
-                                    @endcan
+                                    @if($selectedBaseFolder)
+                                        @can('create ' . $selectedBaseFolder->name . ' documents')
+                                        <button class="btn btn-sm btn-outline-primary me-2" onclick="showCreateFolderSwal()">
+                                            <i class="bx bx-folder-plus"></i> Add Folder
+                                        </button>
+                                        @endcan
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -184,6 +200,7 @@
                         </thead>
                         <tbody>
                             @foreach($folders as $folder)
+                                @can('view ' . $folder->baseFolder->name . ' documents')
                                 <tr class="drop-zone"
                                     data-folder-id="{{ $folder->id }}"
                                     data-base-folder-id="{{ $folder->base_folder_id }}"
@@ -215,14 +232,21 @@
                                         </div>
                                     </td>
                                 </tr>
+                                @endcan
                             @endforeach
 
-                            @if($folders->isEmpty())
+                            @if($folders->isEmpty() || $folders->filter(fn($folder) => auth()->user()->can('view ' . $folder->baseFolder->name . ' documents'))->isEmpty())
                                 <tr>
                                     <td colspan="4" class="text-center py-4">
                                         <i class="bx bx-folder-open text-muted" style="font-size: 2rem;"></i>
                                         <p class="mt-2 mb-0 text-muted">No folders found</p>
-                                        <p class="small text-muted">Create your first folder to get started</p>
+                                        <p class="small text-muted">
+                                            @if($selectedBaseFolder && auth()->user()->can('create ' . $selectedBaseFolder->name . ' documents'))
+                                                Create your first folder to get started
+                                            @else
+                                                No accessible folders available
+                                            @endif
+                                        </p>
                                     </td>
                                 </tr>
                             @endif
@@ -233,8 +257,6 @@
         </div>
     </div>
 </div>
-
-
 
 <style>
 .category-item:hover {
