@@ -102,12 +102,12 @@
                 <div data-i18n="Patient Records">Comments</div>
             </a>
         </li>
-
+        @can('manage users')
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Tools</span>
         </li>
 
-        @can('manage users')
+
             <li class="menu-item {{Route::is('roles.*') || Route::is('admin.users.*') ? 'active' : ''}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-shield"></i>
@@ -143,25 +143,25 @@
 
 
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-search-alt"></i>
-                <div data-i18n="Patient Records">Search</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-search-alt"></i>--}}
+{{--                <div data-i18n="Patient Records">Search</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-cog"></i>
-                <div data-i18n="Patient Records">Settings</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-cog"></i>--}}
+{{--                <div data-i18n="Patient Records">Settings</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-chart"></i>
-                <div data-i18n="Patient Records">Analytics</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-chart"></i>--}}
+{{--                <div data-i18n="Patient Records">Analytics</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
     </ul>
 </aside>

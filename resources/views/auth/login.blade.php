@@ -12,10 +12,11 @@
                         <form method="POST" action="{{ route('login') }}">
                             @csrf
 
+                            {{-- resources/views/auth/login.blade.php --}}
                             <div class="mb-3">
-                                <label for="email" class="form-label">{{ __('Email Address') }}</label>
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-                                @error('email')
+                                <label for="username" class="form-label">{{ __('Username') }}</label>
+                                <input id="username" type="text" class="form-control @error('username') is-invalid @enderror" name="username" value="{{ old('username') }}" required autocomplete="username" autofocus>
+                                @error('username')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
@@ -47,13 +48,13 @@
                                 </button>
                             </div>
 
-                            @if (Route::has('password.request'))
-                                <div class="text-center mt-3">
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
-                                        {{ __('Forgot Your Password?') }}
-                                    </a>
-                                </div>
-                            @endif
+{{--                            @if (Route::has('password.request'))--}}
+{{--                                <div class="text-center mt-3">--}}
+{{--                                    <a class="btn btn-link" href="{{ route('password.request') }}">--}}
+{{--                                        {{ __('Forgot Your Password?') }}--}}
+{{--                                    </a>--}}
+{{--                                </div>--}}
+{{--                            @endif--}}
                         </form>
                     </div>
                 </div>

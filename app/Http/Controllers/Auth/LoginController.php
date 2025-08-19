@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
@@ -36,5 +37,24 @@ class LoginController extends Controller
     {
         $this->middleware('guest')->except('logout');
         $this->middleware('auth')->only('logout');
+    }
+
+    public function username()
+    {
+        return 'username';
+    }
+
+    protected function attemptLogin(\Illuminate\Http\Request $request)
+    {
+        $user = \App\Models\User::where('username', $request->input('username'))->first();
+
+        if ($user && password_verify($request->input('password'), $user->password)) {
+            auth()->login($user, $request->filled('remember'));
+            return true;
+        }
+        Log::warning('Login attempt failed for username: ' . $request->input('username'));
+        session()->flash('error', 'Invalid username or password.');
+
+        return false;
     }
 }

@@ -77,8 +77,19 @@
                         <hr>
                         <div class="text-start">
                             <small class="text-muted d-block">ID: {{ $user->id }}</small>
-                            <small class="text-muted d-block">Created: {{ $user->created_at->format('M d, Y') }}</small>
-                            <small class="text-muted d-block">Status:
+@php
+                                $invalidCreatedAt = [
+                                    null,
+                                    '0000-00-00',
+                                    '0000-00-00 00:00:00',
+                                    '2025-02-11 00:00:00',
+                                ];
+                                $createdAtRaw = $user->getRawOriginal('created_at');
+                                $validCreatedAt = $user->created_at && !in_array($createdAtRaw, $invalidCreatedAt, true);
+                            @endphp
+                            <small class="text-muted d-block">
+                                Created: {{ $validCreatedAt ? $user->created_at->format('M d, Y') : 'N/A' }}
+                            </small>                            <small class="text-muted d-block">Status:
                                 @if($user->email_verified_at)
                                     <span class="badge bg-success badge-sm">Active</span>
                                 @else

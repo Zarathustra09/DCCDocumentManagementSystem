@@ -119,9 +119,22 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <small>{{ $user->created_at->format('M d, Y') }}</small>
+                                    @php
+                                        $invalidDates = [
+                                            '0000-00-00',
+                                            '0000-00-00 00:00:00',
+                                            '2025-02-11 00:00:00',
+                                        ];
+                                        $createdOnRaw = $user->getRawOriginal('created_on');
+                                        $validCreatedOn = $user->created_on && !in_array($createdOnRaw, $invalidDates, true);
+                                    @endphp
+                                    <small>
+                                        {{ $validCreatedOn ? optional($user->created_on)->format('M d, Y') : 'N/A' }}
+                                    </small>
                                     <br>
-                                    <small class="text-muted">{{ $user->created_at->diffForHumans() }}</small>
+                                    <small class="text-muted">
+                                        {{ $validCreatedOn ? optional($user->created_on)->diffForHumans() : 'N/A' }}
+                                    </small>
                                 </td>
                                 <td>
                                     <div class="dropdown">
