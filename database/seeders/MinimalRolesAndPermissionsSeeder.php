@@ -104,7 +104,7 @@ class MinimalRolesAndPermissionsSeeder extends Seeder
                'barcode' => 'BARCODE001',
                'email' => 'superadmin@smartprobegroup.com',
                'separationdate' => null,
-               'password' => bcrypt('password'),
+               'password' => password_hash('password', PASSWORD_BCRYPT),
                'email_verified_at' => now(),
                'remember_token' => \Str::random(10),
                'role' => 'SuperAdmin'
@@ -125,7 +125,7 @@ class MinimalRolesAndPermissionsSeeder extends Seeder
                'barcode' => 'BARCODE002',
                'email' => 'dccadmin@smartprobegroup.com',
                'separationdate' => null,
-               'password' => bcrypt('password'),
+               'password' => password_hash('password', PASSWORD_BCRYPT),
                'email_verified_at' => now(),
                'remember_token' => \Str::random(10),
                'role' => 'DCCAdmin'

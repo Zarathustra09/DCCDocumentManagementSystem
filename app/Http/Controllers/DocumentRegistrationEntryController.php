@@ -662,9 +662,11 @@ class DocumentRegistrationEntryController extends Controller
             ->pluck('device_name')
             ->sort();
 
-        $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
-            ->orderBy('name')
-            ->get();
+       // Get submitters and sort by accessor 'name'
+       $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
+           ->get()
+           ->sortBy('name')
+           ->values();
 
         $fileFormats = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv'];
 
