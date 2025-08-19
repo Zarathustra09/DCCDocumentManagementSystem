@@ -35,18 +35,16 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'birthdate' => 'date',
-            'datehired' => 'date',
-            'created_on' => 'date',
-            'separationdate' => 'date',
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    // app/Models/User.php
 
+    protected $casts = [
+        'birthdate' => 'date',
+        'datehired' => 'date',
+        'created_on' => 'date',
+        'separationdate' => 'date',
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
     public function getNameAttribute()
     {
         return trim("{$this->firstname} {$this->middlename} {$this->lastname}");
