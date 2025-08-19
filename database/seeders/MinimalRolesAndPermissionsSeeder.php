@@ -87,28 +87,56 @@ class MinimalRolesAndPermissionsSeeder extends Seeder
             return;
         }
 
-        $users = [
-            [
-                'name' => 'Super Admin',
-                'email' => 'superadmin@smartprobegroup.com',
-                'password' => bcrypt('password'),
-                'role' => 'SuperAdmin'
-            ],
-            [
-                'name' => 'DCC Admin',
-                'email' => 'dccadmin@smartprobegroup.com',
-                'password' => bcrypt('password'),
-                'role' => 'DCCAdmin'
-            ],
-        ];
+       $users = [
+           [
+               'firstname' => 'Super',
+               'middlename' => 'Admin',
+               'lastname' => 'User',
+               'employee_no' => 'EMP001',
+               'username' => 'superadmin',
+               'address' => '123 Admin St',
+               'birthdate' => '1990-01-01',
+               'contact_info' => '09171234567',
+               'gender' => 'Male',
+               'datehired' => '2020-01-01',
+               'profile_image' => '', // or a default image path
+               'created_on' => now()->toDateString(),
+               'barcode' => 'BARCODE001',
+               'email' => 'superadmin@smartprobegroup.com',
+               'separationdate' => null,
+               'password' => bcrypt('password'),
+               'email_verified_at' => now(),
+               'remember_token' => \Str::random(10),
+               'role' => 'SuperAdmin'
+           ],
+           [
+               'firstname' => 'DCC',
+               'middlename' => 'Admin',
+               'lastname' => 'User',
+               'employee_no' => 'EMP002',
+               'username' => 'dccadmin',
+               'address' => '456 DCC St',
+               'birthdate' => '1992-02-02',
+               'contact_info' => '09179876543',
+               'gender' => 'Female',
+               'datehired' => '2021-02-02',
+               'profile_image' => '',
+               'created_on' => now()->toDateString(),
+               'barcode' => 'BARCODE002',
+               'email' => 'dccadmin@smartprobegroup.com',
+               'separationdate' => null,
+               'password' => bcrypt('password'),
+               'email_verified_at' => now(),
+               'remember_token' => \Str::random(10),
+               'role' => 'DCCAdmin'
+           ],
+       ];
 
         foreach ($users as $userData) {
-            $user = User::create([
-                'name' => $userData['name'],
-                'email' => $userData['email'],
-                'password' => $userData['password'],
-            ]);
-            $user->assignRole($userData['role']);
+            $role = $userData['role'];
+            unset($userData['role']);
+            $user = \App\Models\User::create($userData);
+            $user->assignRole($role);
         }
     }
 }

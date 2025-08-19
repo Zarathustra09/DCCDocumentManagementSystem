@@ -102,12 +102,12 @@
                 <div data-i18n="Patient Records">Comments</div>
             </a>
         </li>
-
+        @can('manage users')
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Tools</span>
         </li>
 
-        @can('manage users')
+
             <li class="menu-item {{Route::is('roles.*') || Route::is('admin.users.*') ? 'active' : ''}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-shield"></i>
