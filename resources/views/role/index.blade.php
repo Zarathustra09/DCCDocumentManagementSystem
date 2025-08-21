@@ -1,162 +1,196 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
-        <h4 class="fw-bold py-3 mb-4">
-            <span class="text-muted fw-light">Administration /</span> Roles & Permissions Management
-        </h4>
-
-        <!-- Quick Stats Cards -->
-        <div class="container-fluid mb-4">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white">
-                        <div class="card-body">
-                            <h5>{{ $roles->count() }}</h5>
-                            <p class="mb-0">Total Roles</p>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Quick Stats Cards -->
+            <div class="container-fluid mb-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-body text-white">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h4 class="mb-0 fw-bold">{{ $roles->count() }}</h4>
+                                        <p class="mb-0 opacity-75">Total Roles</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="bx bx-user-check" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body">
-                            <h5>{{ $totalPermissions }}</h5>
-                            <p class="mb-0">Total Permissions</p>
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <div class="card-body text-white">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h4 class="mb-0 fw-bold">{{ $totalPermissions }}</h4>
+                                        <p class="mb-0 opacity-75">Total Permissions</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="bx bx-shield-quarter" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body">
-                            <h5>{{ $rolesWithoutPermissions }}</h5>
-                            <p class="mb-0">Roles Without Permissions</p>
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <div class="card-body text-white">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h4 class="mb-0 fw-bold">{{ $rolesWithoutPermissions }}</h4>
+                                        <p class="mb-0 opacity-75">Roles Without Permissions</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="bx bx-error-circle" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white">
-                        <div class="card-body">
-                            <h5>{{ $roles->sum(function($role) { return $role->users->count(); }) }}</h5>
-                            <p class="mb-0">Total Assigned Users</p>
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                            <div class="card-body text-dark">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h4 class="mb-0 fw-bold">{{ $roles->sum(function($role) { return $role->users->count(); }) }}</h4>
+                                        <p class="mb-0 opacity-75">Total Assigned Users</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <i class="bx bx-group" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Roles & Permissions Overview</h5>
-                <div class="d-flex gap-2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title"><i class='bx bx-user-check'></i> Roles & Permissions Management</h3>
                     <a href="{{ route('roles.create') }}" class="btn btn-primary">
-                        <i class="bx bx-plus"></i> Create Role
+                        <i class='bx bx-plus'></i> Create Role
                     </a>
-                    <span class="badge bg-success">{{ $roles->count() }} Total Roles</span>
                 </div>
-            </div>
-            <div class="card-body">
 
-                <div class="table-responsive">
-                    <table id="rolesTable" class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Role Name</th>
-                                <th>Users Count</th>
-                                <th>Permissions Count</th>
-{{--                                <th>Key Permissions</th>--}}
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($roles as $role)
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3">
-                                            @if($role->name === 'SuperAdmin')
-                                                <i class="bx bx-shield-alt text-danger" style="font-size: 1.5rem;"></i>
-                                            @elseif(str_contains($role->name, 'Admin'))
-                                                <i class="bx bx-user-check text-warning" style="font-size: 1.5rem;"></i>
-                                            @elseif(str_contains($role->name, 'Head'))
-                                                <i class="bx bx-crown text-info" style="font-size: 1.5rem;"></i>
-                                            @elseif(str_contains($role->name, 'Read Only'))
-                                                <i class="bx bx-show text-secondary" style="font-size: 1.5rem;"></i>
-                                            @else
-                                                <i class="bx bx-user text-primary" style="font-size: 1.5rem;"></i>
-                                            @endif
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="rolesTable">
+                            <thead>
+                                <tr>
+                                    <th>Role Name</th>
+                                    <th>Users Count</th>
+                                    <th>Permissions Count</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($roles as $role)
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                @if($role->name === 'SuperAdmin')
+                                                    <i class="bx bx-shield-alt text-danger" style="font-size: 1.5rem;"></i>
+                                                @elseif(str_contains($role->name, 'Admin'))
+                                                    <i class="bx bx-user-check text-warning" style="font-size: 1.5rem;"></i>
+                                                @elseif(str_contains($role->name, 'Head'))
+                                                    <i class="bx bx-crown text-info" style="font-size: 1.5rem;"></i>
+                                                @elseif(str_contains($role->name, 'Read Only'))
+                                                    <i class="bx bx-show text-secondary" style="font-size: 1.5rem;"></i>
+                                                @else
+                                                    <i class="bx bx-user text-primary" style="font-size: 1.5rem;"></i>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <strong>{{ $role->name }}</strong>
+                                                <br>
+                                                @if($role->name === 'SuperAdmin')
+                                                    <small class="text-muted">Super Admin</small>
+                                                @elseif(str_contains($role->name, 'Admin'))
+                                                    <small class="text-muted">Administrator</small>
+                                                @elseif(str_contains($role->name, 'Head'))
+                                                    <small class="text-muted">Department Head</small>
+                                                @elseif(str_contains($role->name, 'Read Only'))
+                                                    <small class="text-muted">Read Only</small>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h6 class="mb-0">{{ $role->name }}</h6>
-                                            @if($role->name === 'SuperAdmin')
-                                                <span class="badge bg-danger me-1">Super Admin</span>
-                                            @elseif(str_contains($role->name, 'Admin'))
-                                                <span class="badge bg-warning text-dark me-1">Administrator</span>
-                                            @elseif(str_contains($role->name, 'Head'))
-                                                <span class="badge bg-info me-1">Department Head</span>
-                                            @elseif(str_contains($role->name, 'Read Only'))
-                                                <span class="badge bg-secondary me-1">Read Only</span>
-                                            @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-primary me-2">{{ $role->users->count() }}</span>
+                                            <small class="text-muted">users</small>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-primary me-2">{{ $role->users->count() }}</span>
-                                        <small class="text-muted">users</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-success me-2">{{ $role->permissions->count() }}</span>
-                                        <small class="text-muted">permissions</small>
-                                    </div>
-                                </td>
-{{--                                <td>--}}
-{{--                                    @php--}}
-{{--                                        $keyPermissions = $role->permissions->take(2);--}}
-{{--                                        $remainingCount = $role->permissions->count() - 2;--}}
-{{--                                    @endphp--}}
-{{--                                    @foreach($keyPermissions as $permission)--}}
-{{--                                        <span class="badge bg-light text-dark me-1 mb-1 small">{{ $permission->name }}</span>--}}
-{{--                                    @endforeach--}}
-{{--                                    @if($remainingCount > 0)--}}
-{{--                                        <span class="text-muted small">+{{ $remainingCount }} more</span>--}}
-{{--                                    @endif--}}
-{{--                                </td>--}}
-                                <td>
-                                    @if($role->permissions->count() > 0)
-                                        <span class="badge bg-success">Active</span>
-                                    @else
-                                        <span class="badge bg-warning">No Permissions</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                            <i class="bx bx-cog"></i> Manage
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="{{ route('roles.show', $role) }}">
-                                                <i class="bx bx-edit-alt me-2"></i> Edit Permissions
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#" onclick="viewRoleUsers({{ $role->id }}, '{{ addslashes($role->name) }}')">
-                                                <i class="bx bx-user me-2"></i> View Users ({{ $role->users->count() }})
-                                            </a>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-success me-2">{{ $role->permissions->count() }}</span>
+                                            <small class="text-muted">permissions</small>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td>
+                                        @if($role->permissions->count() > 0)
+                                            <span class="badge bg-success">
+                                                <i class='bx bx-check'></i> Active
+                                            </span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">
+                                                <i class='bx bx-time'></i> No Permissions
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                <i class="bx bx-cog"></i> Manage
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="{{ route('roles.show', $role) }}">
+                                                    <i class="bx bx-edit-alt me-2"></i> Edit Permissions
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item" href="#" onclick="viewRoleUsers({{ $role->id }}, '{{ addslashes($role->name) }}')">
+                                                    <i class="bx bx-user me-2"></i> View Users ({{ $role->users->count() }})
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.badge {
+    font-size: 0.85em;
+    padding: 0.375rem 0.75rem;
+}
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+</style>
 @endsection
 
 @push('scripts')
@@ -166,6 +200,9 @@ $(document).ready(function() {
         responsive: true,
         order: [[1, 'desc']],
         pageLength: 10,
+        columnDefs: [
+            { orderable: false, targets: [0, 4] }
+        ],
         language: {
             search: "Search roles:",
             lengthMenu: "Show _MENU_ roles per page",
