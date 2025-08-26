@@ -1,169 +1,206 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
-        <h4 class="fw-bold py-3 mb-4">
-            <span class="text-muted fw-light">Administration /</span> User Roles & Permissions
-        </h4>
+<div class="container-fluid pt-3">
+    <div class="row">
+        <div class="col-12">
+          <!-- Quick Stats Cards -->
+          <div class="container-fluid mb-4">
+              <div class="row">
+                  <div class="col-md-4">
+                      <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                          <div class="card-body text-white">
+                              <div class="d-flex align-items-center">
+                                  <div class="flex-grow-1">
+                                      <h4 class="mb-0 fw-bold">{{ $roles->count() }}</h4>
+                                      <p class="mb-0 opacity-75">Total Roles</p>
+                                  </div>
+                                  <div class="ms-3">
+                                      <i class="bx bx-user-check" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="col-md-4">
+                      <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                          <div class="card-body text-white">
+                              <div class="d-flex align-items-center">
+                                  <div class="flex-grow-1">
+                                      <h4 class="mb-0 fw-bold">{{ $usersWithoutRoles}}</h4>
+                                      <p class="mb-0 opacity-75">Users Without Roles</p>
+                                  </div>
+                                  <div class="ms-3">
+                                      <i class="bx bx-user-x" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="col-md-4">
+                      <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                          <div class="card-body text-white">
+                              <div class="d-flex align-items-center">
+                                  <div class="flex-grow-1">
+                                      <h4 class="mb-0 fw-bold">{{ \Spatie\Permission\Models\Permission::count() }}</h4>
+                                      <p class="mb-0 opacity-75">Total Permissions</p>
+                                  </div>
+                                  <div class="ms-3">
+                                      <i class="bx bx-shield-quarter" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
 
-        <!-- Quick Stats Cards -->
-        <div class="container-fluid mb-4">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card bg-primary text-white">
-                        <div class="card-body">
-                            <h5>{{ $roles->count() }}</h5>
-                            <p class="mb-0">Total Roles</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body">
-                            <h5>{{ $usersWithoutRoles}}</h5>
-                            <p class="mb-0">Users Without Roles</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-info text-white">
-                        <div class="card-body">
-                            <h5>{{ \Spatie\Permission\Models\Permission::count() }}</h5>
-                            <p class="mb-0">Total Permissions</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Users with Roles & Permissions</h5>
-                <div class="d-flex gap-2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title"><i class='bx bx-user-circle'></i> User Roles & Permissions</h3>
                     <span class="badge bg-success">{{ $users->count() }} Total Users</span>
                 </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="usersTable" class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>User</th>
-                                <th>Email</th>
-                                <th>Roles</th>
-                                <th>Permissions Count</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($users as $user)
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar avatar-sm me-3">
-                                            <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px;">
-                                                <img
-                                                    src="{{ $user->profile_image ? asset('storage/' . $user->profile_image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random' }}"
-                                                    alt="{{ $user->name }}"
-                                                    class="img-fluid"
-                                                    style="width: 100%; height: 100%; object-fit: cover;"
-                                                />
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Roles</th>
+                                    <th>Permissions Count</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($users as $user)
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-sm me-3">
+                                                <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px;">
+                                                    <img
+                                                        src="{{ $user->profile_image ? asset('storage/' . $user->profile_image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random' }}"
+                                                        alt="{{ $user->name }}"
+                                                        class="img-fluid"
+                                                        style="width: 100%; height: 100%; object-fit: cover;"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <strong>{{ $user->name }}</strong>
+                                                <br><small class="text-muted">ID: {{ $user->id }}</small>
                                             </div>
                                         </div>
-                                        <div>
-                                            <h6 class="mb-0">{{ $user->name }}</h6>
-                                            <small class="text-muted">ID: {{ $user->id }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-primary">{{ $user->email }}</span>
+                                        @if($user->email_verified_at)
+                                            <i class="bx bx-check-circle text-success ms-1" title="Verified"></i>
+                                        @else
+                                            <i class="bx bx-x-circle text-danger ms-1" title="Unverified"></i>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($user->roles->count() > 0)
+                                            @foreach($user->roles as $role)
+                                                @php
+                                                    $badgeClass = match($role->name) {
+                                                        'SuperAdmin' => 'bg-danger',
+                                                        'DCCAdmin' => 'bg-warning',
+                                                        'VP Sales and Operations' => 'bg-info',
+                                                        'Comptroller' => 'bg-success',
+                                                        default => 'bg-primary'
+                                                    };
+                                                @endphp
+                                                <span class="badge {{ $badgeClass }} me-1 mb-1">{{ $role->name }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="badge bg-secondary">No Role Assigned</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-light text-dark me-2">{{ $user->getAllPermissions()->count() }}</span>
+                                            <small class="text-muted">permissions</small>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="text-primary">{{ $user->email }}</span>
-                                    @if($user->email_verified_at)
-                                        <i class="bx bx-check-circle text-success ms-1" title="Verified"></i>
-                                    @else
-                                        <i class="bx bx-x-circle text-danger ms-1" title="Unverified"></i>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($user->roles->count() > 0)
-                                        @foreach($user->roles as $role)
-                                            @php
-                                                $badgeClass = match($role->name) {
-                                                    'SuperAdmin' => 'bg-danger',
-                                                    'DCCAdmin' => 'bg-warning',
-                                                    'VP Sales and Operations' => 'bg-info',
-                                                    'Comptroller' => 'bg-success',
-                                                    default => 'bg-primary'
-                                                };
-                                            @endphp
-                                            <span class="badge {{ $badgeClass }} me-1 mb-1">{{ $role->name }}</span>
-                                        @endforeach
-                                    @else
-                                        <span class="badge bg-secondary">No Role Assigned</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-light text-dark me-2">{{ $user->getAllPermissions()->count() }}</span>
-                                        <small class="text-muted">permissions</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    @if($user->email_verified_at)
-                                        <span class="badge bg-success">Active</span>
-                                    @else
-                                        <span class="badge bg-warning">Pending</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @php
-                                        $invalidDates = [
-                                            '0000-00-00',
-                                            '0000-00-00 00:00:00',
-                                            '2025-02-11 00:00:00',
-                                        ];
-                                        $createdOnRaw = $user->getRawOriginal('created_on');
-                                        $validCreatedOn = $user->created_on && !in_array($createdOnRaw, $invalidDates, true);
-                                    @endphp
-                                    <small>
-                                        {{ $validCreatedOn ? optional($user->created_on)->format('M d, Y') : 'N/A' }}
-                                    </small>
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ $validCreatedOn ? optional($user->created_on)->diffForHumans() : 'N/A' }}
-                                    </small>
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                            <i class="bx bx-cog"></i> Manage
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="{{ route('admin.users.show', $user->id) }}">
-                                                <i class="bx bx-show me-2"></i> View Details
-                                            </a>
-                                            <a class="dropdown-item" href="#" onclick="editUserRoles({{ $user->id }}, '{{ addslashes($user->name) }}', {{ $user->roles->pluck('id') }})">
-                                                <i class="bx bx-edit-alt me-2"></i> Edit Roles
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#" onclick="viewUserActivity({{ $user->id }})">
-                                                <i class="bx bx-time me-2"></i> Activity Log
-                                            </a>
+                                    </td>
+                                    <td>
+                                        @if($user->email_verified_at)
+                                            <span class="badge bg-success">
+                                                <i class='bx bx-check'></i> Active
+                                            </span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">
+                                                <i class='bx bx-time'></i> Pending
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @php
+                                            $invalidDates = [
+                                                '0000-00-00',
+                                                '0000-00-00 00:00:00',
+                                                '2025-02-11 00:00:00',
+                                            ];
+                                            $createdOnRaw = $user->getRawOriginal('created_on');
+                                            $validCreatedOn = $user->created_on && !in_array($createdOnRaw, $invalidDates, true);
+                                        @endphp
+                                        <small>
+                                            <i class='bx bx-calendar'></i> {{ $validCreatedOn ? optional($user->created_on)->format('M d, Y') : 'N/A' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                <i class="bx bx-cog"></i> Manage
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="{{ route('admin.users.show', $user->id) }}">
+                                                    <i class="bx bx-show me-2"></i> View Details
+                                                </a>
+                                                <a class="dropdown-item" href="#" onclick="editUserRoles({{ $user->id }}, '{{ addslashes($user->name) }}', {{ $user->roles->pluck('id') }})">
+                                                    <i class="bx bx-edit-alt me-2"></i> Edit Roles
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item" href="#" onclick="viewUserActivity({{ $user->id }})">
+                                                    <i class="bx bx-time me-2"></i> Activity Log
+                                                </a>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.badge {
+    font-size: 0.85em;
+    padding: 0.375rem 0.75rem;
+}
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+</style>
 @endsection
 
 @push('scripts')

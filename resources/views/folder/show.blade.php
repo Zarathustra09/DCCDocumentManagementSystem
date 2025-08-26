@@ -103,7 +103,7 @@
                         </button>
                     @endcan
                         @can('create ' . $folder->baseFolder->name . ' documents')
-                            <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">
+                            <button class="swal-upload-btn btn btn-sm btn-outline-success">
                                 <i class="bx bx-upload"></i> Upload
                             </button>
                         @endcan
@@ -211,11 +211,11 @@
                                         <i class="bx bx-folder-plus"></i> Add
                                     </button>
                                     @endcan
-                                    @can('create ' . $folder->baseFolder->name . ' documents')
-                                        <button id="swal-upload-btn" class="btn btn-sm btn-outline-success">
-                                            <i class="bx bx-upload"></i> Upload
-                                        </button>
-                                    @endcan
+                                        @can('create ' . $folder->baseFolder->name . ' documents')
+                                            <button class="swal-upload-btn btn btn-sm btn-outline-success">
+                                                <i class="bx bx-upload"></i> Upload
+                                            </button>
+                                        @endcan
                                 </div>
                             </div>
                         </div>

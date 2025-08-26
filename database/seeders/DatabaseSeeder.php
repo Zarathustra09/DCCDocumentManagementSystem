@@ -6,6 +6,7 @@ use App\Http\Controllers\PermissionController;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Whoops\Run;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,8 +18,9 @@ class DatabaseSeeder extends Seeder
       $this->call([
 //            RolesAndPermissionsSeeder::class,
 //            FolderSeeder::class,
-          PermissionSeeder::class,
-          MinimalRolesAndPermissionsSeeder::class,
+//          PermissionSeeder::class,
+//          RunSqlScriptSeeder::class,
+//          MinimalRolesAndPermissionsSeeder::class,
 
         ]);
     }

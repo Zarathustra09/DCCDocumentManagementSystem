@@ -10,6 +10,11 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            // BaseFolder permissions
+            'create basefolders',
+            'edit basefolders',
+            'delete basefolders',
+            'view basefolders',
             // Document registration approval permissions
             'submit document for approval',
             'approve document registration',

@@ -22,7 +22,12 @@ class MinimalRolesAndPermissionsSeeder extends Seeder
         $dccAdminRole = Role::firstOrCreate(['name' => 'DCCAdmin']);
         $dccAdminRole->syncPermissions($allPermissions);
 
-        // Assign roles to users by employee_no
+        $basicRole = Role::firstOrCreate(['name' => 'BasicRole']);
+        $basicRole->syncPermissions([
+            'view folders',
+        ]);
+
+        // Assign roles to users
         $superAdminUser = User::where('employee_no', '390')->first();
         if ($superAdminUser) {
             $superAdminUser->assignRole('SuperAdmin');
@@ -32,5 +37,10 @@ class MinimalRolesAndPermissionsSeeder extends Seeder
         if ($dccAdminUser) {
             $dccAdminUser->assignRole('DCCAdmin');
         }
+
+        // Assign BasicRole to everyone else
+        User::whereNotIn('employee_no', ['390', '277'])->each(function ($user) use ($basicRole) {
+            $user->assignRole($basicRole);
+        });
     }
 }
