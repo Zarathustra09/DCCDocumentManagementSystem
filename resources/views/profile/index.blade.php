@@ -35,10 +35,21 @@
                                     <label class="form-label">E-mail</label>
                                     <input class="form-control" type="text" value="{{ $user->email }}" readonly />
                                 </div>
-                                <div class="mb-3 col-md-6">
-                                    <label class="form-label">Member Since</label>
-                                    <input class="form-control" type="text" value="{{ $user->created_at->format('F Y') }}" readonly />
-                                </div>
+                               @php
+                                   $invalidDates = [
+                                       '0000-00-00',
+                                       '0000-00-00 00:00:00',
+                                       '2025-02-11 00:00:00',
+                                   ];
+                                   $createdOnRaw = $user->getRawOriginal('created_on');
+                                   $validCreatedOn = $user->created_on && !in_array($createdOnRaw, $invalidDates, true);
+                               @endphp
+                               <div class="mb-3 col-md-6">
+                                   <label class="form-label">Member Since</label>
+                                   <input class="form-control" type="text"
+                                          value="{{ $validCreatedOn ? optional($user->created_on)->format('F Y') : 'N/A' }}"
+                                          readonly />
+                               </div>
                                 <div class="mb-3 col-md-6">
                                     <label class="form-label">Role</label>
                                     <div class="mt-2">

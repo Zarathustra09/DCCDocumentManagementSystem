@@ -223,52 +223,6 @@
             }
         });
 
-        {{--function moveItem(item, targetFolderId) {--}}
-        {{--    // Only handle folder moves--}}
-        {{--    if (item.type !== 'folder') {--}}
-        {{--        console.error('Document moves not supported in this context');--}}
-        {{--        return;--}}
-        {{--    }--}}
-
-        {{--    const url = `/folders/${item.id}/move`;--}}
-        {{--    const data = { parent_id: targetFolderId };--}}
-
-        {{--    fetch(url, {--}}
-        {{--        method: 'POST',--}}
-        {{--        headers: {--}}
-        {{--            'Content-Type': 'application/json',--}}
-        {{--            'X-CSRF-TOKEN': '{{ csrf_token() }}'--}}
-        {{--        },--}}
-        {{--        body: JSON.stringify(data)--}}
-        {{--    })--}}
-        {{--        .then(response => response.json())--}}
-        {{--        .then(data => {--}}
-        {{--            if (data.success) {--}}
-        {{--                // Show success message--}}
-        {{--                const alert = document.createElement('div');--}}
-        {{--                alert.className = 'alert alert-success alert-dismissible fade show mt-3';--}}
-        {{--                alert.innerHTML = `--}}
-        {{--                    ${data.message}--}}
-        {{--                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>--}}
-        {{--                `;--}}
-
-        {{--                const container = document.querySelector('.my-3');--}}
-        {{--                container.parentNode.insertBefore(alert, container.nextSibling);--}}
-
-        {{--                // Reload page after short delay--}}
-        {{--                setTimeout(() => {--}}
-        {{--                    window.location.reload();--}}
-        {{--                }, 1500);--}}
-        {{--            } else {--}}
-        {{--                alert('Error: ' + data.message);--}}
-        {{--            }--}}
-        {{--        })--}}
-        {{--        .catch(error => {--}}
-        {{--            console.error('Move error:', error);--}}
-        {{--            alert('An error occurred while moving the folder.');--}}
-        {{--        });--}}
-        {{--}--}}
-
         function handleFileUploads(files) {
             const validFiles = [];
             const errors = [];
@@ -422,77 +376,79 @@
                 docModal.show();
             });
         });
-    });
 
-    // Upload button functionality
-    document.getElementById('swal-upload-btn')?.addEventListener('click', function() {
-        Swal.fire({
-            title: 'Upload Document',
-            html: `
-                <input type="file" id="swal-file-input" class="swal2-input" style="width:100%" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx">
-                <textarea id="swal-desc-input" class="swal2-textarea" placeholder="Description (optional)"></textarea>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Upload',
-            preConfirm: () => {
-                const fileInput = document.getElementById('swal-file-input');
-                const descInput = document.getElementById('swal-desc-input');
-                if (!fileInput.files.length) {
-                    Swal.showValidationMessage('Please select a file');
-                    return false;
-                }
-                return { file: fileInput.files[0], description: descInput.value };
-            }
-        }).then(result => {
-            if (result.isConfirmed && result.value.file) {
-                const file = result.value.file;
-                const description = result.value.description;
-                const allowedTypes = ['pdf','doc','docx','txt','jpg','jpeg','png','gif','xls','xlsx'];
-                const ext = file.name.split('.').pop().toLowerCase();
-                if (!allowedTypes.includes(ext)) {
-                    Swal.fire('Error', 'File type not supported', 'error');
-                    return;
-                }
-                if (file.size > 10 * 1024 * 1024) {
-                    Swal.fire('Error', 'File size exceeds 10MB', 'error');
-                    return;
-                }
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('folder_id', '{{ $folder->id }}');
-                formData.append('description', description);
-                formData.append('_token', '{{ csrf_token() }}');
-
+        // Upload button functionality
+        document.querySelectorAll('.swal-upload-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
                 Swal.fire({
-                    title: 'Uploading...',
-                    html: '<div id="swal-progress" class="progress"><div class="progress-bar" style="width:0%"></div></div>',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
+                    title: 'Upload Document',
+                    html: `
+                        <input type="file" id="swal-file-input" class="swal2-input" style="width:100%" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx">
+                        <textarea id="swal-desc-input" class="swal2-textarea" placeholder="Description (optional)"></textarea>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Upload',
+                    preConfirm: () => {
+                        const fileInput = document.getElementById('swal-file-input');
+                        const descInput = document.getElementById('swal-desc-input');
+                        if (!fileInput.files.length) {
+                            Swal.showValidationMessage('Please select a file');
+                            return false;
+                        }
+                        return { file: fileInput.files[0], description: descInput.value };
+                    }
+                }).then(result => {
+                    if (result.isConfirmed && result.value.file) {
+                        const file = result.value.file;
+                        const description = result.value.description;
+                        const allowedTypes = ['pdf','doc','docx','txt','jpg','jpeg','png','gif','xls','xlsx'];
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        if (!allowedTypes.includes(ext)) {
+                            Swal.fire('Error', 'File type not supported', 'error');
+                            return;
+                        }
+                        if (file.size > 10 * 1024 * 1024) {
+                            Swal.fire('Error', 'File size exceeds 10MB', 'error');
+                            return;
+                        }
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('folder_id', '{{ $folder->id }}');
+                        formData.append('description', description);
+                        formData.append('_token', '{{ csrf_token() }}');
+
+                        Swal.fire({
+                            title: 'Uploading...',
+                            html: '<div id="swal-progress" class="progress"><div class="progress-bar" style="width:0%"></div></div>',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', '{{ route("documents.store") }}');
+                        xhr.upload.onprogress = function(e) {
+                            if (e.lengthComputable) {
+                                const percent = Math.round((e.loaded / e.total) * 100);
+                                Swal.getHtmlContainer().querySelector('.progress-bar').style.width = percent + '%';
+                            }
+                        };
+                        xhr.onload = function() {
+                            if (xhr.status === 200) {
+                                Swal.fire('Success', 'Document uploaded successfully.', 'success')
+                                    .then(() => window.location.reload());
+                            } else {
+                                Swal.fire('Error', 'Upload failed.', 'error');
+                            }
+                        };
+                        xhr.onerror = function() {
+                            Swal.fire('Error', 'Upload failed.', 'error');
+                        };
+                        xhr.send(formData);
                     }
                 });
-
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', '{{ route("documents.store") }}');
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const percent = Math.round((e.loaded / e.total) * 100);
-                        Swal.getHtmlContainer().querySelector('.progress-bar').style.width = percent + '%';
-                    }
-                };
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        Swal.fire('Success', 'Document uploaded successfully.', 'success')
-                            .then(() => window.location.reload());
-                    } else {
-                        Swal.fire('Error', 'Upload failed.', 'error');
-                    }
-                };
-                xhr.onerror = function() {
-                    Swal.fire('Error', 'Upload failed.', 'error');
-                };
-                xhr.send(formData);
-            }
+            });
         });
     });
 
