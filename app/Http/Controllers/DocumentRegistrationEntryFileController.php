@@ -19,14 +19,14 @@ class DocumentRegistrationEntryFileController extends Controller
         }
         $file->update([
             'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
             'rejection_reason' => null,
         ]);
         $file->registrationEntry->update([
             'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
         ]);
         return back()->with('success', 'File approved successfully.');
     }
@@ -44,8 +44,8 @@ class DocumentRegistrationEntryFileController extends Controller
         // Only update the file status, not the entire entry
         $file->update([
             'status' => 'rejected',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
             'rejection_reason' => $request->rejection_reason,
         ]);
 

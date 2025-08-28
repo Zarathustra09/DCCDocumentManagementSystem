@@ -17,12 +17,12 @@ class DocumentRegistrationEntryFile extends Model
         'file_size',
         'status',
         'rejection_reason',
-        'approved_at',
-        'approved_by',
+        'implemented_at',
+        'implemented_by',
     ];
 
     protected $casts = [
-        'approved_at' => 'datetime',
+        'implemented_at' => 'datetime',
     ];
 
 //    TODO: To convert this into a maintenance table
@@ -39,7 +39,7 @@ class DocumentRegistrationEntryFile extends Model
 
     public function approvedBy()
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(User::class, 'implemented_by');
     }
 
     public function getStatusNameAttribute()

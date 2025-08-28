@@ -17,8 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('file_size')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('rejection_reason')->nullable();
-            $table->timestamp('approved_at')->nullable();
-            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->timestamp('implemented_at')->nullable();
+            $table->foreignId('implemented_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }

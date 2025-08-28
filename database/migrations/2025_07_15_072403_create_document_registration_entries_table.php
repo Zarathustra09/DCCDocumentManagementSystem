@@ -19,9 +19,9 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->foreignId('submitted_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('implemented_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('submitted_at')->nullable();
-            $table->timestamp('approved_at')->nullable();
+            $table->timestamp('implemented_at')->nullable();
 //            $table->text('rejection_reason')->nullable();
 //            $table->text('revision_notes')->nullable();
             $table->timestamps();

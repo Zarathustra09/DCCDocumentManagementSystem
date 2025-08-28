@@ -65,6 +65,7 @@
                                     <th>Customer</th>
                                     <th>Status</th>
                                     <th>Submitted</th>
+                                    <th>Implementation Info</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -100,6 +101,13 @@
                                             <small>
                                                 <i class='bx bx-user'></i> {{ $entry->submittedBy->name }}<br>
                                                 <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('M d, Y') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small>
+                                                 <i class='bx bx-user'></i>{{ $entry->approvedBy->name}}<br>
+                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at->format('M d, Y') }}
+
                                             </small>
                                         </td>
                                         <td>
