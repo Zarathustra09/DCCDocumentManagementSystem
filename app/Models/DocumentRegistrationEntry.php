@@ -20,9 +20,9 @@ class DocumentRegistrationEntry extends Model
         'remarks',
         'status',
         'submitted_by',
-        'approved_by',
+        'implemented_by',
         'submitted_at',
-        'approved_at',
+        'implemented_at',
 //        'rejection_reason',
 //        'revision_notes',
 //        'file_path',
@@ -33,7 +33,7 @@ class DocumentRegistrationEntry extends Model
 
     protected $casts = [
         'submitted_at' => 'datetime',
-        'approved_at' => 'datetime',
+        'implemented_at' => 'datetime',
     ];
     //TODO: to add edit functionality for documents
     const STATUSES = [
@@ -54,7 +54,7 @@ class DocumentRegistrationEntry extends Model
 
     public function approvedBy()
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(User::class, 'implemented_by');
     }
 
     public function getFullDocumentNumberAttribute()

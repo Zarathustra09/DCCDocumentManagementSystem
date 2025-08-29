@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
 use App\Models\User;
+use App\Notifications\DocumentRegistryEntryCreated;
+use App\Notifications\DocumentRegistryEntryStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -90,6 +92,11 @@ class DocumentRegistrationEntryController extends Controller
 
         }
 
+        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new DocumentRegistryEntryCreated($entry));
+        }
+
         return redirect()->route('document-registry.show', $entry)
             ->with('success', 'Document registration submitted successfully and is pending approval.');
     }
@@ -141,17 +148,22 @@ class DocumentRegistrationEntryController extends Controller
         }
         $documentRegistrationEntry->update([
             'status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
+            'implemented_by' => Auth::id(),
+            'implemented_at' => now(),
             'rejection_reason' => null,
             'revision_notes' => null,
         ]);
         $documentRegistrationEntry->files()->update([
             'status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
+            'implemented_by' => Auth::id(),
+            'implemented_at' => now(),
             'rejection_reason' => null,
         ]);
+
+        $user = $documentRegistrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->getStatusNameAttribute()));
+        }
         return back()->with('success', 'Document registration approved successfully.');
     }
 
@@ -166,11 +178,16 @@ class DocumentRegistrationEntryController extends Controller
         ]);
         $documentRegistrationEntry->update([
             'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
+            'implemented_by' => Auth::id(),
+            'implemented_at' => now(),
             'rejection_reason' => $request->rejection_reason,
             'revision_notes' => null,
         ]);
+
+        $user = $documentRegistrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->getStatusNameAttribute()));
+        }
 
         return back()->with('success', 'Document registration rejected.');
     }
@@ -186,15 +203,15 @@ class DocumentRegistrationEntryController extends Controller
         ]);
         $documentRegistrationEntry->update([
             'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
+            'implemented_by' => Auth::id(),
+            'implemented_at' => now(),
             'revision_notes' => $request->revision_notes,
             'rejection_reason' => 'Revision required. Please see revision notes.',
         ]);
         $documentRegistrationEntry->files()->update([
             'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
+            'implemented_by' => Auth::id(),
+            'implemented_at' => now(),
             'rejection_reason' => 'Revision required. Please see revision notes.',
         ]);
         return back()->with('success', 'Revision requested for document registration.');
@@ -226,15 +243,15 @@ class DocumentRegistrationEntryController extends Controller
             ->where('status', 'pending')
             ->update([
                 'status' => 'approved',
-                'approved_by' => Auth::id(),
-                'approved_at' => now()
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now()
             ]);
         DocumentRegistrationEntryFile::whereIn('entry_id', $request->entries)
             ->where('status', 'pending')
             ->update([
                 'status' => 'approved',
-                'approved_by' => Auth::id(),
-                'approved_at' => now()
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now()
             ]);
         return back()->with('success', "{$count} document registrations approved successfully.");
     }
@@ -253,16 +270,16 @@ class DocumentRegistrationEntryController extends Controller
             ->where('status', 'pending')
             ->update([
                 'status' => 'rejected',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now(),
                 'rejection_reason' => $request->rejection_reason
             ]);
         DocumentRegistrationEntryFile::whereIn('entry_id', $request->entries)
             ->where('status', 'pending')
             ->update([
                 'status' => 'rejected',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now(),
                 'rejection_reason' => $request->rejection_reason
             ]);
         return back()->with('success', "{$count} document registrations rejected.");
@@ -295,25 +312,25 @@ class DocumentRegistrationEntryController extends Controller
         if ($request->action === 'approve') {
             $documentRegistrationEntry->update([
                 'status' => 'approved',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now(),
             ]);
             $documentRegistrationEntry->files()->update([
                 'status' => 'approved',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now(),
             ]);
         } else {
             $documentRegistrationEntry->update([
                 'status' => 'rejected',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now(),
                 'rejection_reason' => $request->reason,
             ]);
             $documentRegistrationEntry->files()->update([
                 'status' => 'rejected',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
+                'implemented_by' => Auth::id(),
+                'implemented_at' => now(),
                 'rejection_reason' => $request->reason,
             ]);
         }

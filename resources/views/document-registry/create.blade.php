@@ -157,7 +157,7 @@
                             <!-- Submission Info -->
                             <div class="alert alert-info">
                                 <i class='bx bx-info-circle'></i>
-                                <strong>Note:</strong> This document registration will be submitted for approval.
+                                <strong>Note:</strong> This document registration will be submitted for implementation.
                                 You will be able to edit the details while it's in pending status.
                             </div>
 

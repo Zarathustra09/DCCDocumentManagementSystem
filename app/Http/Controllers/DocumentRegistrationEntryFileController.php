@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
+use App\Models\User;
+use App\Notifications\DocumentRegistryFileCreated;
+use App\Notifications\DocumentRegistryFileStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -19,15 +22,21 @@ class DocumentRegistrationEntryFileController extends Controller
         }
         $file->update([
             'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
             'rejection_reason' => null,
         ]);
         $file->registrationEntry->update([
             'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
         ]);
+
+        $user = $file->registrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->getStatusNameAttribute()));
+        }
+
         return back()->with('success', 'File approved successfully.');
     }
 
@@ -44,10 +53,15 @@ class DocumentRegistrationEntryFileController extends Controller
         // Only update the file status, not the entire entry
         $file->update([
             'status' => 'rejected',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
             'rejection_reason' => $request->rejection_reason,
         ]);
+
+        $user = $file->registrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->getStatusNameAttribute()));
+        }
 
         return back()->with('success', 'File rejected.');
     }
@@ -71,6 +85,14 @@ class DocumentRegistrationEntryFileController extends Controller
             'file_size' => $file->getSize(),
             'status' => 'pending',
         ]);
+
+        $file = DocumentRegistrationEntryFile::where('entry_id', $documentRegistrationEntry->id)
+            ->latest('id')->first();
+
+        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new DocumentRegistryFileCreated($file));
+        }
 
         return back()->with('success', 'File uploaded successfully.');
     }

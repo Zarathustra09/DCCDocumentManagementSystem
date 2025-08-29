@@ -63,8 +63,9 @@
                                     <th>Rev.</th>
                                     <th>Originator</th>
                                     <th>Customer</th>
-                                    <th>Status</th>
                                     <th>Submitted</th>
+                                    <th>Implementation Info</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -81,6 +82,21 @@
                                         <td>{{ $entry->revision_no }}</td>
                                         <td>{{ $entry->originator_name }}</td>
                                         <td>{{ $entry->customer ?? '-' }}</td>
+
+                                        <td>
+                                            <small>
+                                                <i class='bx bx-user'></i> {{ $entry->submittedBy->name }}<br>
+                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('M d, Y') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small>
+                                                 <i class='bx bx-user'></i>{{ $entry->approvedBy->name}}<br>
+                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at->format('M d, Y') }}
+
+                                            </small>
+                                        </td>
+
                                         <td>
                                             @if($entry->status === 'pending')
                                                 <span class="badge bg-warning text-dark">
@@ -95,12 +111,6 @@
                                                     <i class='bx bx-x'></i> {{ $entry->status_name }}
                                                 </span>
                                             @endif
-                                        </td>
-                                        <td>
-                                            <small>
-                                                <i class='bx bx-user'></i> {{ $entry->submittedBy->name }}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('M d, Y') }}
-                                            </small>
                                         </td>
                                         <td>
                                             <div class="dropdown">

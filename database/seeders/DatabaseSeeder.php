@@ -19,8 +19,8 @@ class DatabaseSeeder extends Seeder
 //            RolesAndPermissionsSeeder::class,
 //            FolderSeeder::class,
 //          PermissionSeeder::class,
-//          RunSqlScriptSeeder::class,
-//          MinimalRolesAndPermissionsSeeder::class,
+//          RunSqlSeeder::class,
+          MinimalRolesAndPermissionsSeeder::class,
 
         ]);
     }
