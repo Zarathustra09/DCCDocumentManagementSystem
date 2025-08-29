@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
 use App\Models\User;
+use App\Notifications\DocumentRegistryEntryCreated;
+use App\Notifications\DocumentRegistryEntryStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -90,6 +92,11 @@ class DocumentRegistrationEntryController extends Controller
 
         }
 
+        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new DocumentRegistryEntryCreated($entry));
+        }
+
         return redirect()->route('document-registry.show', $entry)
             ->with('success', 'Document registration submitted successfully and is pending approval.');
     }
@@ -152,6 +159,11 @@ class DocumentRegistrationEntryController extends Controller
             'implemented_at' => now(),
             'rejection_reason' => null,
         ]);
+
+        $user = $documentRegistrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->getStatusNameAttribute()));
+        }
         return back()->with('success', 'Document registration approved successfully.');
     }
 
@@ -171,6 +183,11 @@ class DocumentRegistrationEntryController extends Controller
             'rejection_reason' => $request->rejection_reason,
             'revision_notes' => null,
         ]);
+
+        $user = $documentRegistrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->getStatusNameAttribute()));
+        }
 
         return back()->with('success', 'Document registration rejected.');
     }
