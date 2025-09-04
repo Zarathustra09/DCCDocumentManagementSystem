@@ -15,44 +15,6 @@
                 </div>
 
                 <div class="card-body">
-                    <!-- Filters -->
-{{--                    <form method="GET" action="{{ route('document-registry.index') }}" class="mb-4">--}}
-{{--                        <div class="row">--}}
-{{--                            <div class="col-md-4">--}}
-{{--                                <div class="form-group">--}}
-{{--                                    <label for="status">Status</label>--}}
-{{--                                    <select name="status" class="form-select">--}}
-{{--                                        <option value="">All Statuses</option>--}}
-{{--                                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>--}}
-{{--                                        <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>--}}
-{{--                                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>--}}
-{{--                                    </select>--}}
-{{--                                </div>--}}
-{{--                            </div>--}}
-{{--                            <div class="col-md-4">--}}
-{{--                                <div class="form-group">--}}
-{{--                                    <label for="search">Search</label>--}}
-{{--                                    <input type="text" name="search" id="search" class="form-control"--}}
-{{--                                           value="{{ request('search') }}"--}}
-{{--                                           placeholder="Search by title, document number, originator, or customer...">--}}
-{{--                                </div>--}}
-{{--                            </div>--}}
-{{--                            <div class="col-md-4">--}}
-{{--                                <div class="form-group">--}}
-{{--                                    <label>&nbsp;</label>--}}
-{{--                                    <div>--}}
-{{--                                        <button type="submit" class="btn btn-primary">--}}
-{{--                                            <i class='bx bx-search'></i> Search--}}
-{{--                                        </button>--}}
-{{--                                        <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">--}}
-{{--                                            <i class='bx bx-x'></i> Clear--}}
-{{--                                        </a>--}}
-{{--                                    </div>--}}
-{{--                                </div>--}}
-{{--                            </div>--}}
-{{--                        </div>--}}
-{{--                    </form>--}}
-
                     <!-- Entries Table -->
                     <div class="table-responsive">
                         <table class="table table-striped table-hover" id="documentRegistry">
@@ -73,42 +35,41 @@
                                 @forelse($entries as $entry)
                                     <tr>
                                         <td>
-                                            <strong>{{ $entry->document_title }}</strong>
+                                            <strong>{{ $entry->document_title ?? '-' }}</strong>
                                             @if($entry->device_name)
                                                 <br><small class="text-muted">{{ $entry->device_name }}</small>
                                             @endif
                                         </td>
-                                        <td>{{ $entry->document_no }}</td>
-                                        <td>{{ $entry->revision_no }}</td>
-                                        <td>{{ $entry->originator_name }}</td>
+                                        <td>{{ $entry->document_no ?? '-' }}</td>
+                                        <td>{{ $entry->revision_no ?? '-' }}</td>
+                                        <td>{{ $entry->originator_name ?? '-' }}</td>
                                         <td>{{ $entry->customer ?? '-' }}</td>
 
                                         <td>
                                             <small>
-                                                <i class='bx bx-user'></i> {{ $entry->submittedBy->name }}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('M d, Y') }}
+                                                <i class='bx bx-user'></i> {{ $entry->submittedBy?->name ?? '-' }}<br>
+                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('M d, Y') ?? '-' }}
                                             </small>
                                         </td>
                                         <td>
                                             <small>
-                                                 <i class='bx bx-user'></i>{{ $entry->approvedBy->name}}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at->format('M d, Y') }}
-
+                                                <i class='bx bx-user'></i> {{ $entry->approvedBy?->name ?? '-' }}<br>
+                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at?->format('M d, Y') ?? '-' }}
                                             </small>
                                         </td>
 
                                         <td>
                                             @if($entry->status === 'pending')
                                                 <span class="badge bg-warning text-dark">
-                                                    <i class='bx bx-time'></i> {{ $entry->status_name }}
+                                                    <i class='bx bx-time'></i> {{ $entry->status_name ?? 'Pending' }}
                                                 </span>
                                             @elseif($entry->status === 'approved')
                                                 <span class="badge bg-success text-white">
-                                                    <i class='bx bx-check'></i> {{ $entry->status_name }}
+                                                    <i class='bx bx-check'></i> {{ $entry->status_name ?? 'Approved' }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-danger text-white">
-                                                    <i class='bx bx-x'></i> {{ $entry->status_name }}
+                                                    <i class='bx bx-x'></i> {{ $entry->status_name ?? 'Rejected' }}
                                                 </span>
                                             @endif
                                         </td>
@@ -128,25 +89,13 @@
                                                             <i class="bx bx-edit-alt me-2"></i> Edit
                                                         </a>
                                                     @endif
-{{--                                                    @if($entry->status === 'pending' &&--}}
-{{--                                                        $entry->submitted_by === auth()->id() &&--}}
-{{--                                                        auth()->user()->can('withdraw document submission'))--}}
-{{--                                                        <form action="{{ route('document-registry.withdraw', $entry) }}"--}}
-{{--                                                              method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">--}}
-{{--                                                            @csrf--}}
-{{--                                                            @method('DELETE')--}}
-{{--                                                            <button type="submit" class="dropdown-item text-danger">--}}
-{{--                                                                <i class="bx bx-trash me-2"></i> Withdraw--}}
-{{--                                                            </button>--}}
-{{--                                                        </form>--}}
-{{--                                                    @endif--}}
                                                 </div>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center py-4">
+                                        <td colspan="9" class="text-center py-4">
                                             <i class='bx bx-info-circle'></i> No document registrations found.
                                         </td>
                                     </tr>
@@ -186,7 +135,6 @@
 }
 </style>
 @endsection
-
 
 @push('scripts')
     <script>

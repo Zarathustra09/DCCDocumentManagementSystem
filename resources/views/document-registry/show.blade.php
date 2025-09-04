@@ -15,15 +15,15 @@
                                     </a>
                                 </li>
                                 <li class="breadcrumb-item active" aria-current="page">
-                                    {{ $documentRegistrationEntry->document_no }}
+                                    {{ $documentRegistrationEntry->document_no ?? '-' }}
                                 </li>
                             </ol>
                         </nav>
                         <h4 class="mb-0 mt-2">
                             <i class="bx bx-file-find me-2"></i>
-                            {{ $documentRegistrationEntry->document_title }}
+                            {{ $documentRegistrationEntry->document_title ?? '-'}}
                         </h4>
-                        <p class="text-muted mb-0">{{ $documentRegistrationEntry->full_document_number }}</p>
+                        <p class="text-muted mb-0">{{ $documentRegistrationEntry->full_document_number ?? '-' }}</p>
                     </div>
                 </div>
 
@@ -54,15 +54,15 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Document Number</label>
-                                            <p class="mb-0 fw-medium">{{ $documentRegistrationEntry->document_no }}</p>
+                                            <p class="mb-0 fw-medium">{{ $documentRegistrationEntry->document_no ?? '-' }}</p>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Revision</label>
-                                            <p class="mb-0">{{ $documentRegistrationEntry->revision_no }}</p>
+                                            <p class="mb-0">{{ $documentRegistrationEntry->revision_no ?? '-'}}</p>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Originator</label>
-                                            <p class="mb-0">{{ $documentRegistrationEntry->originator_name }}</p>
+                                            <p class="mb-0">{{ $documentRegistrationEntry->originator_name ?? '-'}}</p>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -112,7 +112,7 @@
                                                 <tbody>
                                                 @foreach($documentRegistrationEntry->files as $file)
                                                     <tr>
-                                                        <td>{{ $file->original_filename }}</td>
+                                                        <td>{{ $file->original_filename ?? '-' }}</td>
 {{--                                                        <td>{{ $file->mime_type }}</td>--}}
                                                         <td>{{ number_format($file->file_size / 1024, 2) }} KB</td>
                                                         <td>
@@ -124,8 +124,7 @@
                                                                 {{ $file->status_name }}
                                                             </span></td>
                                                         <td>
-                                                            {{$file->created_at->format('M d, Y \a\t g:i A')}}
-                                                        </td>
+                                                            {{ $file->created_at?->format('M d, Y \a\t g:i A') ?? '-' }}</td>
                                                         <td>
                                                             @if($file->status === 'pending' && auth()->user()->can('approve document registration'))
                                                                 <form action="{{ route('document-registry.files.approve', $file->id) }}" method="POST" class="d-inline">
