@@ -141,36 +141,36 @@
                                 @forelse($entries as $entry)
                                     <tr>
                                         <td>
-                                            <strong>{{ $entry->document_title }}</strong>
+                                            <strong>{{ $entry->document_title ?? '-'}}</strong>
                                             @if($entry->device_name)
                                                 <br><small class="text-muted">{{ $entry->device_name }}</small>
                                             @endif
                                         </td>
-                                        <td>{{ $entry->document_no }}</td>
-                                        <td>{{ $entry->revision_no }}</td>
-                                        <td>{{ $entry->originator_name }}</td>
+                                        <td>{{ $entry->document_no ?? '-'}}</td>
+                                        <td>{{ $entry->revision_no ?? '-'}}</td>
+                                        <td>{{ $entry->originator_name ?? '-'}}</td>
                                         <td>{{ $entry->customer ?? '-' }}</td>
                                         <td>
                                             @if($entry->status === 'pending')
                                                 <span class="badge bg-warning text-dark">
-                                                    <i class='bx bx-time'></i> {{ $entry->status_name }}
+                                                    <i class='bx bx-time'></i> {{ $entry->status_name ?? '-'}}
                                                 </span>
                                                 {{--}}TODO: To refractor the status approved to implemented--}}
                                             @elseif($entry->status === 'approved')
                                                 <span class="badge bg-success text-white">
-                                                    <i class='bx bx-check'></i> {{ $entry->status_name }}
+                                                    <i class='bx bx-check'></i> {{ $entry->status_name ?? '-'}}
                                                 </span>
                                             @else
 {{--                                                TODO: To refractor the status rejected to cancelled--}}
                                                 {{-- <span class="badge bg-danger text-white"> --}}
                                                 <span class="badge bg-danger text-white">
-                                                    <i class='bx bx-x'></i> {{ $entry->status_name }}
+                                                    <i class='bx bx-x'></i> {{ $entry->status_name ?? '-'}}
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
                                             <small>
-                                                <i class='bx bx-user'></i> {{ $entry->submittedBy->name }}<br>
+                                                <i class='bx bx-user'></i> {{ $entry->submittedBy->name ?? '-'}}<br>
                                                 <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('M d, Y') }}
                                             </small>
                                         </td>

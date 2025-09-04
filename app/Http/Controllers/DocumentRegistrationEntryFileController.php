@@ -89,8 +89,8 @@ class DocumentRegistrationEntryFileController extends Controller
         $file = DocumentRegistrationEntryFile::where('entry_id', $documentRegistrationEntry->id)
             ->latest('id')->first();
 
-//        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
-        $admins = User::role(['SuperAdmin'])->get();
+        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+//        $admins = User::role(['SuperAdmin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new DocumentRegistryFileCreated($file));
         }
