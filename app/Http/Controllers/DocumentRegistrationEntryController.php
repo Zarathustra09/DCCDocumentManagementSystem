@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
+use App\Models\DocumentRegistrationEntryStatus;
 use App\Models\User;
 use App\Notifications\DocumentRegistryEntryCreated;
 use App\Notifications\DocumentRegistryEntryStatusUpdated;
@@ -19,12 +20,16 @@ class DocumentRegistrationEntryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy']);
+        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status']);
 
         $query->where('submitted_by', Auth::id());
+
         if ($request->has('status') && $request->status !== '' && $request->status !== null) {
-            $query->where('status', $request->status);
+            $query->whereHas('status', function ($q) use ($request) {
+                $q->where('name', $request->status);
+            });
         }
+
         if ($request->has('search') && $request->search !== '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -34,6 +39,7 @@ class DocumentRegistrationEntryController extends Controller
                   ->orWhere('originator_name', 'like', "%{$search}%");
             });
         }
+
         $entries = $query->latest()->paginate(15);
         return view('document-registry.index', compact('entries'));
     }
@@ -63,6 +69,8 @@ class DocumentRegistrationEntryController extends Controller
             'document_file' => 'nullable|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:10240'
         ]);
 
+        $pendingStatus = DocumentRegistrationEntryStatus::where('name', 'Pending')->first();
+
         $entry = DocumentRegistrationEntry::create([
             'document_no' => $request->document_no,
             'document_title' => $request->document_title,
@@ -71,32 +79,26 @@ class DocumentRegistrationEntryController extends Controller
             'originator_name' => $request->originator_name,
             'customer' => $request->customer,
             'remarks' => $request->remarks,
-            'status' => 'pending',
+            'status_id' => $pendingStatus->id,
             'submitted_by' => Auth::id(),
             'submitted_at' => now(),
         ]);
 
-
-
         if ($request->hasFile('document_file')) {
             $file = $request->file('document_file');
+            $pendingFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Pending')->first();
+
             DocumentRegistrationEntryFile::create([
                 'entry_id' => $entry->id,
                 'file_path' => $file->store('document_registrations', 'local'),
                 'original_filename' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
-                'status' => 'pending',
+                'status_id' => $pendingFileStatus->id,
             ]);
-
-
         }
 
-        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
-//        $admins = User::role(['SuperAdmin'])->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new DocumentRegistryEntryCreated($entry));
-        }
+        DocumentRegistryEntryCreated::sendToAdmins($entry);
 
         return redirect()->route('document-registry.show', $entry)
             ->with('success', 'Document registration submitted successfully and is pending approval.');
@@ -107,7 +109,7 @@ class DocumentRegistrationEntryController extends Controller
         if (!$this->canViewEntry($documentRegistrationEntry)) {
             abort(403, 'You do not have permission to view this document registration.');
         }
-        $documentRegistrationEntry->load(['submittedBy', 'approvedBy', 'documents', 'files']);
+        $documentRegistrationEntry->load(['submittedBy', 'approvedBy', 'documents', 'files.status', 'status']);
         return view('document-registry.show', compact('documentRegistrationEntry'));
     }
 
@@ -142,52 +144,74 @@ class DocumentRegistrationEntryController extends Controller
 
     public function approve(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        Log::info(Auth::user()->can('approve document registration'));
         if (!Auth::user()->can('approve document registration') ||
-            $documentRegistrationEntry->status !== 'pending') {
+            $documentRegistrationEntry->status->name !== 'Pending') {
             abort(403);
         }
+
+        $implementedStatus = DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
+        $implementedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
+
         $documentRegistrationEntry->update([
-            'status' => 'approved',
+            'status_id' => $implementedStatus->id,
             'implemented_by' => Auth::id(),
             'implemented_at' => now(),
             'rejection_reason' => null,
             'revision_notes' => null,
         ]);
+
         $documentRegistrationEntry->files()->update([
-            'status' => 'approved',
+            'status_id' => $implementedFileStatus->id,
             'implemented_by' => Auth::id(),
             'implemented_at' => now(),
             'rejection_reason' => null,
         ]);
 
+        $documentRegistrationEntry->refresh();
+
         $user = $documentRegistrationEntry->submittedBy;
         if ($user) {
-            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->getStatusNameAttribute()));
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status));
         }
+
+
         return back()->with('success', 'Document registration approved successfully.');
     }
 
     public function reject(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
         if (!Auth::user()->can('reject document registration') ||
-            $documentRegistrationEntry->status !== 'pending') {
+            $documentRegistrationEntry->status->name !== 'Pending') {
             abort(403);
         }
         $request->validate([
             'rejection_reason' => 'required|string'
         ]);
+
+        $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
+        $returnedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Returned')->first();
+
         $documentRegistrationEntry->update([
-            'status' => 'rejected',
+            'status_id' => $cancelledStatus->id,
             'implemented_by' => Auth::id(),
             'implemented_at' => now(),
             'rejection_reason' => $request->rejection_reason,
             'revision_notes' => null,
         ]);
 
+        // Return all existing files for this entry
+        $documentRegistrationEntry->files()->update([
+            'status_id' => $returnedFileStatus->id,
+            'implemented_by' => Auth::id(),
+            'implemented_at' => now(),
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        $documentRegistrationEntry->refresh();
+
         $user = $documentRegistrationEntry->submittedBy;
         if ($user) {
-            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->getStatusNameAttribute()));
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status));
         }
 
         return back()->with('success', 'Document registration rejected.');
@@ -196,25 +220,33 @@ class DocumentRegistrationEntryController extends Controller
     public function requireRevision(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
         if (!Auth::user()->can('require revision for document') ||
-            $documentRegistrationEntry->status !== 'pending') {
+            $documentRegistrationEntry->status->name !== 'Pending') {
             abort(403);
         }
         $request->validate([
             'revision_notes' => 'required|string'
         ]);
+
+        $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
+        $cancelledFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Cancelled')->first();
+
         $documentRegistrationEntry->update([
-            'status' => 'rejected',
+            'status_id' => $cancelledStatus->id,
             'implemented_by' => Auth::id(),
             'implemented_at' => now(),
             'revision_notes' => $request->revision_notes,
             'rejection_reason' => 'Revision required. Please see revision notes.',
         ]);
+
         $documentRegistrationEntry->files()->update([
-            'status' => 'rejected',
+            'status_id' => $cancelledFileStatus->id,
             'implemented_by' => Auth::id(),
             'implemented_at' => now(),
             'rejection_reason' => 'Revision required. Please see revision notes.',
         ]);
+
+        $documentRegistrationEntry->refresh();
+
         return back()->with('success', 'Revision requested for document registration.');
     }
 
@@ -222,7 +254,7 @@ class DocumentRegistrationEntryController extends Controller
     {
         if (!Auth::user()->can('withdraw document submission') ||
             $documentRegistrationEntry->submitted_by !== Auth::id() ||
-            $documentRegistrationEntry->status !== 'pending') {
+            $documentRegistrationEntry->status->name !== 'Pending') {
             abort(403);
         }
         $documentRegistrationEntry->files()->delete();
@@ -240,20 +272,30 @@ class DocumentRegistrationEntryController extends Controller
             'entries' => 'required|array',
             'entries.*' => 'exists:document_registration_entries,id'
         ]);
+
+        $implementedStatus = DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
+        $implementedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
+
         $count = DocumentRegistrationEntry::whereIn('id', $request->entries)
-            ->where('status', 'pending')
+            ->whereHas('status', function($q) {
+                $q->where('name', 'Pending');
+            })
             ->update([
-                'status' => 'approved',
+                'status_id' => $implementedStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now()
             ]);
+
         DocumentRegistrationEntryFile::whereIn('entry_id', $request->entries)
-            ->where('status', 'pending')
+            ->whereHas('status', function($q) {
+                $q->where('name', 'Pending');
+            })
             ->update([
-                'status' => 'approved',
+                'status_id' => $implementedFileStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now()
             ]);
+
         return back()->with('success', "{$count} document registrations approved successfully.");
     }
 
@@ -267,22 +309,32 @@ class DocumentRegistrationEntryController extends Controller
             'entries.*' => 'exists:document_registration_entries,id',
             'rejection_reason' => 'required|string'
         ]);
+
+        $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
+        $cancelledFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Cancelled')->first();
+
         $count = DocumentRegistrationEntry::whereIn('id', $request->entries)
-            ->where('status', 'pending')
+            ->whereHas('status', function($q) {
+                $q->where('name', 'Pending');
+            })
             ->update([
-                'status' => 'rejected',
+                'status_id' => $cancelledStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now(),
                 'rejection_reason' => $request->rejection_reason
             ]);
+
         DocumentRegistrationEntryFile::whereIn('entry_id', $request->entries)
-            ->where('status', 'pending')
+            ->whereHas('status', function($q) {
+                $q->where('name', 'Pending');
+            })
             ->update([
-                'status' => 'rejected',
+                'status_id' => $cancelledFileStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now(),
                 'rejection_reason' => $request->rejection_reason
             ]);
+
         return back()->with('success', "{$count} document registrations rejected.");
     }
 
@@ -310,26 +362,35 @@ class DocumentRegistrationEntryController extends Controller
             'action' => 'required|in:approve,reject',
             'reason' => 'required|string'
         ]);
+
         if ($request->action === 'approve') {
+            $implementedStatus = DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
+            $implementedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
+
             $documentRegistrationEntry->update([
-                'status' => 'approved',
+                'status_id' => $implementedStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now(),
             ]);
+
             $documentRegistrationEntry->files()->update([
-                'status' => 'approved',
+                'status_id' => $implementedFileStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now(),
             ]);
         } else {
+            $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
+            $cancelledFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Cancelled')->first();
+
             $documentRegistrationEntry->update([
-                'status' => 'rejected',
+                'status_id' => $cancelledStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now(),
                 'rejection_reason' => $request->reason,
             ]);
+
             $documentRegistrationEntry->files()->update([
-                'status' => 'rejected',
+                'status_id' => $cancelledFileStatus->id,
                 'implemented_by' => Auth::id(),
                 'implemented_at' => now(),
                 'rejection_reason' => $request->reason,
@@ -347,8 +408,8 @@ class DocumentRegistrationEntryController extends Controller
 
     private function canEditEntry(DocumentRegistrationEntry $entry)
     {
-        return (Auth::user()->can('edit document registration details') && $entry->submitted_by === Auth::id() && $entry->status === 'pending')
-            || ($entry->submitted_by === Auth::id() && $entry->status === 'pending');
+        return (Auth::user()->can('edit document registration details') && $entry->submitted_by === Auth::id() && $entry->status->name === 'Pending')
+            || ($entry->submitted_by === Auth::id() && $entry->status->name === 'Pending');
     }
 
     public function download(DocumentRegistrationEntry $documentRegistrationEntry)
@@ -356,10 +417,14 @@ class DocumentRegistrationEntryController extends Controller
         if (!$this->canViewEntry($documentRegistrationEntry)) {
             abort(403, 'You do not have permission to download this file.');
         }
-        $file = $documentRegistrationEntry->files()->first();
+
+        $fileId = request('file_id');
+        $file = $documentRegistrationEntry->files()->find($fileId);
+
         if (!$file || !Storage::disk('local')->exists($file->file_path)) {
             abort(404, 'File not found.');
         }
+
         return Storage::disk('local')->download(
             $file->file_path,
             $file->original_filename
@@ -590,7 +655,9 @@ class DocumentRegistrationEntryController extends Controller
         $query = $request->get('q');
         $page = $request->get('page', 1);
         $perPage = 10;
-        $entries = DocumentRegistrationEntry::where('status', 'approved')
+        $entries = DocumentRegistrationEntry::whereHas('status', function($q) {
+                $q->where('name', 'Implemented');
+            })
             ->where(function($q) use ($query) {
                 $q->where('document_no', 'like', "%{$query}%")
                     ->orWhere('document_title', 'like', "%{$query}%")
@@ -618,7 +685,7 @@ class DocumentRegistrationEntryController extends Controller
 
     public function list(Request $request)
     {
-        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy']);
+        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status']);
 
         if (Auth::user()->can('view all document registrations')) {
             // User can view all entries
@@ -627,32 +694,31 @@ class DocumentRegistrationEntryController extends Controller
             $query->where('submitted_by', Auth::id());
         }
 
+        // Status filter using relationship
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('document_no', 'like', "%{$search}%")
-                    ->orWhere('document_title', 'like', "%{$search}%")
-                    ->orWhere('device_name', 'like', "%{$search}%")
-                    ->orWhere('originator_name', 'like', "%{$search}%");
+            $query->whereHas('status', function ($q) use ($request) {
+                $q->where('name', $request->status);
             });
         }
 
-        if ($request->filled('customer')) {
-            $query->where('customer', 'like', "%{$request->customer}%");
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('document_title', 'like', "%{$search}%")
+                  ->orWhere('document_no', 'like', "%{$search}%")
+                  ->orWhere('originator_name', 'like', "%{$search}%")
+                  ->orWhere('customer', 'like', "%{$search}%")
+                  ->orWhere('device_name', 'like', "%{$search}%");
+            });
         }
 
-        if ($request->filled('device_name')) {
-            $query->where('device_name', 'like', "%{$request->device_name}%");
-        }
-
+        // Submitted by filter
         if ($request->filled('submitted_by')) {
             $query->where('submitted_by', $request->submitted_by);
         }
 
+        // Date range filters
         if ($request->filled('date_from')) {
             $query->whereDate('submitted_at', '>=', $request->date_from);
         }
@@ -661,43 +727,39 @@ class DocumentRegistrationEntryController extends Controller
             $query->whereDate('submitted_at', '<=', $request->date_to);
         }
 
-        // Get all entries without pagination
         $entries = $query->latest('submitted_at')->get();
 
-        // Calculate counts
-        $pendingCount = DocumentRegistrationEntry::where('status', 'pending')->count();
-        $approvedCount = DocumentRegistrationEntry::where('status', 'approved')->count();
-        $rejectedCount = DocumentRegistrationEntry::where('status', 'rejected')->count();
+        // Calculate counts using relationships
+        $pendingCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
+            $q->where('name', 'Pending');
+        })->count();
+
+        $approvedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
+            $q->where('name', 'Implemented');
+        })->count();
+
+        $rejectedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
+            $q->where('name', 'Cancelled');
+        })->count();
 
         // Get filter options
-        $customers = DocumentRegistrationEntry::whereNotNull('customer')
-            ->distinct()
-            ->pluck('customer')
-            ->sort();
+        $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
+            ->get()
+            ->sortBy('name')
+            ->values();
 
-        $deviceNames = DocumentRegistrationEntry::whereNotNull('device_name')
-            ->distinct()
-            ->pluck('device_name')
-            ->sort();
-
-       // Get submitters and sort by accessor 'name'
-       $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
-           ->get()
-           ->sortBy('name')
-           ->values();
-
-        $fileFormats = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv'];
+        // Get status options from the relationship
+        $statuses = DocumentRegistrationEntryStatus::active()
+            ->orderBy('name')
+            ->get();
 
         return view('document-registry.list', compact(
             'entries',
-            'customers',
-            'deviceNames',
             'submitters',
+            'statuses',
             'pendingCount',
             'approvedCount',
-            'rejectedCount',
-            'fileFormats'
+            'rejectedCount'
         ));
     }
-
 }

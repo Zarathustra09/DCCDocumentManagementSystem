@@ -15,7 +15,7 @@ class DocumentRegistrationEntryFile extends Model
         'original_filename',
         'mime_type',
         'file_size',
-        'status',
+        'status_id',
         'rejection_reason',
         'implemented_at',
         'implemented_by',
@@ -25,12 +25,10 @@ class DocumentRegistrationEntryFile extends Model
         'implemented_at' => 'datetime',
     ];
 
-//    TODO: To convert this into a maintenance table
-    const STATUSES = [
-        'pending' => 'Pending',
-        'approved' => 'Implemented',
-        'rejected' => 'Cancelled',
-    ];
+    public function status()
+    {
+        return $this->belongsTo(DocumentRegistrationEntryFileStatus::class, 'status_id');
+    }
 
     public function registrationEntry()
     {
@@ -44,6 +42,27 @@ class DocumentRegistrationEntryFile extends Model
 
     public function getStatusNameAttribute()
     {
-        return self::STATUSES[$this->status] ?? $this->status;
+        return $this->status->name ?? 'Unknown';
+    }
+
+    public function scopePending($query)
+    {
+        return $query->whereHas('status', function ($q) {
+            $q->where('name', 'Pending');
+        });
+    }
+
+    public function scopeImplemented($query)
+    {
+        return $query->whereHas('status', function ($q) {
+            $q->where('name', 'Implemented');
+        });
+    }
+
+    public function scopeReturned($query)
+    {
+        return $query->whereHas('status', function ($q) {
+            $q->where('name', 'Returned');
+        });
     }
 }

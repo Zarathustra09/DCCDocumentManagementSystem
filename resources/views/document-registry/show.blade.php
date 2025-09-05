@@ -11,7 +11,7 @@
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item">
                                     <a href="{{ route('document-registry.index') }}" class="text-decoration-none">
-                                        <i class="bx bx-file-find"></i> Document Registry
+                                        <i class="bx bx-file-find"></i> My Registrations
                                     </a>
                                 </li>
                                 <li class="breadcrumb-item active" aria-current="page">
@@ -23,7 +23,6 @@
                             <i class="bx bx-file-find me-2"></i>
                             {{ $documentRegistrationEntry->document_title ?? '-'}}
                         </h4>
-                        <p class="text-muted mb-0">{{ $documentRegistrationEntry->full_document_number ?? '-' }}</p>
                     </div>
                 </div>
 
@@ -40,12 +39,18 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3 class="card-title"><i class='bx bx-plus'></i> Submit New Document Registration</h3>
-                        <a href="{{route('document-registry.index')}}" class="btn btn-secondary">
-                            <i class='bx bx-arrow-back'></i> Back to Registry
-                        </a>
-                    </div>
+                 <div class="card-header d-flex justify-content-between align-items-center">
+                     <h3 class="card-title">
+                         @if(auth()->id() === $documentRegistrationEntry->submitted_by)
+                             My Registration
+                         @else
+                             Document Registry
+                         @endif
+                     </h3>
+                     <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">
+                         <i class='bx bx-arrow-back'></i> Back to Registry
+                     </a>
+                 </div>
                     <div class="card-body">
                         <div class="row">
                             <!-- Left Column - Document Information -->
@@ -68,7 +73,7 @@
                                     <div class="col-md-6">
                                         @if($documentRegistrationEntry->device_name)
                                             <div class="mb-3">
-                                                <label class="form-label text-muted">Device/Equipment</label>
+                                                <label class="form-label text-muted">Device Part Number</label>
                                                 <p class="mb-0">{{ $documentRegistrationEntry->device_name }}</p>
                                             </div>
                                         @endif
@@ -102,7 +107,6 @@
                                                 <thead>
                                                 <tr>
                                                     <th>File Name</th>
-{{--                                                    <th>Type</th>--}}
                                                     <th>Size</th>
                                                     <th>Status</th>
                                                     <th>Time Submitted</th>
@@ -113,32 +117,33 @@
                                                 @foreach($documentRegistrationEntry->files as $file)
                                                     <tr>
                                                         <td>{{ $file->original_filename ?? '-' }}</td>
-{{--                                                        <td>{{ $file->mime_type }}</td>--}}
                                                         <td>{{ number_format($file->file_size / 1024, 2) }} KB</td>
                                                         <td>
                                                             <span class="badge
-                                                                @if($file->status === 'pending') bg-warning text-dark
-                                                                @elseif($file->status === 'approved') bg-success
+                                                                @if($file->status->name === 'Pending') bg-warning text-dark
+                                                                @elseif($file->status->name === 'Implemented') bg-success
                                                                 @else bg-danger
                                                                 @endif">
-                                                                {{ $file->status_name }}
-                                                            </span></td>
+                                                                {{ $file->status->name }}
+                                                            </span>
+                                                        </td>
                                                         <td>
-                                                            {{ $file->created_at?->format('M d, Y \a\t g:i A') ?? '-' }}</td>
+                                                            {{ $file->created_at?->format('M d, Y \a\t g:i A') ?? '-' }}
+                                                        </td>
                                                         <td>
-                                                            @if($file->status === 'pending' && auth()->user()->can('approve document registration'))
+                                                            @if($file->status->name === 'Pending' && auth()->user()->can('approve document registration'))
                                                                 <form action="{{ route('document-registry.files.approve', $file->id) }}" method="POST" class="d-inline">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-sm btn-success"
-                                                                            onclick="return confirm('Approve this file?')">
-                                                                        <i class="bx bx-check"></i> Approve
+                                                                            onclick="return confirm('Implement this file?')">
+                                                                        <i class="bx bx-check"></i> Implement
                                                                     </button>
                                                                 </form>
                                                             @endif
-                                                            @if($file->status === 'pending' && auth()->user()->can('reject document registration'))
+                                                            @if($file->status->name === 'Pending' && auth()->user()->can('reject document registration'))
                                                                 <button type="button" class="btn btn-sm btn-danger"
                                                                         data-bs-toggle="modal" data-bs-target="#rejectFileModal{{$file->id}}">
-                                                                    <i class="bx bx-x"></i> Reject
+                                                                    <i class="bx bx-x"></i> Return
                                                                 </button>
                                                                 <!-- Modal for rejection reason -->
                                                                 <div class="modal fade" id="rejectFileModal{{$file->id}}" tabindex="-1">
@@ -163,6 +168,42 @@
                                                                     </div>
                                                                 </div>
                                                             @endif
+                                                                @if($file->status->name === 'Returned' && $file->rejection_reason)
+                                                                    <button type="button" class="btn btn-sm btn-outline-warning"
+                                                                            data-bs-toggle="modal" data-bs-target="#viewFileRejectionModal{{$file->id}}">
+                                                                        <i class="bx bx-info-circle"></i> Details
+                                                                    </button>
+                                                                    <!-- Modal for viewing file rejection reason -->
+                                                                    <div class="modal fade" id="viewFileRejectionModal{{$file->id}}" tabindex="-1">
+                                                                        <div class="modal-dialog">
+                                                                            <div class="modal-content">
+                                                                                <div class="modal-header">
+                                                                                    <h5 class="modal-title text-warning">
+                                                                                        <i class="bx bx-undo"></i> File Returned
+                                                                                    </h5>
+                                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                                </div>
+                                                                                <div class="modal-body">
+                                                                                    <div class="alert alert-warning">
+                                                                                        <h6 class="alert-heading">Return Reason:</h6>
+                                                                                        <p class="mb-0">{{ $file->rejection_reason }}</p>
+                                                                                    </div>
+                                                                                    @if($file->implemented_at && $file->approvedBy)
+                                                                                        <div class="text-muted">
+                                                                                            <small>
+                                                                                                <strong>Returned by:</strong> {{ $file->approvedBy->name }}<br>
+                                                                                                <strong>Date:</strong> {{ $file->implemented_at->format('M d, Y \a\t g:i A') }}
+                                                                                            </small>
+                                                                                        </div>
+                                                                                    @endif
+                                                                                </div>
+                                                                                <div class="modal-footer">
+                                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
                                                             <!-- Existing Preview and Download buttons -->
                                                             <button type="button" class="btn btn-sm btn-outline-primary me-2"
                                                                     onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')">
@@ -191,18 +232,22 @@
                                     <div class="card-body">
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Current Status</label><br>
-                                            @if($documentRegistrationEntry->status === 'pending')
+                                            @if($documentRegistrationEntry->status->name === 'Pending')
                                                 <span class="badge bg-warning text-dark fs-6">
-                                                <i class='bx bx-time'></i> {{ $documentRegistrationEntry->status_name }}
-                                            </span>
-                                            @elseif($documentRegistrationEntry->status === 'approved')
+                                                    <i class='bx bx-time'></i> {{ $documentRegistrationEntry->status->name }}
+                                                </span>
+                                            @elseif($documentRegistrationEntry->status->name === 'Implemented')
                                                 <span class="badge bg-success text-white fs-6">
-                                                <i class='bx bx-check'></i> {{ $documentRegistrationEntry->status_name }}
-                                            </span>
+                                                    <i class='bx bx-check'></i> {{ $documentRegistrationEntry->status->name }}
+                                                </span>
+                                            @elseif($documentRegistrationEntry->status->name === 'Cancelled')
+                                                <span class="badge bg-danger text-white fs-6">
+                                                    <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status->name }}
+                                                </span>
                                             @else
                                                 <span class="badge bg-danger text-white fs-6">
-                                                <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status_name }}
-                                            </span>
+                                                    <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status->name }}
+                                                </span>
                                             @endif
                                         </div>
 
@@ -212,17 +257,17 @@
                                             <small class="text-muted">{{ $documentRegistrationEntry->submitted_at->format('M d, Y \a\t g:i A') }}</small>
                                         </div>
 
-                                        @if($documentRegistrationEntry->approved_by)
+                                        @if($documentRegistrationEntry->implemented_by)
                                             <div class="mb-3">
                                                 <label class="form-label text-muted">
-                                                    @if($documentRegistrationEntry->status === 'approved')
-                                                        Approved By
+                                                    @if($documentRegistrationEntry->status->name === 'Implemented')
+                                                        Implemented By
                                                     @else
-                                                        Rejected By
+                                                        Cancelled By
                                                     @endif
                                                 </label>
                                                 <p class="mb-0">{{ $documentRegistrationEntry->approvedBy->name }}</p>
-                                                <small class="text-muted">{{ $documentRegistrationEntry->approved_at->format('M d, Y \a\t g:i A') }}</small>
+                                                <small class="text-muted">{{ $documentRegistrationEntry->implemented_at->format('M d, Y \a\t g:i A') }}</small>
                                             </div>
                                         @endif
 
@@ -244,8 +289,7 @@
                                             </div>
                                         @endif
 
-                                        <!-- Inside the Status Card (at the end of .card-body, before closing .card) -->
-                                        @if($documentRegistrationEntry->status === 'pending' && auth()->user()->can('reject document registration'))
+                                        @if($documentRegistrationEntry->status->name === 'Pending' && auth()->user()->can('reject document registration'))
                                             <div class="d-flex justify-content-end mt-3">
                                                 <button type="button"
                                                         class="btn btn-danger"
@@ -256,14 +300,12 @@
                                             </div>
                                         @endif
                                     </div>
-
-
                                 </div>
 
-                                @if($documentRegistrationEntry->status === 'pending' && auth()->user()->can('submit document for approval'))
+                                @if($documentRegistrationEntry->status->name === 'Pending' && auth()->user()->can('submit document for approval'))
                                     <div class="card mb-3">
                                         <div class="card-header">
-                                            <h5 class="mb-0"><i class="bx bx-upload"></i> Upload Revision</h5>
+                                            <h5 class="mb-0"><i class="bx bx-upload"></i> Upload File</h5>
                                         </div>
                                         <div class="card-body">
                                             <form action="{{ route('document-registry.upload-file', $documentRegistrationEntry) }}" method="POST" enctype="multipart/form-data">
@@ -281,19 +323,18 @@
                                     </div>
                                 @endif
 
-
-                                @if($documentRegistrationEntry->status !== 'pending')
+                                @if($documentRegistrationEntry->status->name !== 'Pending')
                                     <div class="card mb-3">
                                         <div class="card-header">
                                             <h5 class="mb-0"><i class="bx bx-block"></i> Upload Disabled</h5>
                                         </div>
                                         <div class="card-body">
-                                            @if($documentRegistrationEntry->status === 'approved')
+                                            @if($documentRegistrationEntry->status->name === 'Implemented')
                                                 <div class="alert alert-success mb-0">
                                                     <i class="bx bx-check"></i>
                                                     This document has been implemented. You cannot upload new files.
                                                 </div>
-                                            @elseif($documentRegistrationEntry->status === 'rejected')
+                                            @elseif($documentRegistrationEntry->status->name === 'Cancelled')
                                                 <div class="alert alert-danger mb-0">
                                                     <i class="bx bx-x"></i>
                                                     This document registration has been cancelled. You cannot upload new files.
@@ -331,8 +372,8 @@
             </div>
         @endif
 
-        <!-- Referenced Documents Section (only show for approved entries) -->
-        @if($documentRegistrationEntry->status === 'approved' && $documentRegistrationEntry->documents->count() > 0)
+        <!-- Referenced Documents Section -->
+        @if($documentRegistrationEntry->status->name === 'Implemented' && $documentRegistrationEntry->documents->count() > 0)
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card">
@@ -387,6 +428,37 @@
                 </div>
             </div>
         @endif
+    </div>
+
+    <!-- View Cancellation Reason Modal -->
+    <div class="modal fade" id="viewCancelledModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class='bx bx-x-circle'></i> Registration Cancelled
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">Cancellation Reason:</h6>
+                        <p class="mb-0">{{ $documentRegistrationEntry->rejection_reason }}</p>
+                    </div>
+                    @if($documentRegistrationEntry->implemented_at && $documentRegistrationEntry->approvedBy)
+                        <div class="text-muted">
+                            <small>
+                                <strong>Cancelled by:</strong> {{ $documentRegistrationEntry->approvedBy->name }}<br>
+                                <strong>Date:</strong> {{ $documentRegistrationEntry->implemented_at->format('M d, Y \a\t g:i A') }}
+                            </small>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Reject Modal -->
@@ -502,17 +574,17 @@
 @endpush
 
 @push('scripts')
+    <!-- JavaScript remains the same -->
     <script>
-
         $(document).ready(function() {
             $('#fileTable').DataTable({
                 responsive: true,
                 order: [[1, 'desc']],
                 pageLength: 10,
                 language: {
-                    search: "Search roles:",
-                    lengthMenu: "Show _MENU_ roles per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ roles"
+                  search: "Search files:",
+                  lengthMenu: "Show _MENU_ files per page",
+                  info: "Showing _START_ to _END_ of _TOTAL_ files"
                 }
             });
         });
@@ -523,67 +595,64 @@
             previewCard.style.display = 'block';
             previewCard.scrollIntoView({ behavior: 'smooth' });
 
-            // Build URLs using entry and file ID
             const entryId = '{{ $documentRegistrationEntry->id }}';
             const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
             const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
             const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
 
-            // Show loading spinner
             previewContent.innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2 text-muted">Loading preview...</p>
-        </div>
-    `;
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading preview...</p>
+                </div>
+            `;
 
             if (mimeType.includes('pdf')) {
                 previewContent.innerHTML = `
-            <div class="pdf-preview">
-                <div class="embed-responsive" style="height: 70vh;">
-                    <iframe src="${previewUrl}"
-                            class="w-100 h-100 border rounded"
-                            style="min-height: 500px;"
-                            type="application/pdf">
-                        <p>Your browser does not support PDFs.
-                           <a href="${downloadUrl}">Download the PDF</a>.
-                        </p>
-                    </iframe>
-                </div>
-            </div>
-        `;
+                    <div class="pdf-preview">
+                        <div class="embed-responsive" style="height: 70vh;">
+                            <iframe src="${previewUrl}"
+                                    class="w-100 h-100 border rounded"
+                                    style="min-height: 500px;"
+                                    type="application/pdf">
+                                <p>Your browser does not support PDFs.
+                                   <a href="${downloadUrl}">Download the PDF</a>.
+                                </p>
+                            </iframe>
+                        </div>
+                    </div>
+                `;
             } else if (mimeType.includes('image')) {
                 previewContent.innerHTML = `
-            <div class="text-center">
-                <img src="${previewUrl}"
-                     alt="${fileName}"
-                     class="img-fluid rounded shadow"
-                     style="max-height: 70vh;"
-                     onerror="this.outerHTML='<div class=\\'text-center py-5\\'><i class=\\'bx bx-image-alt text-muted\\' style=\\'font-size: 4rem;\\'></i><h4 class=\\'mt-3\\'>Image Preview Unavailable</h4><p class=\\'text-muted\\'>Unable to preview this image file</p><a href=\\'${downloadUrl}\\' class=\\'btn btn-primary\\'><i class=\\'bx bx-download\\'></i> Download to View</a></div>'">
-            </div>
-        `;
+                    <div class="text-center">
+                        <img src="${previewUrl}"
+                             alt="${fileName}"
+                             class="img-fluid rounded shadow"
+                             style="max-height: 70vh;"
+                             onerror="this.outerHTML='<div class=\\'text-center py-5\\'><i class=\\'bx bx-image-alt text-muted\\' style=\\'font-size: 4rem;\\'></i><h4 class=\\'mt-3\\'>Image Preview Unavailable</h4><p class=\\'text-muted\\'>Unable to preview this image file</p><a href=\\'${downloadUrl}\\' class=\\'btn btn-primary\\'><i class=\\'bx bx-download\\'></i> Download to View</a></div>'">
+                    </div>
+                `;
             } else if (mimeType.includes('word') || mimeType.includes('document')) {
                 previewContent.innerHTML = `
-            <div class="word-preview">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Document Preview</h6>
-                    </div>
-                    <div class="card-body">
-                        <div id="word-preview-loading" class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                    <div class="word-preview">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Document Preview</h6>
                             </div>
-                            <p class="mt-2 text-muted">Converting document...</p>
+                            <div class="card-body">
+                                <div id="word-preview-loading" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Converting document...</p>
+                                </div>
+                                <div id="word-preview-content" class="d-none"></div>
+                            </div>
                         </div>
-                        <div id="word-preview-content" class="d-none"></div>
                     </div>
-                </div>
-            </div>
-        `;
-                // Auto-load Word preview
+                `;
                 fetch(previewApiUrl, {
                     method: 'GET',
                     headers: {
@@ -598,21 +667,21 @@
                         const contentDiv = document.getElementById('word-preview-content');
                         if (data.success) {
                             contentDiv.innerHTML = `
-                    <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
-                        ${data.content}
-                    </div>
-                `;
+                                <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
+                                    ${data.content}
+                                </div>
+                            `;
                         } else {
                             contentDiv.innerHTML = `
-                    <div class="text-center py-4">
-                        <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
-                        <h5 class="mt-3 text-danger">Preview Failed</h5>
-                        <p class="text-muted">${data.message || 'Unable to generate preview'}</p>
-                        <a href="${downloadUrl}" class="btn btn-primary">
-                            <i class="bx bx-download"></i> Download Document
-                        </a>
-                    </div>
-                `;
+                                <div class="text-center py-4">
+                                    <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3 text-danger">Preview Failed</h5>
+                                    <p class="text-muted">${data.message || 'Unable to generate preview'}</p>
+                                    <a href="${downloadUrl}" class="btn btn-primary">
+                                        <i class="bx bx-download"></i> Download Document
+                                    </a>
+                                </div>
+                            `;
                         }
                         contentDiv.classList.remove('d-none');
                     })
@@ -620,15 +689,15 @@
                         document.getElementById('word-preview-loading').classList.add('d-none');
                         const contentDiv = document.getElementById('word-preview-content');
                         contentDiv.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3 text-danger">Preview Error</h5>
-                    <p class="text-muted">An error occurred while loading the preview</p>
-                    <a href="${downloadUrl}" class="btn btn-primary">
-                        <i class="bx bx-download"></i> Download Document
-                    </a>
-                </div>
-            `;
+                            <div class="text-center py-4">
+                                <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 text-danger">Preview Error</h5>
+                                <p class="text-muted">An error occurred while loading the preview</p>
+                                <a href="${downloadUrl}" class="btn btn-primary">
+                                    <i class="bx bx-download"></i> Download Document
+                                </a>
+                            </div>
+                        `;
                         contentDiv.classList.remove('d-none');
                     });
             } else if (mimeType.includes('text')) {
@@ -636,17 +705,17 @@
                     .then(response => response.text())
                     .then(text => {
                         previewContent.innerHTML = `
-                    <div class="text-preview">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="mb-0">File Contents</h6>
+                            <div class="text-preview">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">File Contents</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <pre class="mb-0" style="white-space: pre-wrap; max-height: 60vh; overflow-y: auto;">${text}</pre>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <pre class="mb-0" style="white-space: pre-wrap; max-height: 60vh; overflow-y: auto;">${text}</pre>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                        `;
                     })
                     .catch(() => {
                         showGenericPreview();
@@ -665,71 +734,16 @@
                     iconClass = 'bxs-file-presentation text-warning';
                 }
                 previewContent.innerHTML = `
-            <div class="text-center py-5">
-                <i class="bx ${iconClass}" style="font-size: 4rem;"></i>
-                <h4 class="mt-3">${fileName}</h4>
-                <p class="text-muted">Preview not available for this file type</p>
-                <a href="${downloadUrl}" class="btn btn-primary">
-                    <i class="bx bx-download"></i> Download to View
-                </a>
-            </div>
-        `;
+                    <div class="text-center py-5">
+                        <i class="bx ${iconClass}" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">${fileName}</h4>
+                        <p class="text-muted">Preview not available for this file type</p>
+                        <a href="${downloadUrl}" class="btn btn-primary">
+                            <i class="bx bx-download"></i> Download to View
+                        </a>
+                    </div>
+                `;
             }
-        }
-        // Auto-loading Word document preview functionality
-        function loadWordPreviewAuto() {
-            const contentDiv = document.getElementById('word-preview-content');
-            const loadingDiv = document.getElementById('word-preview-loading');
-
-            const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}';
-
-            fetch(previewApiUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    loadingDiv.classList.add('d-none');
-
-                    if (data.success) {
-                        contentDiv.innerHTML = `
-                <div class="word-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding: 1rem;">
-                    ${data.content}
-                </div>
-            `;
-                    } else {
-                        contentDiv.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3 text-danger">Preview Failed</h5>
-                    <p class="text-muted">${data.message || 'Unable to generate preview'}</p>
-                    <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
-                        <i class="bx bx-download"></i> Download Document
-                    </a>
-                </div>
-            `;
-                    }
-
-                    contentDiv.classList.remove('d-none');
-                })
-                .catch(error => {
-                    loadingDiv.classList.add('d-none');
-                    contentDiv.innerHTML = `
-            <div class="text-center py-4">
-                <i class="bx bxs-file-doc text-danger" style="font-size: 3rem;"></i>
-                <h5 class="mt-3 text-danger">Preview Error</h5>
-                <p class="text-muted">An error occurred while loading the preview</p>
-                <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}" class="btn btn-primary">
-                    <i class="bx bx-download"></i> Download Document
-                </a>
-            </div>
-        `;
-                    contentDiv.classList.remove('d-none');
-                });
         }
 
         function hidePreview() {

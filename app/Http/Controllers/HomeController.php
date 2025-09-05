@@ -35,9 +35,11 @@ class HomeController extends Controller
 
             $canApprove = Auth::user()->can('approve document registration');
 
-            // Get pending document registrations
-            $pendingRegistrations = DocumentRegistrationEntry::with(['submittedBy'])
-                ->where('status', 'pending')
+            // Get pending document registrations using relationship
+            $pendingRegistrations = DocumentRegistrationEntry::with(['submittedBy', 'status'])
+                ->whereHas('status', function ($q) {
+                    $q->where('name', 'Pending');
+                })
                 ->latest('submitted_at')
                 ->get();
         }

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
+use App\Models\DocumentRegistrationEntryFileStatus;
 use App\Models\User;
+use App\Notifications\DocumentRegistryEntryStatusUpdated;
 use App\Notifications\DocumentRegistryFileCreated;
 use App\Notifications\DocumentRegistryFileStatusUpdated;
 use Illuminate\Http\Request;
@@ -13,62 +15,80 @@ use Illuminate\Support\Facades\Storage;
 
 class DocumentRegistrationEntryFileController extends Controller
 {
-
     public function approve(Request $request, $id)
     {
-        $file = \App\Models\DocumentRegistrationEntryFile::findOrFail($id);
-        if (!auth()->user()->can('approve document registration') || $file->status !== 'pending') {
+        $file = DocumentRegistrationEntryFile::findOrFail($id);
+        if (!auth()->user()->can('approve document registration') || $file->status->name !== 'Pending') {
             abort(403);
         }
+
+        $implementedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
+        $entryImplementedStatus = \App\Models\DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
+
         $file->update([
-            'status' => 'approved',
+            'status_id' => $implementedStatus->id,
             'implemented_by' => auth()->id(),
             'implemented_at' => now(),
             'rejection_reason' => null,
         ]);
+
         $file->registrationEntry->update([
-            'status' => 'approved',
+            'status_id' => $entryImplementedStatus->id,
             'implemented_by' => auth()->id(),
             'implemented_at' => now(),
         ]);
 
+        $file->refresh();
+
         $user = $file->registrationEntry->submittedBy;
         if ($user) {
-            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->getStatusNameAttribute()));
+            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
+            $user->notify(new DocumentRegistryEntryStatusUpdated($file->registrationEntry, $file->registrationEntry->status));
+
         }
+
 
         return back()->with('success', 'File approved successfully.');
     }
 
     public function reject(Request $request, $id)
     {
-        $file = \App\Models\DocumentRegistrationEntryFile::findOrFail($id);
-        if (!auth()->user()->can('reject document registration') || $file->status !== 'pending') {
+        $file = DocumentRegistrationEntryFile::findOrFail($id);
+        if (!auth()->user()->can('reject document registration') || $file->status->name !== 'Pending') {
             abort(403);
         }
         $request->validate([
             'rejection_reason' => 'required|string'
         ]);
 
-        // Only update the file status, not the entire entry
+        // Use 'Returned' status for files instead of 'Cancelled'
+        $returnedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Returned')->first();
+
+        // Add error handling if status doesn't exist
+        if (!$returnedStatus) {
+            return back()->withErrors(['error' => 'File status "Returned" not found. Please contact administrator.']);
+        }
+
         $file->update([
-            'status' => 'rejected',
+            'status_id' => $returnedStatus->id,
             'implemented_by' => auth()->id(),
             'implemented_at' => now(),
             'rejection_reason' => $request->rejection_reason,
         ]);
 
+        $file->refresh();
+
         $user = $file->registrationEntry->submittedBy;
         if ($user) {
-            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->getStatusNameAttribute()));
+            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
         }
 
-        return back()->with('success', 'File rejected.');
+        return back()->with('success', 'File returned for revision.');
     }
 
     public function uploadFile(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!Auth::user()->can('submit document for approval') || $documentRegistrationEntry->status !== 'pending') {
+        if (!Auth::user()->can('submit document for approval') || $documentRegistrationEntry->status->name !== 'Pending') {
             abort(403);
         }
 
@@ -77,31 +97,28 @@ class DocumentRegistrationEntryFileController extends Controller
         ]);
 
         $file = $request->file('document_file');
+        $pendingStatus = DocumentRegistrationEntryFileStatus::where('name', 'Pending')->first();
+
         DocumentRegistrationEntryFile::create([
             'entry_id' => $documentRegistrationEntry->id,
             'file_path' => $file->store('document_registrations', 'local'),
             'original_filename' => $file->getClientOriginalName(),
             'mime_type' => $file->getMimeType(),
             'file_size' => $file->getSize(),
-            'status' => 'pending',
+            'status_id' => $pendingStatus->id,
         ]);
 
         $file = DocumentRegistrationEntryFile::where('entry_id', $documentRegistrationEntry->id)
             ->latest('id')->first();
 
-        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
-//        $admins = User::role(['SuperAdmin'])->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new DocumentRegistryFileCreated($file));
-        }
+        DocumentRegistryFileCreated::sendToAdmins($file);
 
         return back()->with('success', 'File uploaded successfully.');
     }
 
-
     public function preview(Request $request, $id)
     {
-        $file = \App\Models\DocumentRegistrationEntryFile::findOrFail($id);
+        $file = DocumentRegistrationEntryFile::findOrFail($id);
 
         // Check if the user can view the parent entry
         $entry = $file->registrationEntry;
@@ -131,7 +148,7 @@ class DocumentRegistrationEntryFileController extends Controller
 
     public function download(Request $request, $id)
     {
-        $file = \App\Models\DocumentRegistrationEntryFile::findOrFail($id);
+        $file = DocumentRegistrationEntryFile::findOrFail($id);
         $entry = $file->registrationEntry;
 
         if (!auth()->user()->can('view all document registrations') &&
@@ -139,11 +156,11 @@ class DocumentRegistrationEntryFileController extends Controller
             abort(403, 'You do not have permission to download this file.');
         }
 
-        if (!$file || !\Storage::disk('local')->exists($file->file_path)) {
+        if (!$file || !Storage::disk('local')->exists($file->file_path)) {
             abort(404, 'File not found.');
         }
 
-        return \Storage::disk('local')->download(
+        return Storage::disk('local')->download(
             $file->file_path,
             $file->original_filename
         );

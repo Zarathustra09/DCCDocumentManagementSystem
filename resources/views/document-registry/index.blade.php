@@ -6,7 +6,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-folder-open'></i> Document Registry</h3>
+                    <h3 class="card-title"><i class='bx bx-folder-open'></i> My Registrations</h3>
                     @can('submit document for approval')
                         <a href="{{ route('document-registry.create') }}" class="btn btn-primary">
                             <i class='bx bx-plus'></i> Register New Document
@@ -21,12 +21,13 @@
                             <thead>
                                 <tr>
                                     <th>Document Title</th>
+                                    <th>Device Part Number</th>
                                     <th>Document No.</th>
                                     <th>Rev.</th>
                                     <th>Originator</th>
                                     <th>Customer</th>
-                                    <th>Submitted</th>
-                                    <th>Implementation Info</th>
+                                    <th>Submitted By</th>
+                                    <th>Implemented By</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -36,9 +37,9 @@
                                     <tr>
                                         <td>
                                             <strong>{{ $entry->document_title ?? '-' }}</strong>
-                                            @if($entry->device_name)
-                                                <br><small class="text-muted">{{ $entry->device_name }}</small>
-                                            @endif
+                                        </td>
+                                        <td>
+                                            {{ $entry->device_name ?? '-'}}
                                         </td>
                                         <td>{{ $entry->document_no ?? '-' }}</td>
                                         <td>{{ $entry->revision_no ?? '-' }}</td>
@@ -59,17 +60,17 @@
                                         </td>
 
                                         <td>
-                                            @if($entry->status === 'pending')
+                                            @if($entry->status->name === 'Pending')
                                                 <span class="badge bg-warning text-dark">
-                                                    <i class='bx bx-time'></i> {{ $entry->status_name ?? 'Pending' }}
+                                                    <i class='bx bx-time'></i> {{ $entry->status->name }}
                                                 </span>
-                                            @elseif($entry->status === 'approved')
+                                            @elseif($entry->status->name === 'Implemented')
                                                 <span class="badge bg-success text-white">
-                                                    <i class='bx bx-check'></i> {{ $entry->status_name ?? 'Approved' }}
+                                                    <i class='bx bx-check'></i> {{ $entry->status->name }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-danger text-white">
-                                                    <i class='bx bx-x'></i> {{ $entry->status_name ?? 'Rejected' }}
+                                                    <i class='bx bx-x'></i> {{ $entry->status->name }}
                                                 </span>
                                             @endif
                                         </td>
@@ -82,7 +83,7 @@
                                                     <a class="dropdown-item" href="{{ route('document-registry.show', $entry) }}">
                                                         <i class="bx bx-show me-2"></i> View Details
                                                     </a>
-                                                    @if($entry->status === 'pending' &&
+                                                    @if($entry->status->name === 'Pending' &&
                                                         $entry->submitted_by === auth()->id() &&
                                                         auth()->user()->can('edit document registration details'))
                                                         <a class="dropdown-item" href="{{ route('document-registry.edit', $entry) }}">
@@ -95,7 +96,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="text-center py-4">
+                                        <td colspan="10" class="text-center py-4">
                                             <i class='bx bx-info-circle'></i> No document registrations found.
                                         </td>
                                     </tr>
@@ -103,13 +104,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Pagination -->
-                    @if($entries->hasPages())
-                        <div class="d-flex justify-content-center">
-                            {{ $entries->appends(request()->query())->links() }}
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>
@@ -141,15 +135,15 @@
         $(document).ready(function() {
             $('#documentRegistry').DataTable({
                 responsive: true,
-                order: [[5, 'desc']],
+                order: [[6, 'desc']],
                 pageLength: 10,
                 columnDefs: [
-                    { orderable: false, targets: [0, 6] }
+                    { orderable: false, targets: [0, 9] }
                 ],
                 language: {
-                    search: "Search users:",
-                    lengthMenu: "Show _MENU_ users per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ users"
+                    search: "Search entries:",
+                    lengthMenu: "Show _MENU_ entries per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries"
                 }
             });
         });
