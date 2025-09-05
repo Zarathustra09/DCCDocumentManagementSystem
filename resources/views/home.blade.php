@@ -99,7 +99,7 @@
                                             </td>
                                             <td>
                                                 <span class="badge bg-warning text-dark">
-                                                    <i class='bx bx-time'></i> {{ $entry->status_name }}
+                                                    <i class='bx bx-time'></i> {{ $entry->status->name }}
                                                 </span>
                                             </td>
                                             <td class="text-center">
@@ -111,25 +111,37 @@
                                                         <a class="dropdown-item" href="{{ route('document-registry.show', $entry) }}">
                                                             <i class="bx bx-show me-2"></i> View Details
                                                         </a>
-{{--                                                        @if($entry->status === 'pending' &&--}}
-{{--                                                            $entry->submitted_by === auth()->id() &&--}}
-{{--                                                            auth()->user()->can('edit document registration details'))--}}
-{{--                                                            <a class="dropdown-item" href="{{ route('document-registry.edit', $entry) }}">--}}
-{{--                                                                <i class="bx bx-edit-alt me-2"></i> Edit--}}
-{{--                                                            </a>--}}
-{{--                                                        @endif--}}
-{{--                                                        @if($entry->status === 'pending' &&--}}
-{{--                                                            $entry->submitted_by === auth()->id() &&--}}
-{{--                                                            auth()->user()->can('withdraw document submission'))--}}
-{{--                                                            <form action="{{ route('document-registry.withdraw', $entry) }}"--}}
-{{--                                                                  method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">--}}
-{{--                                                                @csrf--}}
-{{--                                                                @method('DELETE')--}}
-{{--                                                                <button type="submit" class="dropdown-item text-danger">--}}
-{{--                                                                    <i class="bx bx-trash me-2"></i> Withdraw--}}
-{{--                                                                </button>--}}
-{{--                                                            </form>--}}
-{{--                                                        @endif--}}
+                                                        @if($entry->status->name === 'Pending' &&
+                                                            $entry->submitted_by === auth()->id() &&
+                                                            auth()->user()->can('edit document registration details'))
+                                                            <a class="dropdown-item" href="{{ route('document-registry.edit', $entry) }}">
+                                                                <i class="bx bx-edit-alt me-2"></i> Edit
+                                                            </a>
+                                                        @endif
+                                                        @if($entry->status->name === 'Pending' &&
+                                                            $entry->submitted_by === auth()->id() &&
+                                                            auth()->user()->can('withdraw document submission'))
+                                                            <form action="{{ route('document-registry.withdraw', $entry) }}"
+                                                                  method="POST" onsubmit="return confirm('Are you sure you want to withdraw this submission?')">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="dropdown-item text-danger">
+                                                                    <i class="bx bx-trash me-2"></i> Withdraw
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                        @if(auth()->user()->can('approve document registration') && $entry->status->name === 'Pending')
+                                                            <div class="dropdown-divider"></div>
+                                                            <button type="button" class="dropdown-item text-success" onclick="approveRegistration({{ $entry->id }})">
+                                                                <i class="bx bx-check me-2"></i> Approve
+                                                            </button>
+                                                            <button type="button" class="dropdown-item text-danger" onclick="showRejectModal({{ $entry->id }}, '{{ $entry->document_title }}')">
+                                                                <i class="bx bx-x me-2"></i> Reject
+                                                            </button>
+                                                            <button type="button" class="dropdown-item text-warning" onclick="showRevisionModal({{ $entry->id }}, '{{ $entry->document_title }}')">
+                                                                <i class="bx bx-edit me-2"></i> Require Revision
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>
@@ -139,13 +151,13 @@
                             </table>
                         </div>
 
-{{--                        @if($pendingRegistrations->count() >= 10)--}}
-{{--                            <div class="text-center mt-3">--}}
-{{--                                <a href="{{ route('document-registry.list')}}" class="btn btn-primary">--}}
-{{--                                    <i class='bx bx-show'></i> View All Pending Registrations--}}
-{{--                                </a>--}}
-{{--                            </div>--}}
-{{--                        @endif--}}
+                        @if($pendingRegistrations->count() >= 10)
+                            <div class="text-center mt-3">
+                                <a href="{{ route('document-registry.list')}}" class="btn btn-primary">
+                                    <i class='bx bx-show'></i> View All Pending Registrations
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -158,9 +170,9 @@
                         <i class='bx bx-check-circle text-success' style="font-size: 4rem;"></i>
                         <h4 class="mt-3">No Pending Registrations</h4>
                         <p class="text-muted">All document registrations have been processed.</p>
-{{--                        <a href="{{ route('document-registry.index') }}" class="btn btn-primary">--}}
-{{--                            <i class='bx bx-file-find'></i> View My Registrations--}}
-{{--                        </a>--}}
+                        <a href="{{ route('document-registry.index') }}" class="btn btn-primary">
+                            <i class='bx bx-file-find'></i> View My Registrations
+                        </a>
                     </div>
                 </div>
             </div>
@@ -222,53 +234,50 @@
     </div>
 </div>
 
-
 @endsection
 
-
 @push('scripts')
+<script>
+    function approveRegistration(entryId) {
+        if (confirm('Are you sure you want to approve this document registration?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/document-registry/${entryId}/approve`;
 
-    <script>
-        function approveRegistration(entryId) {
-            if (confirm('Are you sure you want to approve this document registration?')) {
-                // Create a form and submit it
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/document-registry/${entryId}/approve`;
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
 
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-
-                form.appendChild(csrfToken);
-                document.body.appendChild(form);
-                form.submit();
-            }
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            form.submit();
         }
+    }
 
-        function showRejectModal(entryId, documentTitle) {
-            document.getElementById('rejectDocumentTitle').textContent = documentTitle;
-            document.getElementById('quickRejectForm').action = `/document-registry/${entryId}/reject`;
-            document.getElementById('quick_rejection_reason').value = '';
+    function showRejectModal(entryId, documentTitle) {
+        document.getElementById('rejectDocumentTitle').textContent = documentTitle;
+        document.getElementById('quickRejectForm').action = `/document-registry/${entryId}/reject`;
+        document.getElementById('quick_rejection_reason').value = '';
 
-            const modal = new bootstrap.Modal(document.getElementById('quickRejectModal'));
-            modal.show();
-        }
+        const modal = new bootstrap.Modal(document.getElementById('quickRejectModal'));
+        modal.show();
+    }
 
-        function showRevisionModal(entryId, documentTitle) {
-            document.getElementById('revisionDocumentTitle').textContent = documentTitle;
-            document.getElementById('quickRevisionForm').action = `/document-registry/${entryId}/require-revision`;
-            document.getElementById('quick_revision_notes').value = '';
+    function showRevisionModal(entryId, documentTitle) {
+        document.getElementById('revisionDocumentTitle').textContent = documentTitle;
+        document.getElementById('quickRevisionForm').action = `/document-registry/${entryId}/require-revision`;
+        document.getElementById('quick_revision_notes').value = '';
 
-            const modal = new bootstrap.Modal(document.getElementById('quickRevisionModal'));
-            modal.show();
-        }
+        const modal = new bootstrap.Modal(document.getElementById('quickRevisionModal'));
+        modal.show();
+    }
 
-
-        $(document).ready(function() {
-            $('#documentRegistry').DataTable({
-            });
+    $(document).ready(function() {
+        $('#documentRegistry').DataTable({
+            "pageLength": 10,
+            "order": [[ 2, "desc" ]]
         });
-    </script>
+    });
+</script>
 @endpush

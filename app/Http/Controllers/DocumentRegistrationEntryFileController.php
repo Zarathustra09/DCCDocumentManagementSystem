@@ -6,6 +6,7 @@ use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
 use App\Models\DocumentRegistrationEntryFileStatus;
 use App\Models\User;
+use App\Notifications\DocumentRegistryEntryStatusUpdated;
 use App\Notifications\DocumentRegistryFileCreated;
 use App\Notifications\DocumentRegistryFileStatusUpdated;
 use Illuminate\Http\Request;
@@ -37,10 +38,15 @@ class DocumentRegistrationEntryFileController extends Controller
             'implemented_at' => now(),
         ]);
 
+        $file->refresh();
+
         $user = $file->registrationEntry->submittedBy;
         if ($user) {
             $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
+            $user->notify(new DocumentRegistryEntryStatusUpdated($file->registrationEntry, $file->registrationEntry->status));
+
         }
+
 
         return back()->with('success', 'File approved successfully.');
     }
@@ -69,6 +75,8 @@ class DocumentRegistrationEntryFileController extends Controller
             'implemented_at' => now(),
             'rejection_reason' => $request->rejection_reason,
         ]);
+
+        $file->refresh();
 
         $user = $file->registrationEntry->submittedBy;
         if ($user) {
@@ -102,6 +110,8 @@ class DocumentRegistrationEntryFileController extends Controller
 
         $file = DocumentRegistrationEntryFile::where('entry_id', $documentRegistrationEntry->id)
             ->latest('id')->first();
+
+        DocumentRegistryFileCreated::sendToAdmins($file);
 
         return back()->with('success', 'File uploaded successfully.');
     }

@@ -98,6 +98,8 @@ class DocumentRegistrationEntryController extends Controller
             ]);
         }
 
+        DocumentRegistryEntryCreated::sendToAdmins($entry);
+
         return redirect()->route('document-registry.show', $entry)
             ->with('success', 'Document registration submitted successfully and is pending approval.');
     }
@@ -165,10 +167,14 @@ class DocumentRegistrationEntryController extends Controller
             'rejection_reason' => null,
         ]);
 
+        $documentRegistrationEntry->refresh();
+
         $user = $documentRegistrationEntry->submittedBy;
         if ($user) {
-            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status->name));
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status));
         }
+
+
         return back()->with('success', 'Document registration approved successfully.');
     }
 
@@ -192,9 +198,11 @@ class DocumentRegistrationEntryController extends Controller
             'revision_notes' => null,
         ]);
 
+        $documentRegistrationEntry->refresh();
+
         $user = $documentRegistrationEntry->submittedBy;
         if ($user) {
-            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status->name));
+            $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status));
         }
 
         return back()->with('success', 'Document registration rejected.');
@@ -227,6 +235,8 @@ class DocumentRegistrationEntryController extends Controller
             'implemented_at' => now(),
             'rejection_reason' => 'Revision required. Please see revision notes.',
         ]);
+
+        $documentRegistrationEntry->refresh();
 
         return back()->with('success', 'Revision requested for document registration.');
     }
