@@ -189,6 +189,7 @@ class DocumentRegistrationEntryController extends Controller
         ]);
 
         $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
+        $returnedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Returned')->first();
 
         $documentRegistrationEntry->update([
             'status_id' => $cancelledStatus->id,
@@ -196,6 +197,14 @@ class DocumentRegistrationEntryController extends Controller
             'implemented_at' => now(),
             'rejection_reason' => $request->rejection_reason,
             'revision_notes' => null,
+        ]);
+
+        // Return all existing files for this entry
+        $documentRegistrationEntry->files()->update([
+            'status_id' => $returnedFileStatus->id,
+            'implemented_by' => Auth::id(),
+            'implemented_at' => now(),
+            'rejection_reason' => $request->rejection_reason,
         ]);
 
         $documentRegistrationEntry->refresh();

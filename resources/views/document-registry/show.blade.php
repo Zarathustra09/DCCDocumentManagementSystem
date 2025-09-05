@@ -168,6 +168,42 @@
                                                                     </div>
                                                                 </div>
                                                             @endif
+                                                                @if($file->status->name === 'Returned' && $file->rejection_reason)
+                                                                    <button type="button" class="btn btn-sm btn-outline-warning"
+                                                                            data-bs-toggle="modal" data-bs-target="#viewFileRejectionModal{{$file->id}}">
+                                                                        <i class="bx bx-info-circle"></i> Details
+                                                                    </button>
+                                                                    <!-- Modal for viewing file rejection reason -->
+                                                                    <div class="modal fade" id="viewFileRejectionModal{{$file->id}}" tabindex="-1">
+                                                                        <div class="modal-dialog">
+                                                                            <div class="modal-content">
+                                                                                <div class="modal-header">
+                                                                                    <h5 class="modal-title text-warning">
+                                                                                        <i class="bx bx-undo"></i> File Returned
+                                                                                    </h5>
+                                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                                </div>
+                                                                                <div class="modal-body">
+                                                                                    <div class="alert alert-warning">
+                                                                                        <h6 class="alert-heading">Return Reason:</h6>
+                                                                                        <p class="mb-0">{{ $file->rejection_reason }}</p>
+                                                                                    </div>
+                                                                                    @if($file->implemented_at && $file->approvedBy)
+                                                                                        <div class="text-muted">
+                                                                                            <small>
+                                                                                                <strong>Returned by:</strong> {{ $file->approvedBy->name }}<br>
+                                                                                                <strong>Date:</strong> {{ $file->implemented_at->format('M d, Y \a\t g:i A') }}
+                                                                                            </small>
+                                                                                        </div>
+                                                                                    @endif
+                                                                                </div>
+                                                                                <div class="modal-footer">
+                                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
                                                             <!-- Existing Preview and Download buttons -->
                                                             <button type="button" class="btn btn-sm btn-outline-primary me-2"
                                                                     onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')">
@@ -203,6 +239,10 @@
                                             @elseif($documentRegistrationEntry->status->name === 'Implemented')
                                                 <span class="badge bg-success text-white fs-6">
                                                     <i class='bx bx-check'></i> {{ $documentRegistrationEntry->status->name }}
+                                                </span>
+                                            @elseif($documentRegistrationEntry->status->name === 'Cancelled')
+                                                <span class="badge bg-danger text-white fs-6">
+                                                    <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status->name }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-danger text-white fs-6">
@@ -265,7 +305,7 @@
                                 @if($documentRegistrationEntry->status->name === 'Pending' && auth()->user()->can('submit document for approval'))
                                     <div class="card mb-3">
                                         <div class="card-header">
-                                            <h5 class="mb-0"><i class="bx bx-upload"></i> Upload Revision</h5>
+                                            <h5 class="mb-0"><i class="bx bx-upload"></i> Upload File</h5>
                                         </div>
                                         <div class="card-body">
                                             <form action="{{ route('document-registry.upload-file', $documentRegistrationEntry) }}" method="POST" enctype="multipart/form-data">
@@ -388,6 +428,37 @@
                 </div>
             </div>
         @endif
+    </div>
+
+    <!-- View Cancellation Reason Modal -->
+    <div class="modal fade" id="viewCancelledModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class='bx bx-x-circle'></i> Registration Cancelled
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">Cancellation Reason:</h6>
+                        <p class="mb-0">{{ $documentRegistrationEntry->rejection_reason }}</p>
+                    </div>
+                    @if($documentRegistrationEntry->implemented_at && $documentRegistrationEntry->approvedBy)
+                        <div class="text-muted">
+                            <small>
+                                <strong>Cancelled by:</strong> {{ $documentRegistrationEntry->approvedBy->name }}<br>
+                                <strong>Date:</strong> {{ $documentRegistrationEntry->implemented_at->format('M d, Y \a\t g:i A') }}
+                            </small>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Reject Modal -->

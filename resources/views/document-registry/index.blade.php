@@ -104,13 +104,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Pagination -->
-                    @if($entries->hasPages())
-                        <div class="d-flex justify-content-center">
-                            {{ $entries->appends(request()->query())->links() }}
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>

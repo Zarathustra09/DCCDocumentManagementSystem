@@ -23,6 +23,7 @@ class DocumentRegistrationEntry extends Model
         'implemented_by',
         'submitted_at',
         'implemented_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
