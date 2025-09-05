@@ -18,29 +18,22 @@ class DocumentRegistrationEntry extends Model
         'originator_name',
         'customer',
         'remarks',
-        'status',
+        'status_id',
         'submitted_by',
         'implemented_by',
         'submitted_at',
         'implemented_at',
-//        'rejection_reason',
-//        'revision_notes',
-//        'file_path',
-//        'original_filename',
-//        'mime_type',
-//        'file_size',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
         'implemented_at' => 'datetime',
     ];
-    //TODO: to add edit functionality for documents
-    const STATUSES = [
-        'pending' => 'Pending Registration',
-        'approved' => 'Implemented',
-        'rejected' => 'Cancelled',
-    ];
+
+    public function status()
+    {
+        return $this->belongsTo(DocumentRegistrationEntryStatus::class, 'status_id');
+    }
 
     public function documents()
     {
@@ -57,6 +50,11 @@ class DocumentRegistrationEntry extends Model
         return $this->belongsTo(User::class, 'implemented_by');
     }
 
+    public function files()
+    {
+        return $this->hasMany(DocumentRegistrationEntryFile::class, 'entry_id');
+    }
+
     public function getFullDocumentNumberAttribute()
     {
         return $this->document_no . ' Rev. ' . $this->revision_no;
@@ -64,7 +62,7 @@ class DocumentRegistrationEntry extends Model
 
     public function getStatusNameAttribute()
     {
-        return self::STATUSES[$this->status] ?? $this->status;
+        return $this->status->name ?? 'Unknown';
     }
 
     public function getFormattedFileSizeAttribute()
@@ -88,20 +86,22 @@ class DocumentRegistrationEntry extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->whereHas('status', function ($q) {
+            $q->where('name', 'Pending');
+        });
     }
 
-    public function scopeApproved($query)
+    public function scopeImplemented($query)
     {
-        return $query->where('status', 'approved');
+        return $query->whereHas('status', function ($q) {
+            $q->where('name', 'Implemented');
+        });
     }
 
-    public function scopeRejected($query)
+    public function scopeCancelled($query)
     {
-        return $query->where('status', 'rejected');
-    }
-    public function files()
-    {
-        return $this->hasMany(DocumentRegistrationEntryFile::class, 'entry_id');
+        return $query->whereHas('status', function ($q) {
+            $q->where('name', 'Cancelled');
+        });
     }
 }
