@@ -58,7 +58,7 @@
                                     <tr>
                                         <th>Document Details</th>
                                         <th>Originator</th>
-                                        <th>Submitted</th>
+                                        <th>Submitted By</th>
                                         <th>Status</th>
                                         <th class="text-center">Actions</th>
                                     </tr>
@@ -92,7 +92,7 @@
                                                 <div>
                                                     {{ $entry->submittedBy->name }}
                                                     <br>
-                                                    <small class="text-muted">{{ $entry->submitted_at->format('M d, Y') }}</small>
+                                                    <small class="text-muted">{{ $entry->submitted_at->format('m/d/Y') }}</small>
                                                     <br>
                                                     <small class="text-muted">{{ $entry->submitted_at->format('g:i A') }}</small>
                                                 </div>

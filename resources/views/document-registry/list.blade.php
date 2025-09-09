@@ -6,7 +6,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-folder-open'></i> Document Registry - Advanced List</h3>
+                    <h3 class="card-title"><i class='bx bx-folder-open'></i> Document Registry Management</h3>
                 </div>
                 <div class="card-body">
                     <!-- Advanced Filters -->
@@ -102,6 +102,7 @@
                         <table class="table table-striped table-hover" id="documentRegistry">
                             <thead>
                                 <tr>
+                                    <th>Control No.</th>
                                     <th>Document Title</th>
                                     <th>Device Part Number</th>
                                     <th>Document No.</th>
@@ -109,13 +110,16 @@
                                     <th>Originator</th>
                                     <th>Customer</th>
                                     <th>Status</th>
-                                    <th>Submitted By</th>
+                                    <th>Submitted At</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($entries as $entry)
                                     <tr>
+                                        <td>
+                                            <strong>{{$entry->control_no ?? '-'}}</strong>
+                                        </td>
                                         <td>
                                             <strong>{{ $entry->document_title ?? '-'}}</strong>
                                         </td>
@@ -143,8 +147,9 @@
                                         </td>
                                         <td>
                                             <small>
-                                                <i class='bx bx-user'></i> {{ $entry->submittedBy->name ?? '-'}}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('M d, Y') }}
+                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('m/d/Y') }}
+                                                <br>
+                                                <small class="text-muted">{{ $entry->submitted_at->format('g:i A') }}</small>
                                             </small>
                                         </td>
                                         <td>

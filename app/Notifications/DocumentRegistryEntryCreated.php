@@ -52,9 +52,16 @@ class DocumentRegistryEntryCreated extends Notification
 
     public static function sendToAdmins(DocumentRegistrationEntry $entry)
     {
-        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+        $admins = User::role(['SuperAdmin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new static($entry));
         }
+    }
+
+    public function getCreatedAtFormattedAttribute()
+    {
+        return $this->created_at
+            ? $this->created_at->format('m/d/Y g:ia')
+            : null;
     }
 }

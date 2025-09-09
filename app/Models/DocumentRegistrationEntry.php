@@ -29,6 +29,8 @@ class DocumentRegistrationEntry extends Model
     protected $casts = [
         'submitted_at' => 'datetime',
         'implemented_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function status()
@@ -103,6 +105,17 @@ class DocumentRegistrationEntry extends Model
     {
         return $query->whereHas('status', function ($q) {
             $q->where('name', 'Cancelled');
+        });
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->control_no)) {
+                $model->control_no = 'DCC-' . \Illuminate\Support\Str::random(9);
+            }
         });
     }
 }

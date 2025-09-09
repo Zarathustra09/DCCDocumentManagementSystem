@@ -51,7 +51,7 @@ class DocumentRegistryFileCreated extends Notification
 
     public static function sendToAdmins(DocumentRegistrationEntryFile $file)
     {
-        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+        $admins = User::role(['SuperAdmin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new static($file));
         }

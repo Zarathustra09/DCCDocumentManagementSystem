@@ -20,13 +20,14 @@
                         <table class="table table-striped table-hover" id="documentRegistry">
                             <thead>
                                 <tr>
+                                    <th>Control No.</th>
                                     <th>Document Title</th>
                                     <th>Device Part Number</th>
                                     <th>Document No.</th>
                                     <th>Rev.</th>
                                     <th>Originator</th>
                                     <th>Customer</th>
-                                    <th>Submitted By</th>
+                                    <th>Submitted At</th>
                                     <th>Implemented By</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -35,6 +36,9 @@
                             <tbody>
                                 @forelse($entries as $entry)
                                     <tr>
+                                        <td>
+                                            <strong>{{$entry->control_no ?? '-'}}</strong>
+                                        </td>
                                         <td>
                                             <strong>{{ $entry->document_title ?? '-' }}</strong>
                                         </td>
@@ -48,14 +52,18 @@
 
                                         <td>
                                             <small>
-                                                <i class='bx bx-user'></i> {{ $entry->submittedBy?->name ?? '-' }}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('M d, Y') ?? '-' }}
+{{--                                                <i class='bx bx-user'></i> {{ $entry->submittedBy?->name ?? '-' }}<br>--}}
+                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('m/d/Y') ?? '-' }}
+                                                <br>
+                                                <small class="text-muted">{{ $entry->submitted_at->format('g:i A') }}</small>
                                             </small>
                                         </td>
                                         <td>
                                             <small>
                                                 <i class='bx bx-user'></i> {{ $entry->approvedBy?->name ?? '-' }}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at?->format('M d, Y') ?? '-' }}
+                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at?->format('m/d/Y') ?? '-' }}
+                                                <small class="text-muted">{{ $entry->implemented_at?->format('g:i A') }}</small>
+
                                             </small>
                                         </td>
 

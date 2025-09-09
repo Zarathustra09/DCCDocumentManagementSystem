@@ -15,13 +15,13 @@
                                     </a>
                                 </li>
                                 <li class="breadcrumb-item active" aria-current="page">
-                                    {{ $documentRegistrationEntry->document_no ?? '-' }}
+                                    {{ $documentRegistrationEntry->document_title ?? '-' }}
                                 </li>
                             </ol>
                         </nav>
                         <h4 class="mb-0 mt-2">
-                            <i class="bx bx-file-find me-2"></i>
-                            {{ $documentRegistrationEntry->document_title ?? '-'}}
+{{--                            <i class="bx bx-file-find me-2"></i>--}}
+                            Registration: {{ $documentRegistrationEntry->control_no ?? '-'}}
                         </h4>
                     </div>
                 </div>
@@ -128,7 +128,7 @@
                                                             </span>
                                                         </td>
                                                         <td>
-                                                            {{ $file->created_at?->format('M d, Y \a\t g:i A') ?? '-' }}
+                                                            {{ $file->created_at?->format('m/d/Y g:ia') ?? '-' }}
                                                         </td>
                                                         <td>
                                                             @if($file->status->name === 'Pending' && auth()->user()->can('approve document registration'))
@@ -192,7 +192,7 @@
                                                                                         <div class="text-muted">
                                                                                             <small>
                                                                                                 <strong>Returned by:</strong> {{ $file->approvedBy->name }}<br>
-                                                                                                <strong>Date:</strong> {{ $file->implemented_at->format('M d, Y \a\t g:i A') }}
+                                                                                                <strong>Date:</strong> {{ $file->implemented_at->format('m/d/Y') }}
                                                                                             </small>
                                                                                         </div>
                                                                                     @endif
@@ -252,9 +252,11 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label class="form-label text-muted">Submitted By</label>
+                                            <label class="form-label text-muted">Originator Name</label>
                                             <p class="mb-0">{{ $documentRegistrationEntry->submittedBy->name }}</p>
-                                            <small class="text-muted">{{ $documentRegistrationEntry->submitted_at->format('M d, Y \a\t g:i A') }}</small>
+                                            <small class="text-muted">{{ $documentRegistrationEntry->submitted_at->format('m/d/Y') }}</small>
+                                            <small class="text-muted">{{ $documentRegistrationEntry->submitted_at->format('g:i A') }}</small>
+
                                         </div>
 
                                         @if($documentRegistrationEntry->implemented_by)
@@ -267,7 +269,9 @@
                                                     @endif
                                                 </label>
                                                 <p class="mb-0">{{ $documentRegistrationEntry->approvedBy->name }}</p>
-                                                <small class="text-muted">{{ $documentRegistrationEntry->implemented_at->format('M d, Y \a\t g:i A') }}</small>
+                                                <small class="text-muted">{{ $documentRegistrationEntry->implemented_at->format('m/d/Y') }}</small>
+                                                <small class="text-muted">{{ $documentRegistrationEntry->implemented_at->format('g:i A') }}</small>
+
                                             </div>
                                         @endif
 
@@ -407,7 +411,7 @@
                                             <td>{{ number_format($document->file_size / 1024, 2) }} KB</td>
                                             <td>
                                                 <small class="text-muted">
-                                                    {{ $document->created_at->format('M d, Y') }}
+                                                    {{ $document->created_at->format('m/d/Y g:ia') }}
                                                 </small>
                                             </td>
                                             <td>
@@ -449,7 +453,7 @@
                         <div class="text-muted">
                             <small>
                                 <strong>Cancelled by:</strong> {{ $documentRegistrationEntry->approvedBy->name }}<br>
-                                <strong>Date:</strong> {{ $documentRegistrationEntry->implemented_at->format('M d, Y \a\t g:i A') }}
+                                <strong>Date:</strong> {{ $documentRegistrationEntry->implemented_at->format('m/d/Y') }}
                             </small>
                         </div>
                     @endif
