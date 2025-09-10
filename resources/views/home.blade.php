@@ -56,8 +56,10 @@
                             <table class="table table-hover" id="documentRegistry">
                                 <thead class="table-light">
                                     <tr>
+                                        <th>Control No.</th>
                                         <th>Document Details</th>
                                         <th>Originator</th>
+                                        <th>Device Name</th>
                                         <th>Submitted By</th>
                                         <th>Status</th>
                                         <th class="text-center">Actions</th>
@@ -66,6 +68,9 @@
                                 <tbody>
                                     @foreach($pendingRegistrations as $entry)
                                         <tr>
+                                            <td>
+                                                <strong>{{ $entry->control_no }}</strong>
+                                            </td>
                                             <td>
                                                 <div>
                                                     <strong>{{ $entry->document_title }}</strong>
@@ -82,10 +87,11 @@
                                             <td>
                                                 <div>
                                                     {{ $entry->originator_name }}
-                                                    @if($entry->device_name)
-                                                        <br>
-                                                        <small class="text-muted">{{ $entry->device_name }}</small>
-                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                        <small class="text-muted">{{ $entry->device_name ?? '-' }}</small>
                                                 </div>
                                             </td>
                                             <td>

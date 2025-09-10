@@ -12,7 +12,7 @@
                     <!-- Advanced Filters -->
                     <form method="GET" action="{{ route('document-registry.list') }}" class="mb-4">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label for="status">Status</label>
                                     <select name="status" id="status" class="form-select">
@@ -25,7 +25,20 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="category_id">Category</label>
+                                    <select name="category_id" id="category_id" class="form-select">
+                                        <option value="">All Categories</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }} ({{ $category->code }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label for="search">Search</label>
                                     <input type="text" name="search" id="search" class="form-control"
@@ -104,6 +117,7 @@
                                 <tr>
                                     <th>Control No.</th>
                                     <th>Document Title</th>
+                                    <th>Category</th>
                                     <th>Device Part Number</th>
                                     <th>Document No.</th>
                                     <th>Rev.</th>
@@ -122,6 +136,14 @@
                                         </td>
                                         <td>
                                             <strong>{{ $entry->document_title ?? '-'}}</strong>
+                                        </td>
+                                        <td>
+                                            @if($entry->category)
+                                                <span class="badge bg-info">{{ $entry->category->code }}</span>
+                                                <br><small>{{ $entry->category->name }}</small>
+                                            @else
+                                                -
+                                            @endif
                                         </td>
                                         <td>
                                             {{ $entry->device_name ?? '-'}}

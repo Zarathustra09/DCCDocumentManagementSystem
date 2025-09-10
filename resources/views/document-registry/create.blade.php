@@ -6,7 +6,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3 class="card-title"><i class='bx bx-plus'></i> Submit New Document Registration</h3>
+                        <h3 class="card-title"><i class='bx bx-plus'></i> New Document Registration</h3>
                         <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">
                             <i class='bx bx-arrow-back'></i> Back to Registry
                         </a>
@@ -30,6 +30,27 @@
                                            required
                                            placeholder="Enter document title">
                                     @error('document_title')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- Category -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="category_id" class="form-label">
+                                        <i class='bx bx-category'></i> Category <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select @error('category_id') is-invalid @enderror"
+                                            id="category_id"
+                                            name="category_id"
+                                            required>
+                                        <option value="">Select Category</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }} ({{ $category->code }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('category_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -103,7 +124,7 @@
                                 </div>
 
                                 <!-- Customer -->
-                                <div class="col-md-12 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label for="customer" class="form-label">
                                         <i class='bx bx-building'></i> Customer
                                     </label>
@@ -179,129 +200,134 @@
 
 @endsection
 
-
 @push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-format document number
+    const documentNoInput = document.getElementById('document_no');
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-format document number
-            const documentNoInput = document.getElementById('document_no');
-            documentNoInput.addEventListener('blur', function() {
-                let value = this.value.trim().toUpperCase();
-                if (value && !value.includes('-')) {
-                    // Auto-format if it doesn't contain hyphens
-                    const year = new Date().getFullYear();
-                    const match = value.match(/(\d+)$/);
-                    if (match) {
-                        const number = match[1].padStart(3, '0');
-                        value = `DOC-${year}-${number}`;
-                    }
-                }
-                this.value = value;
-            });
+    // Auto-format document number
+    documentNoInput.addEventListener('blur', function() {
+        let value = this.value.trim().toUpperCase();
+        if (value && !value.includes('-')) {
+            // Auto-format if it doesn't contain hyphens
+            const year = new Date().getFullYear();
+            const match = value.match(/(\d+)$/);
+            if (match) {
+                const number = match[1].padStart(3, '0');
+                value = `DOC-${year}-${number}`;
+            }
+        }
+        this.value = value;
+    });
 
-            // Validate revision number format
-            const revisionInput = document.getElementById('revision_no');
-            revisionInput.addEventListener('input', function() {
-                // Only allow numbers and basic revision formats
-                this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
-            });
+    // Validate revision number format
+    const revisionInput = document.getElementById('revision_no');
+    revisionInput.addEventListener('input', function() {
+        // Only allow numbers and basic revision formats
+        this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
+    });
 
-            // File upload validation
-            const fileInput = document.getElementById('document_file');
-            fileInput.addEventListener('change', function() {
-                const file = this.files[0];
-                if (file) {
-                    const maxSize = 10 * 1024 * 1024; // 10MB
-                    if (file.size > maxSize) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'File Too Large',
-                            text: 'File size must be less than 10MB',
-                            confirmButtonColor: '#d33'
-                        });
-                        this.value = '';
-                        return;
-                    }
-
-                    // Display file info
-                    const fileName = file.name;
-                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                    console.log(`Selected file: ${fileName} (${fileSize} MB)`);
-                }
-            });
-
-            // Form submission with SweetAlert confirmation
-            const submitBtn = document.getElementById('submitBtn');
-            const form = document.getElementById('documentForm');
-
-            submitBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                // Check if form is valid first
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                // Get form values for confirmation
-                const formData = new FormData(form);
-                const documentTitle = formData.get('document_title') || 'Not specified';
-                const documentNo = formData.get('document_no') || 'Not specified';
-                const revisionNo = formData.get('revision_no') || 'Not specified';
-                const deviceName = formData.get('device_name') || 'Not specified';
-                const customer = formData.get('customer') || 'Not specified';
-                const fileName = formData.get('document_file') ? formData.get('document_file').name : 'No file selected';
-                const remarks = formData.get('remarks') || 'No remarks';
-
-                // Show confirmation dialog with form details
+    // File upload validation
+    const fileInput = document.getElementById('document_file');
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
                 Swal.fire({
-                    title: 'Confirm Document Submission',
-                    html: `
-                <div class="text-left">
-                    <p><strong>Please review the following details before submitting:</strong></p>
-                    <hr>
-                    <p><strong>Document Title:</strong> ${documentTitle}</p>
-                    <p><strong>Document Number:</strong> ${documentNo}</p>
-                    <p><strong>Revision Number:</strong> ${revisionNo}</p>
-                    <p><strong>Device Name:</strong> ${deviceName}</p>
-                    <p><strong>Customer:</strong> ${customer}</p>
-                    <p><strong>File:</strong> ${fileName}</p>
-                    <p><strong>Remarks:</strong> ${remarks.substring(0, 100)}${remarks.length > 100 ? '...' : ''}</p>
-                    <hr>
-                    <p class="text-muted"><small><i class='bx bx-info-circle'></i> This document will be submitted for approval and you can edit it while it's in pending status.</small></p>
-                </div>
-            `,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="bx bx-check"></i> Yes, Submit',
-                    cancelButtonText: '<i class="bx bx-x"></i> Cancel',
-                    width: '600px',
-                    customClass: {
-                        htmlContainer: 'text-left'
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Show loading state
-                        Swal.fire({
-                            title: 'Submitting Document...',
-                            text: 'Please wait while we process your document registration.',
-                            icon: 'info',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            showConfirmButton: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'File size must be less than 10MB',
+                    confirmButtonColor: '#d33'
+                });
+                this.value = '';
+                return;
+            }
 
-                        // Submit the form
-                        form.submit();
+            // Display file info
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            console.log(`Selected file: ${fileName} (${fileSize} MB)`);
+        }
+    });
+
+    // Form submission with SweetAlert confirmation
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('documentForm');
+
+    submitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        // Check if form is valid first
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        // Get form values for confirmation
+        const formData = new FormData(form);
+        const documentTitle = formData.get('document_title') || 'Not specified';
+        const documentNo = formData.get('document_no') || 'Not specified';
+        const revisionNo = formData.get('revision_no') || 'Not specified';
+        const deviceName = formData.get('device_name') || 'Not specified';
+        const customer = formData.get('customer') || 'Not specified';
+        const fileName = formData.get('document_file') ? formData.get('document_file').name : 'No file selected';
+        const remarks = formData.get('remarks') || 'No remarks';
+
+        // Get selected category name
+        const categorySelect = document.getElementById('category_id');
+        const categoryName = categorySelect.options[categorySelect.selectedIndex].textContent || 'Not selected';
+
+        // Show confirmation dialog with form details
+        Swal.fire({
+            title: 'Confirm Document Submission',
+            html: `
+        <div class="text-left">
+            <p><strong>Please review the following details before submitting:</strong></p>
+            <hr>
+            <p><strong>Document Title:</strong> ${documentTitle}</p>
+            <p><strong>Category:</strong> ${categoryName}</p>
+            <p><strong>Document Number:</strong> ${documentNo}</p>
+            <p><strong>Revision Number:</strong> ${revisionNo}</p>
+            <p><strong>Device Name:</strong> ${deviceName}</p>
+            <p><strong>Customer:</strong> ${customer}</p>
+            <p><strong>File:</strong> ${fileName}</p>
+            <p><strong>Remarks:</strong> ${remarks.substring(0, 100)}${remarks.length > 100 ? '...' : ''}</p>
+            <hr>
+            <p class="text-muted"><small><i class='bx bx-info-circle'></i> This document will be submitted for approval and you can edit it while it's in pending status.</small></p>
+        </div>
+    `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="bx bx-check"></i> Yes, Submit',
+            cancelButtonText: '<i class="bx bx-x"></i> Cancel',
+            width: '600px',
+            customClass: {
+                htmlContainer: 'text-left'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading state
+                Swal.fire({
+                    title: 'Submitting Document...',
+                    text: 'Please wait while we process your document registration.',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
                 });
-            });
+
+                // Submit the form
+                form.submit();
+            }
         });
-    </script>
+    });
+});
+</script>
 @endpush

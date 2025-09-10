@@ -24,6 +24,7 @@ class DocumentRegistrationEntry extends Model
         'submitted_at',
         'implemented_at',
         'rejection_reason',
+        'category_id',
     ];
 
     protected $casts = [
@@ -32,6 +33,11 @@ class DocumentRegistrationEntry extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function status()
     {

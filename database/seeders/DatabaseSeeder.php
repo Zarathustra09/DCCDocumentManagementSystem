@@ -20,7 +20,8 @@ class DatabaseSeeder extends Seeder
 //            FolderSeeder::class,
 //          PermissionSeeder::class,
 //          RunSqlSeeder::class,
-          MinimalRolesAndPermissionsSeeder::class,
+//          MinimalRolesAndPermissionsSeeder::class,
+      CategorySeeder::class
 
         ]);
     }

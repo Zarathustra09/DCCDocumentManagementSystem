@@ -39,6 +39,7 @@ class DocumentRegistryEntryCreated extends Notification
             ->greeting('Hello ' . $notifiable->name . ',')
             ->line('A new document registry entry has been created.')
             ->line('Document: ' . $this->entry->document_title)
+            ->line('Category: ' . ($this->entry->category ? $this->entry->category->name : 'N/A'))
             ->line('Document No: ' . $this->entry->document_no)
             ->line('Submitted by: ' . $this->entry->submittedBy->name)
             ->action('View Entry', url(route('document-registry.show', $this->entry->document_no)))
@@ -52,7 +53,7 @@ class DocumentRegistryEntryCreated extends Notification
 
     public static function sendToAdmins(DocumentRegistrationEntry $entry)
     {
-        $admins = User::role(['SuperAdmin','DCCAdmin'])->get();
+        $admins = User::role(['SuperAdmin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new static($entry));
         }

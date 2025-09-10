@@ -35,19 +35,24 @@
                                 @enderror
                             </div>
 
-                            <!-- Document Number -->
+                            <!-- Category -->
                             <div class="col-md-6 mb-3">
-                                <label for="document_no" class="form-label">
-                                    <i class='bx bx-hash'></i> Document Number <span class="text-danger">*</span>
+                                <label for="category_id" class="form-label">
+                                    <i class='bx bx-category'></i> Category <span class="text-danger">*</span>
                                 </label>
-                                <input type="text"
-                                       class="form-control @error('document_no') is-invalid @enderror"
-                                       id="document_no"
-                                       name="document_no"
-                                       value="{{ old('document_no', $documentRegistrationEntry->document_no) }}"
-                                       required
-                                       placeholder="e.g., DOC-2024-001">
-                                @error('document_no')
+                                <select class="form-select @error('category_id') is-invalid @enderror"
+                                        id="category_id"
+                                        name="category_id"
+                                        required>
+                                    <option value="">Select a category</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}"
+                                                {{ old('category_id', $documentRegistrationEntry->category_id) == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }} ({{ $category->code }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('category_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -138,17 +143,17 @@
                         <div class="alert alert-info">
                             <i class='bx bx-info-circle'></i>
                             <strong>Current Status:</strong>
-                            @if($documentRegistrationEntry->status === 'pending')
+                            @if($documentRegistrationEntry->status->name === 'Pending')
                                 <span class="badge bg-warning text-dark ms-2">
-                                    <i class='bx bx-time'></i> {{ $documentRegistrationEntry->status_name }}
+                                    <i class='bx bx-time'></i> {{ $documentRegistrationEntry->status->name }}
                                 </span>
-                            @elseif($documentRegistrationEntry->status === 'approved')
+                            @elseif($documentRegistrationEntry->status->name === 'Implemented')
                                 <span class="badge bg-success text-white ms-2">
-                                    <i class='bx bx-check'></i> {{ $documentRegistrationEntry->status_name }}
+                                    <i class='bx bx-check'></i> {{ $documentRegistrationEntry->status->name }}
                                 </span>
                             @else
                                 <span class="badge bg-danger text-white ms-2">
-                                    <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status_name }}
+                                    <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status->name }}
                                 </span>
                             @endif
                             <br>
@@ -170,12 +175,8 @@
         </div>
     </div>
 </div>
-
-
-
 @endsection
 
-{{--TODO: To remove the style after the database migration of the new document registry files reference to the registry--}}
 @push('styles')
     <style>
         .badge {
@@ -198,25 +199,8 @@
 @endpush
 
 @push('scripts')
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-format document number
-            const documentNoInput = document.getElementById('document_no');
-            documentNoInput.addEventListener('blur', function() {
-                let value = this.value.trim().toUpperCase();
-                if (value && !value.includes('-')) {
-                    // Auto-format if it doesn't contain hyphens
-                    const year = new Date().getFullYear();
-                    const match = value.match(/(\d+)$/);
-                    if (match) {
-                        const number = match[1].padStart(3, '0');
-                        value = `DOC-${year}-${number}`;
-                    }
-                }
-                this.value = value;
-            });
-
             // Validate revision number format
             const revisionInput = document.getElementById('revision_no');
             revisionInput.addEventListener('input', function() {

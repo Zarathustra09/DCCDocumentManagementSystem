@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
 use App\Models\DocumentRegistrationEntryStatus;
@@ -20,7 +21,7 @@ class DocumentRegistrationEntryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status']);
+        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status', 'category']);
 
         $query->where('submitted_by', Auth::id());
 
@@ -30,18 +31,28 @@ class DocumentRegistrationEntryController extends Controller
             });
         }
 
+        if ($request->has('category_id') && $request->category_id !== '' && $request->category_id !== null) {
+            $query->where('category_id', $request->category_id);
+        }
+
         if ($request->has('search') && $request->search !== '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('document_no', 'like', "%{$search}%")
-                  ->orWhere('document_title', 'like', "%{$search}%")
-                  ->orWhere('device_name', 'like', "%{$search}%")
-                  ->orWhere('originator_name', 'like', "%{$search}%");
+                    ->orWhere('document_title', 'like', "%{$search}%")
+                    ->orWhere('device_name', 'like', "%{$search}%")
+                    ->orWhere('originator_name', 'like', "%{$search}%")
+                    ->orWhereHas('category', function($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                    });
             });
         }
 
         $entries = $query->latest()->paginate(15);
-        return view('document-registry.index', compact('entries'));
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+
+        return view('document-registry.index', compact('entries', 'categories'));
     }
 
     public function create()
@@ -49,7 +60,9 @@ class DocumentRegistrationEntryController extends Controller
         if (!Auth::user()->can('submit document for approval')) {
             abort(403, 'You do not have permission to submit documents for approval.');
         }
-        return view('document-registry.create');
+
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        return view('document-registry.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -61,6 +74,7 @@ class DocumentRegistrationEntryController extends Controller
         $request->validate([
             'document_no' => 'required|string|max:100|unique:document_registration_entries',
             'document_title' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
             'revision_no' => 'required|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
@@ -74,6 +88,7 @@ class DocumentRegistrationEntryController extends Controller
         $entry = DocumentRegistrationEntry::create([
             'document_no' => $request->document_no,
             'document_title' => $request->document_title,
+            'category_id' => $request->category_id,
             'revision_no' => $request->revision_no,
             'device_name' => $request->device_name,
             'originator_name' => $request->originator_name,
@@ -109,7 +124,7 @@ class DocumentRegistrationEntryController extends Controller
         if (!$this->canViewEntry($documentRegistrationEntry)) {
             abort(403, 'You do not have permission to view this document registration.');
         }
-        $documentRegistrationEntry->load(['submittedBy', 'approvedBy', 'documents', 'files.status', 'status']);
+        $documentRegistrationEntry->load(['submittedBy', 'approvedBy', 'documents', 'files.status', 'status', 'category']);
         return view('document-registry.show', compact('documentRegistrationEntry'));
     }
 
@@ -118,29 +133,12 @@ class DocumentRegistrationEntryController extends Controller
         if (!$this->canEditEntry($documentRegistrationEntry)) {
             abort(403);
         }
-        return view('document-registry.edit', compact('documentRegistrationEntry'));
+
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        return view('document-registry.edit', compact('documentRegistrationEntry', 'categories'));
     }
 
-    public function update(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
-    {
-        if (!$this->canEditEntry($documentRegistrationEntry)) {
-            abort(403);
-        }
-        $request->validate([
-            'document_title' => 'required|string|max:255',
-            'revision_no' => 'required|string|max:50',
-            'device_name' => 'nullable|string|max:255',
-            'originator_name' => 'required|string|max:255',
-            'customer' => 'nullable|string|max:255',
-            'remarks' => 'nullable|string',
-        ]);
-        $documentRegistrationEntry->update($request->only([
-            'document_title', 'revision_no', 'device_name',
-            'originator_name', 'customer', 'remarks'
-        ]));
-        return redirect()->route('document-registry.show', $documentRegistrationEntry)
-            ->with('success', 'Document registration updated successfully.');
-    }
+
 
     public function approve(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
@@ -217,6 +215,169 @@ class DocumentRegistrationEntryController extends Controller
         return back()->with('success', 'Document registration rejected.');
     }
 
+    public function update(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
+    {
+        if (!$this->canEditEntry($documentRegistrationEntry)) {
+            abort(403);
+        }
+
+        $request->validate([
+            'document_title' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'revision_no' => 'required|string|max:50',
+            'device_name' => 'nullable|string|max:255',
+            'originator_name' => 'required|string|max:255',
+            'customer' => 'nullable|string|max:255',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $documentRegistrationEntry->update($request->only([
+            'document_title', 'category_id', 'revision_no', 'device_name',
+            'originator_name', 'customer', 'remarks'
+        ]));
+
+        return redirect()->route('document-registry.show', $documentRegistrationEntry)
+            ->with('success', 'Document registration updated successfully.');
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+        $page = $request->get('page', 1);
+        $perPage = 10;
+
+        $entries = DocumentRegistrationEntry::with('category')
+            ->whereHas('status', function($q) {
+                $q->where('name', 'Implemented');
+            })
+            ->where(function($q) use ($query) {
+                $q->where('document_no', 'like', "%{$query}%")
+                    ->orWhere('document_title', 'like', "%{$query}%")
+                    ->orWhere('device_name', 'like', "%{$query}%")
+                    ->orWhere('originator_name', 'like', "%{$query}%")
+                    ->orWhereHas('category', function($categoryQuery) use ($query) {
+                        $categoryQuery->where('name', 'like', "%{$query}%")
+                            ->orWhere('code', 'like', "%{$query}%");
+                    });
+            })
+            ->orderBy('document_title')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $morePages = $entries->hasMorePages();
+        $results = [];
+
+        foreach ($entries as $entry) {
+            $categoryInfo = $entry->category ? " [{$entry->category->code}]" : "";
+            $results[] = [
+                'id' => $entry->id,
+                'text' => "{$entry->document_no} - {$entry->document_title}" .
+                    ($entry->device_name ? " ({$entry->device_name})" : "") . $categoryInfo
+            ];
+        }
+
+        return response()->json([
+            'results' => $results,
+            'pagination' => [
+                'more' => $morePages
+            ]
+        ]);
+    }
+
+    public function list(Request $request)
+    {
+        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status', 'category']);
+
+        if (Auth::user()->can('view all document registrations')) {
+            // User can view all entries
+        } else {
+            // Restrict to user's own entries
+            $query->where('submitted_by', Auth::id());
+        }
+
+        // Status filter using relationship
+        if ($request->filled('status')) {
+            $query->whereHas('status', function ($q) use ($request) {
+                $q->where('name', $request->status);
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('document_title', 'like', "%{$search}%")
+                    ->orWhere('document_no', 'like', "%{$search}%")
+                    ->orWhere('originator_name', 'like', "%{$search}%")
+                    ->orWhere('customer', 'like', "%{$search}%")
+                    ->orWhere('device_name', 'like', "%{$search}%")
+                    ->orWhereHas('category', function($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Submitted by filter
+        if ($request->filled('submitted_by')) {
+            $query->where('submitted_by', $request->submitted_by);
+        }
+
+        // Date range filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('submitted_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('submitted_at', '<=', $request->date_to);
+        }
+
+        $entries = $query->latest('submitted_at')->get();
+
+        // Calculate counts using relationships
+        $pendingCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
+            $q->where('name', 'Pending');
+        })->count();
+
+        $approvedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
+            $q->where('name', 'Implemented');
+        })->count();
+
+        $rejectedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
+            $q->where('name', 'Cancelled');
+        })->count();
+
+        // Get filter options
+        $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
+            ->get()
+            ->sortBy('name')
+            ->values();
+
+        // Get status options from the relationship
+        $statuses = DocumentRegistrationEntryStatus::active()
+            ->orderBy('name')
+            ->get();
+
+        // Get categories for filtering
+        $categories = Category::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('document-registry.list', compact(
+            'entries',
+            'submitters',
+            'statuses',
+            'categories',
+            'pendingCount',
+            'approvedCount',
+            'rejectedCount'
+        ));
+    }
+
     public function requireRevision(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
         if (!Auth::user()->can('require revision for document') ||
@@ -261,142 +422,6 @@ class DocumentRegistrationEntryController extends Controller
         $documentRegistrationEntry->delete();
         return redirect()->route('document-registry.index')
             ->with('success', 'Document registration withdrawn successfully.');
-    }
-
-    public function bulkApprove(Request $request)
-    {
-        if (!Auth::user()->can('bulk approve document registrations')) {
-            abort(403);
-        }
-        $request->validate([
-            'entries' => 'required|array',
-            'entries.*' => 'exists:document_registration_entries,id'
-        ]);
-
-        $implementedStatus = DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
-        $implementedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
-
-        $count = DocumentRegistrationEntry::whereIn('id', $request->entries)
-            ->whereHas('status', function($q) {
-                $q->where('name', 'Pending');
-            })
-            ->update([
-                'status_id' => $implementedStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now()
-            ]);
-
-        DocumentRegistrationEntryFile::whereIn('entry_id', $request->entries)
-            ->whereHas('status', function($q) {
-                $q->where('name', 'Pending');
-            })
-            ->update([
-                'status_id' => $implementedFileStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now()
-            ]);
-
-        return back()->with('success', "{$count} document registrations approved successfully.");
-    }
-
-    public function bulkReject(Request $request)
-    {
-        if (!Auth::user()->can('bulk reject document registrations')) {
-            abort(403);
-        }
-        $request->validate([
-            'entries' => 'required|array',
-            'entries.*' => 'exists:document_registration_entries,id',
-            'rejection_reason' => 'required|string'
-        ]);
-
-        $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
-        $cancelledFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Cancelled')->first();
-
-        $count = DocumentRegistrationEntry::whereIn('id', $request->entries)
-            ->whereHas('status', function($q) {
-                $q->where('name', 'Pending');
-            })
-            ->update([
-                'status_id' => $cancelledStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => $request->rejection_reason
-            ]);
-
-        DocumentRegistrationEntryFile::whereIn('entry_id', $request->entries)
-            ->whereHas('status', function($q) {
-                $q->where('name', 'Pending');
-            })
-            ->update([
-                'status_id' => $cancelledFileStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => $request->rejection_reason
-            ]);
-
-        return back()->with('success', "{$count} document registrations rejected.");
-    }
-
-    public function reassignApprover(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
-    {
-        if (!Auth::user()->can('reassign document approver')) {
-            abort(403);
-        }
-        $request->validate([
-            'approver_id' => 'required|exists:users,id'
-        ]);
-        $newApprover = User::find($request->approver_id);
-        if (!$newApprover->can('approve document registration')) {
-            return back()->withErrors(['approver_id' => 'Selected user does not have approval permissions.']);
-        }
-        return back()->with('success', 'Document approver reassigned successfully.');
-    }
-
-    public function overrideApproval(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
-    {
-        if (!Auth::user()->can('override approval process')) {
-            abort(403);
-        }
-        $request->validate([
-            'action' => 'required|in:approve,reject',
-            'reason' => 'required|string'
-        ]);
-
-        if ($request->action === 'approve') {
-            $implementedStatus = DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
-            $implementedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
-
-            $documentRegistrationEntry->update([
-                'status_id' => $implementedStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-            ]);
-
-            $documentRegistrationEntry->files()->update([
-                'status_id' => $implementedFileStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-            ]);
-        } else {
-            $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
-            $cancelledFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Cancelled')->first();
-
-            $documentRegistrationEntry->update([
-                'status_id' => $cancelledStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => $request->reason,
-            ]);
-
-            $documentRegistrationEntry->files()->update([
-                'status_id' => $cancelledFileStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => $request->reason,
-            ]);
-        }
-        return back()->with('success', 'Approval process overridden successfully.');
     }
 
     private function canViewEntry(DocumentRegistrationEntry $entry)
@@ -648,118 +673,5 @@ class DocumentRegistrationEntryController extends Controller
         $html = str_replace('> <', '><', $html);
         $html = str_replace('<p></p>', '', $html);
         return trim($html);
-    }
-
-    public function search(Request $request)
-    {
-        $query = $request->get('q');
-        $page = $request->get('page', 1);
-        $perPage = 10;
-        $entries = DocumentRegistrationEntry::whereHas('status', function($q) {
-                $q->where('name', 'Implemented');
-            })
-            ->where(function($q) use ($query) {
-                $q->where('document_no', 'like', "%{$query}%")
-                    ->orWhere('document_title', 'like', "%{$query}%")
-                    ->orWhere('device_name', 'like', "%{$query}%")
-                    ->orWhere('originator_name', 'like', "%{$query}%");
-            })
-            ->orderBy('document_title')
-            ->paginate($perPage, ['*'], 'page', $page);
-        $morePages = $entries->hasMorePages();
-        $results = [];
-        foreach ($entries as $entry) {
-            $results[] = [
-                'id' => $entry->id,
-                'text' => "{$entry->document_no} - {$entry->document_title}" .
-                    ($entry->device_name ? " ({$entry->device_name})" : "")
-            ];
-        }
-        return response()->json([
-            'results' => $results,
-            'pagination' => [
-                'more' => $morePages
-            ]
-        ]);
-    }
-
-    public function list(Request $request)
-    {
-        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status']);
-
-        if (Auth::user()->can('view all document registrations')) {
-            // User can view all entries
-        } else {
-            // Restrict to user's own entries
-            $query->where('submitted_by', Auth::id());
-        }
-
-        // Status filter using relationship
-        if ($request->filled('status')) {
-            $query->whereHas('status', function ($q) use ($request) {
-                $q->where('name', $request->status);
-            });
-        }
-
-        // Search filter
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('document_title', 'like', "%{$search}%")
-                  ->orWhere('document_no', 'like', "%{$search}%")
-                  ->orWhere('originator_name', 'like', "%{$search}%")
-                  ->orWhere('customer', 'like', "%{$search}%")
-                  ->orWhere('device_name', 'like', "%{$search}%");
-            });
-        }
-
-        // Submitted by filter
-        if ($request->filled('submitted_by')) {
-            $query->where('submitted_by', $request->submitted_by);
-        }
-
-        // Date range filters
-        if ($request->filled('date_from')) {
-            $query->whereDate('submitted_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('submitted_at', '<=', $request->date_to);
-        }
-
-        $entries = $query->latest('submitted_at')->get();
-
-        // Calculate counts using relationships
-        $pendingCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
-            $q->where('name', 'Pending');
-        })->count();
-
-        $approvedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
-            $q->where('name', 'Implemented');
-        })->count();
-
-        $rejectedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
-            $q->where('name', 'Cancelled');
-        })->count();
-
-        // Get filter options
-        $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
-            ->get()
-            ->sortBy('name')
-            ->values();
-
-        // Get status options from the relationship
-        $statuses = DocumentRegistrationEntryStatus::active()
-            ->orderBy('name')
-            ->get();
-
-        return view('document-registry.list', compact(
-            'entries',
-            'submitters',
-            'statuses',
-            'pendingCount',
-            'approvedCount',
-            'rejectedCount'
-        ));
     }
 }

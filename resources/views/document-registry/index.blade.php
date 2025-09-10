@@ -15,6 +15,38 @@
                 </div>
 
                 <div class="card-body">
+                    <!-- Filter Form -->
+                    <form method="GET" action="{{ route('document-registry.index') }}" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select name="status" class="form-select">
+                                    <option value="">All Statuses</option>
+                                    <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="Implemented" {{ request('status') == 'Implemented' ? 'selected' : '' }}>Implemented</option>
+                                    <option value="Cancelled" {{ request('status') == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="category_id" class="form-select">
+                                    <option value="">All Categories</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }} ({{ $category->code }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="search" class="form-control"
+                                       value="{{ request('search') }}"
+                                       placeholder="Search documents...">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+
                     <!-- Entries Table -->
                     <div class="table-responsive">
                         <table class="table table-striped table-hover" id="documentRegistry">
@@ -22,6 +54,7 @@
                                 <tr>
                                     <th>Control No.</th>
                                     <th>Document Title</th>
+                                    <th>Category</th>
                                     <th>Device Part Number</th>
                                     <th>Document No.</th>
                                     <th>Rev.</th>
@@ -43,16 +76,22 @@
                                             <strong>{{ $entry->document_title ?? '-' }}</strong>
                                         </td>
                                         <td>
+                                            @if($entry->category)
+                                                <span class="badge bg-info">{{ $entry->category->code }}</span>
+                                                <br><small>{{ $entry->category->name }}</small>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>
                                             {{ $entry->device_name ?? '-'}}
                                         </td>
                                         <td>{{ $entry->document_no ?? '-' }}</td>
                                         <td>{{ $entry->revision_no ?? '-' }}</td>
                                         <td>{{ $entry->originator_name ?? '-' }}</td>
                                         <td>{{ $entry->customer ?? '-' }}</td>
-
                                         <td>
                                             <small>
-{{--                                                <i class='bx bx-user'></i> {{ $entry->submittedBy?->name ?? '-' }}<br>--}}
                                                 <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('m/d/Y') ?? '-' }}
                                                 <br>
                                                 <small class="text-muted">{{ $entry->submitted_at->format('g:i A') }}</small>
@@ -63,10 +102,8 @@
                                                 <i class='bx bx-user'></i> {{ $entry->approvedBy?->name ?? '-' }}<br>
                                                 <i class='bx bx-calendar'></i> {{ $entry->implemented_at?->format('m/d/Y') ?? '-' }}
                                                 <small class="text-muted">{{ $entry->implemented_at?->format('g:i A') }}</small>
-
                                             </small>
                                         </td>
-
                                         <td>
                                             @if($entry->status->name === 'Pending')
                                                 <span class="badge bg-warning text-dark">
@@ -104,7 +141,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="text-center py-4">
+                                        <td colspan="12" class="text-center py-4">
                                             <i class='bx bx-info-circle'></i> No document registrations found.
                                         </td>
                                     </tr>
@@ -143,10 +180,10 @@
         $(document).ready(function() {
             $('#documentRegistry').DataTable({
                 responsive: true,
-                order: [[6, 'desc']],
+                order: [[8, 'desc']],
                 pageLength: 10,
                 columnDefs: [
-                    { orderable: false, targets: [0, 9] }
+                    { orderable: false, targets: [0, 11] }
                 ],
                 language: {
                     search: "Search entries:",
