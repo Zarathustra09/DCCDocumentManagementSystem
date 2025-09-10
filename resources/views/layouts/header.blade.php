@@ -83,6 +83,14 @@
             </ul>
         </li>
 
+      @can('view category')
+          <li class="menu-item {{ Route::is('categories.*') ? 'active' : '' }}">
+              <a href="{{ route('categories.index') }}" class="menu-link">
+                  <i class="menu-icon tf-icons bx bx-category"></i>
+                  <div data-i18n="Categories">Categories</div>
+              </a>
+          </li>
+      @endcan
 
 
         <li class="menu-header small text-uppercase">
