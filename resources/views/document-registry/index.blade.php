@@ -85,7 +85,7 @@
                                         <td>{{ $entry->document_no ?? '-' }}</td>
                                         <td>{{ $entry->revision_no ?? '-' }}</td>
                                         <td>{{ $entry->originator_name ?? '-' }}</td>
-                                        <td>{{ $entry->customer ?? '-' }}</td>
+                                        <td>{{ $entry->customer->name ?? '-' }}</td>
                                         <td>
                                             <small>
                                                 <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('m/d/Y') ?? '-' }}

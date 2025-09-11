@@ -80,7 +80,7 @@
                                                     </small>
                                                     @if($entry->customer)
                                                         <br>
-                                                        <small class="text-info">Customer: {{ $entry->customer }}</small>
+                                                        <small class="text-info">Customer: {{ $entry->customer->name }}</small>
                                                     @endif
                                                 </div>
                                             </td>

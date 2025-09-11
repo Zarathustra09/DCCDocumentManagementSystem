@@ -21,7 +21,10 @@ class DatabaseSeeder extends Seeder
 //          PermissionSeeder::class,
 //          RunSqlSeeder::class,
 //          MinimalRolesAndPermissionsSeeder::class,
-      CategorySeeder::class
+//      CategorySeeder::class
+      RemoveMechatronicsParentCategorySeeder::class,
+      CustomerSeeder::class,
+       CustomerSeeder::class,
 
         ]);
     }

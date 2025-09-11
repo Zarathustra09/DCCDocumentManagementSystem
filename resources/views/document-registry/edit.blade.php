@@ -6,10 +6,17 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-edit'></i> Edit Document Registration</h3>
-                    <a href="javascript:history.back()" class="btn btn-secondary">
-                        <i class='bx bx-arrow-back'></i> Back to Details
-                    </a>
+                    <h3 class="card-title">
+                        <i class='bx bx-edit'></i> Edit Document Registration
+                    </h3>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-{{ $documentRegistrationEntry->status->name === 'Pending' ? 'warning' : ($documentRegistrationEntry->status->name === 'Implemented' ? 'success' : 'danger') }}">
+                            {{ $documentRegistrationEntry->status->name }}
+                        </span>
+                        <a href="{{ route('document-registry.show', $documentRegistrationEntry) }}" class="btn btn-secondary">
+                            <i class='bx bx-arrow-back'></i> Back to Details
+                        </a>
+                    </div>
                 </div>
 
                 <div class="card-body">
@@ -31,7 +38,7 @@
                                        required
                                        placeholder="Enter document title">
                                 @error('document_title')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -40,21 +47,57 @@
                                 <label for="category_id" class="form-label">
                                     <i class='bx bx-category'></i> Category <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('category_id') is-invalid @enderror"
+                                <select class="form-control @error('category_id') is-invalid @enderror"
                                         id="category_id"
                                         name="category_id"
                                         required>
-                                    <option value="">Select a category</option>
+                                    <option value="">Select Category</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->id }}"
                                                 {{ old('category_id', $documentRegistrationEntry->category_id) == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }} ({{ $category->code }})
+                                            {{ $category->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('category_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+
+                            <!-- Customer -->
+                            <div class="col-md-6 mb-3">
+                                <label for="customer_id" class="form-label">
+                                    <i class='bx bx-building'></i> Customer
+                                </label>
+                                <select class="form-control @error('customer_id') is-invalid @enderror"
+                                        id="customer_id"
+                                        name="customer_id">
+                                    <option value="">Select Customer (Optional)</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}"
+                                                {{ old('customer_id', $documentRegistrationEntry->customer_id) == $customer->id ? 'selected' : '' }}>
+                                            {{ $customer->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('customer_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Document Number (Read-only) -->
+                            <div class="col-md-6 mb-3">
+                                <label for="document_no" class="form-label">
+                                    <i class='bx bx-hash'></i> Document Number
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="document_no"
+                                       value="{{ $documentRegistrationEntry->document_no }}"
+                                       readonly>
+                                <small class="form-text text-muted">
+                                    <i class='bx bx-info-circle'></i> Document number cannot be changed
+                                </small>
                             </div>
 
                             <!-- Revision Number -->
@@ -70,7 +113,7 @@
                                        required
                                        placeholder="e.g., 0, 1, 2">
                                 @error('revision_no')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -86,7 +129,7 @@
                                        value="{{ old('device_name', $documentRegistrationEntry->device_name) }}"
                                        placeholder="Enter device name (if applicable)">
                                 @error('device_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -103,23 +146,7 @@
                                        required
                                        placeholder="Enter originator name">
                                 @error('originator_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <!-- Customer -->
-                            <div class="col-md-12 mb-3">
-                                <label for="customer" class="form-label">
-                                    <i class='bx bx-building'></i> Customer
-                                </label>
-                                <input type="text"
-                                       class="form-control @error('customer') is-invalid @enderror"
-                                       id="customer"
-                                       name="customer"
-                                       value="{{ old('customer', $documentRegistrationEntry->customer) }}"
-                                       placeholder="Enter customer name (if applicable)">
-                                @error('customer')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -134,30 +161,16 @@
                                           rows="4"
                                           placeholder="Enter any additional remarks or notes">{{ old('remarks', $documentRegistrationEntry->remarks) }}</textarea>
                                 @error('remarks')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
 
-                        <!-- Current Status Info -->
+                        <!-- Update Info -->
                         <div class="alert alert-info">
                             <i class='bx bx-info-circle'></i>
-                            <strong>Current Status:</strong>
-                            @if($documentRegistrationEntry->status->name === 'Pending')
-                                <span class="badge bg-warning text-dark ms-2">
-                                    <i class='bx bx-time'></i> {{ $documentRegistrationEntry->status->name }}
-                                </span>
-                            @elseif($documentRegistrationEntry->status->name === 'Implemented')
-                                <span class="badge bg-success text-white ms-2">
-                                    <i class='bx bx-check'></i> {{ $documentRegistrationEntry->status->name }}
-                                </span>
-                            @else
-                                <span class="badge bg-danger text-white ms-2">
-                                    <i class='bx bx-x'></i> {{ $documentRegistrationEntry->status->name }}
-                                </span>
-                            @endif
-                            <br>
-                            <strong>Note:</strong> Changes will be saved but the approval status will remain unchanged.
+                            <strong>Note:</strong> Only certain fields can be edited while the document is in pending status.
+                            The document number cannot be changed after creation.
                         </div>
 
                         <!-- Form Actions -->
@@ -166,7 +179,7 @@
                                 <i class='bx bx-x'></i> Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-check'></i> Update Registration
+                                <i class='bx bx-save'></i> Update Registration
                             </button>
                         </div>
                     </form>
@@ -196,17 +209,4 @@
             color: #ffffff !important;
         }
     </style>
-@endpush
-
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Validate revision number format
-            const revisionInput = document.getElementById('revision_no');
-            revisionInput.addEventListener('input', function() {
-                // Only allow numbers and basic revision formats
-                this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
-            });
-        });
-    </script>
 @endpush

@@ -80,6 +80,26 @@
                                     @enderror
                                 </div>
 
+                                <!-- Customer Field (add this after the category field) -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="customer" class="form-label">
+                                            <i class='bx bx-building'></i> Customer
+                                        </label>
+                                        <select class="form-control" id="customer_id" name="customer_id">
+                                            <option value="">Select Customer (Optional)</option>
+                                            @foreach($customers as $customer)
+                                                <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
+                                                    {{ $customer->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('customer_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
                                 <!-- Document Number -->
                                 <div class="col-md-6 mb-3">
                                     <label for="document_no" class="form-label">
@@ -148,21 +168,6 @@
                                     </small>
                                 </div>
 
-                                <!-- Customer -->
-                                <div class="col-md-6 mb-3">
-                                    <label for="customer" class="form-label">
-                                        <i class='bx bx-building'></i> Customer
-                                    </label>
-                                    <input type="text"
-                                           class="form-control @error('customer') is-invalid @enderror"
-                                           id="customer"
-                                           name="customer"
-                                           value="{{ old('customer') }}"
-                                           placeholder="Enter customer name (if applicable)">
-                                    @error('customer')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
 
                                 <!-- Document File Upload -->
                                 <div class="col-md-12 mb-3">
@@ -474,7 +479,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const documentNo = formData.get('document_no') || 'Not specified';
             const revisionNo = formData.get('revision_no') || 'Not specified';
             const deviceName = formData.get('device_name') || 'Not specified';
-            const customer = formData.get('customer') || 'Not specified';
+            const customerSelect = document.getElementById('customer_id');
+            const customerText = customerSelect.selectedIndex > 0 ? customerSelect.options[customerSelect.selectedIndex].text : 'Not specified';
             const fileName = formData.get('document_file') ? formData.get('document_file').name : 'No file selected';
             const remarks = formData.get('remarks') || 'No remarks';
             const categoryDisplay = document.getElementById('category_display').value || 'Not selected';
@@ -490,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p><strong>Document Number:</strong> ${documentNo}</p>
                         <p><strong>Revision Number:</strong> ${revisionNo}</p>
                         <p><strong>Device Name:</strong> ${deviceName}</p>
-                        <p><strong>Customer:</strong> ${customer}</p>
+                        <p><strong>Customer:</strong> ${customerText}<br></p>
                         <p><strong>File:</strong> ${fileName}</p>
                         <p><strong>Remarks:</strong> ${remarks.substring(0, 100)}${remarks.length > 100 ? '...' : ''}</p>
                         <hr>

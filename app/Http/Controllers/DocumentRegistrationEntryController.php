@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
 use App\Models\DocumentRegistrationEntryStatus;
@@ -62,7 +63,8 @@ class DocumentRegistrationEntryController extends Controller
         }
 
         $categories = Category::where('is_active', true)->orderBy('name')->get();
-        return view('document-registry.create', compact('categories'));
+        $customers = Customer::where('is_active', true)->orderBy('name')->get();
+        return view('document-registry.create', compact('categories', 'customers'));
     }
 
     public function store(Request $request)
@@ -75,10 +77,11 @@ class DocumentRegistrationEntryController extends Controller
             'document_no' => 'required|string|max:100|unique:document_registration_entries',
             'document_title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'customer_id' => 'required|exists:customers,id',
             'revision_no' => 'required|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
-            'customer' => 'nullable|string|max:255',
+//            'customer' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
             'document_file' => 'nullable|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:10240'
         ]);
@@ -89,10 +92,11 @@ class DocumentRegistrationEntryController extends Controller
             'document_no' => $request->document_no,
             'document_title' => $request->document_title,
             'category_id' => $request->category_id,
+            'customer_id' => $request->customer_id,
             'revision_no' => $request->revision_no,
             'device_name' => $request->device_name,
             'originator_name' => $request->originator_name,
-            'customer' => $request->customer,
+//            'customer' => $request->customer,
             'remarks' => $request->remarks,
             'status_id' => $pendingStatus->id,
             'submitted_by' => Auth::id(),
@@ -135,7 +139,8 @@ class DocumentRegistrationEntryController extends Controller
         }
 
         $categories = Category::where('is_active', true)->orderBy('name')->get();
-        return view('document-registry.edit', compact('documentRegistrationEntry', 'categories'));
+        $customers = Customer::where('is_active', true)->orderBy('name')->get();
+        return view('document-registry.edit', compact('documentRegistrationEntry', 'categories', 'customers'));
     }
 
 
@@ -224,16 +229,16 @@ class DocumentRegistrationEntryController extends Controller
         $request->validate([
             'document_title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'customer_id' => 'nullable|exists:customers,id',
             'revision_no' => 'required|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
-            'customer' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
         ]);
 
         $documentRegistrationEntry->update($request->only([
-            'document_title', 'category_id', 'revision_no', 'device_name',
-            'originator_name', 'customer', 'remarks'
+            'document_title', 'category_id', 'customer_id', 'revision_no', 'device_name',
+            'originator_name', 'remarks'
         ]));
 
         return redirect()->route('document-registry.show', $documentRegistrationEntry)

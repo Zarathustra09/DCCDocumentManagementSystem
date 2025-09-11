@@ -152,7 +152,7 @@
                                         <td>{{ $entry->document_no ?? '-'}}</td>
                                         <td>{{ $entry->revision_no ?? '-'}}</td>
                                         <td>{{ $entry->originator_name ?? '-'}}</td>
-                                        <td>{{ $entry->customer ?? '-' }}</td>
+                                        <td>{{ $entry->customer->name ?? '-' }}</td>
                                         <td>
                                             @if($entry->status->name === 'Pending')
                                                 <span class="badge bg-warning text-dark">

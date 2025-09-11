@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BaseFolderController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentRegistrationEntryController;
 use App\Http\Controllers\DocumentRegistrationEntryFileController;
@@ -66,6 +67,7 @@ Route::put('roles/{role}/update-name', [RoleController::class, 'updateName'])->n
 
 Route::resource('base-folder', BaseFolderController::class)->except(['index', 'show']);
 Route::resource('categories', CategoryController::class);
+Route::resource('customers', CustomerController::class);
 
 
 

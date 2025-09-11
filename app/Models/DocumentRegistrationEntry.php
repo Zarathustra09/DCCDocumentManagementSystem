@@ -16,7 +16,7 @@ class DocumentRegistrationEntry extends Model
         'revision_no',
         'device_name',
         'originator_name',
-        'customer',
+//        'customer',
         'remarks',
         'status_id',
         'submitted_by',
@@ -25,6 +25,7 @@ class DocumentRegistrationEntry extends Model
         'implemented_at',
         'rejection_reason',
         'category_id',
+        'customer_id'
     ];
 
     protected $casts = [
@@ -37,6 +38,11 @@ class DocumentRegistrationEntry extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function status()

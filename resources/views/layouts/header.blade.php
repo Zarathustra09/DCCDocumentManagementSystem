@@ -92,6 +92,16 @@
           </li>
       @endcan
 
+        @can('view customer')
+            <li class="menu-item {{ Route::is('customers.*') ? 'active' : '' }}">
+                <a href="{{ route('customers.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user"></i>
+                    <div data-i18n="Customers">Customers</div>
+                </a>
+            </li>
+        @endcan
+
+
 
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Collaboration</span>

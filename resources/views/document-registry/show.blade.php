@@ -80,7 +80,7 @@
                                         @if($documentRegistrationEntry->customer)
                                             <div class="mb-3">
                                                 <label class="form-label text-muted">Customer</label>
-                                                <p class="mb-0">{{ $documentRegistrationEntry->customer }}</p>
+                                                <p class="mb-0">{{ $documentRegistrationEntry->customer->name }}</p>
                                             </div>
                                         @endif
                                     </div>
