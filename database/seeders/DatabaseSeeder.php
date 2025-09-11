@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
 //      CategorySeeder::class
       RemoveMechatronicsParentCategorySeeder::class,
       CustomerSeeder::class,
-       CustomerSeeder::class,
+       CustomerPermissionSeeder::class,
 
         ]);
     }
