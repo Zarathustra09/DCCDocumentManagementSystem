@@ -1,6 +1,31 @@
 @extends('layouts.app')
 
 @section('content')
+
+    <style>
+        .category-section {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 1rem;
+        }
+
+        .category-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            color: #495057;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem !important;
+        }
+
+        .category-groups {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+    </style>
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -12,7 +37,7 @@
                         </a>
                     </div>
 
-                    <div class="card-body">
+                    <div class="card-body" id="formContainer" style="display: none;">
                         <form id="documentForm" action="{{ route('document-registry.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
 
@@ -34,24 +59,24 @@
                                     @enderror
                                 </div>
 
-                                <!-- Category -->
+                                <!-- Category (Hidden input) -->
                                 <div class="col-md-6 mb-3">
-                                    <label for="category_id" class="form-label">
+                                    <label for="category_display" class="form-label">
                                         <i class='bx bx-category'></i> Category <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-select @error('category_id') is-invalid @enderror"
-                                            id="category_id"
-                                            name="category_id"
-                                            required>
-                                        <option value="">Select Category</option>
-                                        @foreach($categories as $category)
-                                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                                {{ $category->name }} ({{ $category->code }})
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <div class="input-group">
+                                        <input type="text"
+                                               class="form-control"
+                                               id="category_display"
+                                               readonly
+                                               placeholder="Category will be selected">
+                                        <button type="button" class="btn btn-outline-secondary" id="changeCategoryBtn">
+                                            <i class='bx bx-edit'></i> Change
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="category_id" id="category_id" value="{{ old('category_id') }}">
                                     @error('category_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
 
@@ -193,6 +218,14 @@
                             </div>
                         </form>
                     </div>
+
+                    <!-- Loading State -->
+                    <div class="card-body text-center" id="loadingContainer">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Please select a category to continue...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -203,14 +236,190 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-format document number
+    // Categories data from server
+    const categories = @json($categories);
+
+    // Check if there's an old category_id from validation errors
+    const oldCategoryId = '{{ old('category_id') }}';
+
+    // Show category selection on page load (unless there are validation errors)
+    if (!oldCategoryId) {
+        showCategorySelection();
+    } else {
+        // If there are validation errors, pre-fill the category and show form
+        const selectedCategory = categories.find(cat => cat.id == oldCategoryId);
+        if (selectedCategory) {
+            selectCategory(selectedCategory);
+        }
+    }
+
+    // Change category button handler
+    document.getElementById('changeCategoryBtn').addEventListener('click', showCategorySelection);
+
+
+    function showCategorySelection() {
+        // Group categories
+        const generalCategories = categories.filter(cat =>
+            !cat.name.toLowerCase().includes('mechatronics')
+        );
+
+        const mechatronicsCategories = categories.filter(cat =>
+            cat.name.toLowerCase().includes('mechatronics')
+        );
+
+        let optionsHtml = '<div class="category-groups">';
+
+        // General Categories Section
+        if (generalCategories.length > 0) {
+            optionsHtml += `
+                <div class="category-section mb-4">
+                    <h5 class="section-title mb-3">
+                        <i class="bx bx-folder text-primary"></i> General Categories
+                    </h5>
+                    <div class="row">
+            `;
+
+            generalCategories.forEach((category, index) => {
+                optionsHtml += `
+                    <div class="col-md-6 mb-3">
+                        <div class="category-option p-3 border rounded cursor-pointer hover-shadow"
+                             data-category-id="${category.id}"
+                             style="cursor: pointer; transition: all 0.2s;">
+                            <div class="d-flex align-items-center">
+                                <div class="category-icon me-3">
+                                    <i class="bx bx-category-alt fs-4 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">${category.name}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            optionsHtml += '</div></div>';
+        }
+
+        // Mechatronics Categories Section
+        if (mechatronicsCategories.length > 0) {
+            optionsHtml += `
+                <div class="category-section">
+                    <h5 class="section-title mb-3">
+                        <i class="bx bx-cog text-success"></i> Mechatronics and Automation
+                    </h5>
+                    <div class="row">
+            `;
+
+            mechatronicsCategories.forEach((category, index) => {
+                optionsHtml += `
+                    <div class="col-md-6 mb-3">
+                        <div class="category-option p-3 border rounded cursor-pointer hover-shadow"
+                             data-category-id="${category.id}"
+                             style="cursor: pointer; transition: all 0.2s;">
+                            <div class="d-flex align-items-center">
+                                <div class="category-icon me-3">
+                                    <i class="bx bx-chip fs-4 text-success"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">${category.name}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            optionsHtml += '</div></div>';
+        }
+
+        optionsHtml += '</div>';
+
+        Swal.fire({
+            title: '<i class="bx bx-category"></i> Select Document Category',
+            html: `
+                <div class="text-start">
+                    <p class="text-muted mb-4">Choose the category that best fits your document:</p>
+                    ${optionsHtml}
+                    <div class="alert alert-warning mt-3">
+                        <i class="bx bx-info-circle"></i>
+                        <strong>Required:</strong> You must select a category to continue.
+                    </div>
+                </div>
+            `,
+            width: '800px',
+            showCancelButton: false,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            customClass: {
+                htmlContainer: 'text-start',
+                popup: 'category-selection-popup'
+            },
+            didOpen: () => {
+                // Add hover effects and click handlers
+                const categoryOptions = document.querySelectorAll('.category-option');
+                categoryOptions.forEach(option => {
+                    option.addEventListener('mouseenter', function() {
+                        this.style.backgroundColor = '#f8f9fa';
+                        this.style.borderColor = '#007bff';
+                        this.style.transform = 'translateY(-2px)';
+                        this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                    });
+
+                    option.addEventListener('mouseleave', function() {
+                        this.style.backgroundColor = '';
+                        this.style.borderColor = '';
+                        this.style.transform = '';
+                        this.style.boxShadow = '';
+                    });
+
+                    option.addEventListener('click', function() {
+                        const categoryId = this.getAttribute('data-category-id');
+                        const selectedCategory = categories.find(cat => cat.id == categoryId);
+
+                        // Add selected visual feedback
+                        categoryOptions.forEach(opt => opt.style.backgroundColor = '');
+                        this.style.backgroundColor = '#e3f2fd';
+                        this.style.borderColor = '#2196f3';
+
+                        // Close SweetAlert and proceed
+                        Swal.close();
+                        selectCategory(selectedCategory);
+                    });
+                });
+            }
+        });
+    }
+    function selectCategory(category) {
+        // Set the category values
+        document.getElementById('category_id').value = category.id;
+
+        // Set display field to show the full category name (no code)
+        document.getElementById('category_display').value = category.name;
+
+        // Hide loading, show form
+        document.getElementById('loadingContainer').style.display = 'none';
+        document.getElementById('formContainer').style.display = 'block';
+
+        // Show success message
+        Swal.fire({
+            title: 'Category Selected!',
+            text: `You have selected: ${category.name}`,
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    }
+
+    // Rest of the existing form functionality
     const documentNoInput = document.getElementById('document_no');
 
-    // Auto-format document number
     documentNoInput.addEventListener('blur', function() {
         let value = this.value.trim().toUpperCase();
         if (value && !value.includes('-')) {
-            // Auto-format if it doesn't contain hyphens
             const year = new Date().getFullYear();
             const match = value.match(/(\d+)$/);
             if (match) {
@@ -221,14 +430,11 @@ document.addEventListener('DOMContentLoaded', function() {
         this.value = value;
     });
 
-    // Validate revision number format
     const revisionInput = document.getElementById('revision_no');
     revisionInput.addEventListener('input', function() {
-        // Only allow numbers and basic revision formats
         this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
     });
 
-    // File upload validation
     const fileInput = document.getElementById('document_file');
     fileInput.addEventListener('change', function() {
         const file = this.files[0];
@@ -245,89 +451,96 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Display file info
             const fileName = file.name;
             const fileSize = (file.size / 1024 / 1024).toFixed(2);
             console.log(`Selected file: ${fileName} (${fileSize} MB)`);
         }
     });
 
-    // Form submission with SweetAlert confirmation
     const submitBtn = document.getElementById('submitBtn');
     const form = document.getElementById('documentForm');
 
-    submitBtn.addEventListener('click', function(e) {
-        e.preventDefault();
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
 
-        // Check if form is valid first
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
-        // Get form values for confirmation
-        const formData = new FormData(form);
-        const documentTitle = formData.get('document_title') || 'Not specified';
-        const documentNo = formData.get('document_no') || 'Not specified';
-        const revisionNo = formData.get('revision_no') || 'Not specified';
-        const deviceName = formData.get('device_name') || 'Not specified';
-        const customer = formData.get('customer') || 'Not specified';
-        const fileName = formData.get('document_file') ? formData.get('document_file').name : 'No file selected';
-        const remarks = formData.get('remarks') || 'No remarks';
-
-        // Get selected category name
-        const categorySelect = document.getElementById('category_id');
-        const categoryName = categorySelect.options[categorySelect.selectedIndex].textContent || 'Not selected';
-
-        // Show confirmation dialog with form details
-        Swal.fire({
-            title: 'Confirm Document Submission',
-            html: `
-        <div class="text-left">
-            <p><strong>Please review the following details before submitting:</strong></p>
-            <hr>
-            <p><strong>Document Title:</strong> ${documentTitle}</p>
-            <p><strong>Category:</strong> ${categoryName}</p>
-            <p><strong>Document Number:</strong> ${documentNo}</p>
-            <p><strong>Revision Number:</strong> ${revisionNo}</p>
-            <p><strong>Device Name:</strong> ${deviceName}</p>
-            <p><strong>Customer:</strong> ${customer}</p>
-            <p><strong>File:</strong> ${fileName}</p>
-            <p><strong>Remarks:</strong> ${remarks.substring(0, 100)}${remarks.length > 100 ? '...' : ''}</p>
-            <hr>
-            <p class="text-muted"><small><i class='bx bx-info-circle'></i> This document will be submitted for approval and you can edit it while it's in pending status.</small></p>
-        </div>
-    `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="bx bx-check"></i> Yes, Submit',
-            cancelButtonText: '<i class="bx bx-x"></i> Cancel',
-            width: '600px',
-            customClass: {
-                htmlContainer: 'text-left'
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
             }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading state
-                Swal.fire({
-                    title: 'Submitting Document...',
-                    text: 'Please wait while we process your document registration.',
-                    icon: 'info',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
 
-                // Submit the form
-                form.submit();
-            }
+            const formData = new FormData(form);
+            const documentTitle = formData.get('document_title') || 'Not specified';
+            const documentNo = formData.get('document_no') || 'Not specified';
+            const revisionNo = formData.get('revision_no') || 'Not specified';
+            const deviceName = formData.get('device_name') || 'Not specified';
+            const customer = formData.get('customer') || 'Not specified';
+            const fileName = formData.get('document_file') ? formData.get('document_file').name : 'No file selected';
+            const remarks = formData.get('remarks') || 'No remarks';
+            const categoryDisplay = document.getElementById('category_display').value || 'Not selected';
+
+            Swal.fire({
+                title: 'Confirm Document Submission',
+                html: `
+                    <div class="text-left">
+                        <p><strong>Please review the following details before submitting:</strong></p>
+                        <hr>
+                        <p><strong>Document Title:</strong> ${documentTitle}</p>
+                        <p><strong>Category:</strong> ${categoryDisplay}</p>
+                        <p><strong>Document Number:</strong> ${documentNo}</p>
+                        <p><strong>Revision Number:</strong> ${revisionNo}</p>
+                        <p><strong>Device Name:</strong> ${deviceName}</p>
+                        <p><strong>Customer:</strong> ${customer}</p>
+                        <p><strong>File:</strong> ${fileName}</p>
+                        <p><strong>Remarks:</strong> ${remarks.substring(0, 100)}${remarks.length > 100 ? '...' : ''}</p>
+                        <hr>
+                        <p class="text-muted"><small><i class='bx bx-info-circle'></i> This document will be submitted for approval and you can edit it while it's in pending status.</small></p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bx bx-check"></i> Yes, Submit',
+                cancelButtonText: '<i class="bx bx-x"></i> Cancel',
+                width: '600px',
+                customClass: {
+                    htmlContainer: 'text-left'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Submitting Document...',
+                        text: 'Please wait while we process your document registration.',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    form.submit();
+                }
+            });
         });
-    });
+    }
 });
 </script>
+
+<style>
+.category-selection-popup .swal2-html-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.hover-shadow {
+    transition: all 0.2s ease-in-out;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+</style>
 @endpush

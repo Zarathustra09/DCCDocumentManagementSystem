@@ -31,15 +31,10 @@
                                     <option value="">All Categories</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }} ({{ $category->code }})
+                                            {{ $category->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="text" name="search" class="form-control"
-                                       value="{{ request('search') }}"
-                                       placeholder="Search documents...">
                             </div>
                             <div class="col-md-2">
                                 <button type="submit" class="btn btn-primary">Filter</button>
@@ -77,8 +72,9 @@
                                         </td>
                                         <td>
                                             @if($entry->category)
-                                                <span class="badge bg-info">{{ $entry->category->code }}</span>
-                                                <br><small>{{ $entry->category->name }}</small>
+{{--                                                <span class="badge bg-info">{{ $entry->category->code }}</span>--}}
+{{--                                                <br>--}}
+                                                <small>{{ $entry->category->name }}</small>
                                             @else
                                                 -
                                             @endif

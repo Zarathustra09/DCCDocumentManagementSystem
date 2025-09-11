@@ -32,7 +32,7 @@
                                         <option value="">All Categories</option>
                                         @foreach($categories as $category)
                                             <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                                {{ $category->name }} ({{ $category->code }})
+                                                {{ $category->name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -139,8 +139,9 @@
                                         </td>
                                         <td>
                                             @if($entry->category)
-                                                <span class="badge bg-info">{{ $entry->category->code }}</span>
-                                                <br><small>{{ $entry->category->name }}</small>
+{{--                                                <span class="badge bg-info">{{ $entry->category->code }}</span>--}}
+{{--                                                <br>--}}
+                                                <small>{{ $entry->category->name }}</small>
                                             @else
                                                 -
                                             @endif
