@@ -83,6 +83,14 @@
                                                 <p class="mb-0">{{ $documentRegistrationEntry->customer->name }}</p>
                                             </div>
                                         @endif
+
+                                            @if($documentRegistrationEntry->category)
+                                                <div class="mb-3">
+                                                    <label class="form-label text-muted">Category</label>
+                                                    <p class="mb-0">{{ $documentRegistrationEntry->category->name }}</p>
+                                                </div>
+                                            @endif
+
                                     </div>
                                 </div>
 
