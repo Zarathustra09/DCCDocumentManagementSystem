@@ -18,11 +18,12 @@ class DatabaseSeeder extends Seeder
       $this->call([
 //            RolesAndPermissionsSeeder::class,
 //            FolderSeeder::class,
-//          PermissionSeeder::class,
+          PermissionSeeder::class,
 //          RunSqlSeeder::class,
-//          MinimalRolesAndPermissionsSeeder::class,
-//      CategorySeeder::class
-      RemoveMechatronicsParentCategorySeeder::class,
+          MinimalRolesAndPermissionsSeeder::class,
+      CategorySeeder::class,
+
+//      RemoveMechatronicsParentCategorySeeder::class,
       CustomerSeeder::class,
        CustomerPermissionSeeder::class,
 

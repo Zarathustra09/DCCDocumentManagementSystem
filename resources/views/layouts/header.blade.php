@@ -28,25 +28,59 @@
         </li>
 
 
-        @can('approve document registration')
-            <li class="menu-item {{Route::is('document-registry.list') ? 'active' : ''}}">
-                <a href="{{route('document-registry.list')}}" class="menu-link">
-              <i class="menu-icon tf-icons bx bx-archive"></i>
-                    <div data-i18n="Patient Records">Registry Management</div>
+      @can('approve document registration')
+          <li class="menu-item {{ Route::is('document-registry.list') ? 'active' : '' }}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                  <i class="menu-icon tf-icons bx bx-archive"></i>
+                  <div data-i18n="Patient Records">Registry Management</div>
+              </a>
+              <ul class="menu-sub">
+                  <li class="menu-item {{ Route::is('document-registry.list') ? 'active' : '' }}">
+                      <a href="{{ route('document-registry.list') }}" class="menu-link">
+                          <i class="menu-icon tf-icons bx bx-list-ul"></i>
+                          <div data-i18n="Tracking Registration">Tracking of Registration</div>
+                      </a>
+                  </li>
+                  <li class="menu-item">
+                      <a href="#" class="menu-link">
+                          <i class="menu-icon tf-icons bx bx-cog"></i>
+                          <div data-i18n="DCN Control">DCN Management</div>
+                      </a>
+                  </li>
+
+              </ul>
+          </li>
+      @endcan
+
+
+
+
+        @canany(['view category', 'view customer'])
+            <li class="menu-item {{ Route::is('categories.*') || Route::is('customers.*') ? 'active' : '' }}">
+                <a href="javascript:void(0);" class="menu-link menu-toggle">
+                    <i class="menu-icon tf-icons bx bx-data"></i>
+                    <div data-i18n="Data Management">Data Management</div>
                 </a>
+                <ul class="menu-sub">
+                    @can('view category')
+                        <li class="menu-item {{ Route::is('categories.*') ? 'active' : '' }}">
+                            <a href="{{ route('categories.index') }}" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-category"></i>
+                                <div data-i18n="Categories">Categories</div>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('view customer')
+                        <li class="menu-item {{ Route::is('customers.*') ? 'active' : '' }}">
+                            <a href="{{ route('customers.index') }}" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-user"></i>
+                                <div data-i18n="Customers">Customers</div>
+                            </a>
+                        </li>
+                    @endcan
+                </ul>
             </li>
-        @endcan
-
-
-        @can('submit document for approval')
-            <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}">
-                <a href="{{route('document-registry.index')}}" class="menu-link">
-                   <i class="menu-icon tf-icons bx bx-upload"></i>
-                    <div data-i18n="Patient Records">My Registrations</div>
-                </a>
-            </li>
-        @endcan
-
+        @endcanany
 
         <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -83,23 +117,18 @@
             </ul>
         </li>
 
-      @can('view category')
-          <li class="menu-item {{ Route::is('categories.*') ? 'active' : '' }}">
-              <a href="{{ route('categories.index') }}" class="menu-link">
-                  <i class="menu-icon tf-icons bx bx-category"></i>
-                  <div data-i18n="Categories">Categories</div>
-              </a>
-          </li>
-      @endcan
 
-        @can('view customer')
-            <li class="menu-item {{ Route::is('customers.*') ? 'active' : '' }}">
-                <a href="{{ route('customers.index') }}" class="menu-link">
-                    <i class="menu-icon tf-icons bx bx-user"></i>
-                    <div data-i18n="Customers">Customers</div>
+
+    @can('submit document for approval')
+            <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}">
+                <a href="{{route('document-registry.index')}}" class="menu-link">
+                   <i class="menu-icon tf-icons bx bx-upload"></i>
+                    <div data-i18n="Patient Records">My Registrations</div>
                 </a>
             </li>
         @endcan
+
+
 
 
 

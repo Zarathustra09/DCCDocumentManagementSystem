@@ -45,8 +45,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
-    public function getNameAttribute()
-    {
-        return trim("{$this->firstname} {$this->middlename} {$this->lastname}");
-    }
+
+     public function getNameAttribute()
+     {
+         return trim("{$this->firstname} {$this->lastname}");
+     }
 }
