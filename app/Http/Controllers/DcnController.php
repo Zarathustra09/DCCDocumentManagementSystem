@@ -267,16 +267,22 @@ class DcnController extends Controller
         }
     }
 
-//    public function show(DocumentRegistrationEntry $entry)
-//    {
-//        $entry->load(['customer', 'category', 'submittedBy', 'status', 'files']);
-//        return view('dcn.show', compact('entry'));
-//    }
+    public function show(DocumentRegistrationEntry $entry)
+    {
+        $entry->load(['customer', 'category', 'submittedBy', 'status', 'files']);
+        return view('dcn.show', compact('entry'));
+    }
 
     public function getEntryData(DocumentRegistrationEntry $entry)
     {
         try {
             $entry->load(['customer', 'category']);
+
+            // Generate next available suffix if customer and category exist
+            $nextSuffix = null;
+            if ($entry->customer_id && $entry->category_id) {
+                $nextSuffix = $this->generateNextSuffix($entry->category_id, $entry->customer_id, $entry->id);
+            }
 
             return response()->json([
                 'success' => true,
@@ -295,7 +301,8 @@ class DcnController extends Controller
                         'name' => $entry->category->name,
                         'code' => $entry->category->code
                     ] : null,
-                    'current_dcn' => $entry->dcn_no
+                    'current_dcn' => $entry->dcn_no,
+                    'suggested_suffix' => $nextSuffix
                 ]
             ]);
 
@@ -305,6 +312,56 @@ class DcnController extends Controller
                 'message' => 'Error loading entry data.',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    private function generateNextSuffix($categoryId, $customerId, $excludeEntryId = null)
+    {
+        try {
+            $category = Category::findOrFail($categoryId);
+            $customer = Customer::findOrFail($customerId);
+            $currentYear = date('y');
+
+            // Create the exact pattern for THIS specific category-customer-year combination
+            // Example patterns:
+            // - CN25-ALL-xxx (Category: CN, Year: 25, Customer: ALL)
+            // - CN25-BUA-xxx (Category: CN, Year: 25, Customer: BUA)
+            // - AGA25-ALL-xxx (Category: AGA, Year: 25, Customer: ALL)
+            $pattern = $category->code . $currentYear . '-' . $customer->code . '-';
+
+            // Find ALL existing DCN numbers that match this EXACT pattern
+            // This ensures each category-customer combination has its own sequence
+            $query = DocumentRegistrationEntry::where('dcn_no', 'like', $pattern . '%');
+
+            // Exclude current entry if we're updating (not creating new)
+            if ($excludeEntryId) {
+                $query->where('id', '!=', $excludeEntryId);
+            }
+
+            $existingDcns = $query->pluck('dcn_no')->toArray();
+
+            // Extract ONLY the 3-digit suffixes from DCNs with this exact pattern
+            $existingSuffixes = [];
+            foreach ($existingDcns as $dcn) {
+                // Match the exact pattern and extract the 3-digit suffix
+                if (preg_match('/' . preg_quote($pattern) . '(\d{3})$/', $dcn, $matches)) {
+                    $existingSuffixes[] = (int)$matches[1];
+                }
+            }
+
+            // Find the next available number for THIS category-customer combination
+            // Each combination starts fresh from 001
+            for ($i = 1; $i <= 999; $i++) {
+                if (!in_array($i, $existingSuffixes)) {
+                    return str_pad($i, 3, '0', STR_PAD_LEFT);
+                }
+            }
+
+            // If somehow all 999 numbers are used for this combination (very unlikely)
+            return null;
+
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }

@@ -55,7 +55,8 @@ class DocumentRegistryFileStatusUpdated extends Notification
 
     public static function sendToAdmins(DocumentRegistrationEntryFile $file, $status)
     {
-        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+        $roles = config('admin_notification_roles');
+        $admins = User::role($roles)->get();
         foreach ($admins as $admin) {
             $admin->notify(new static($file, $status));
         }

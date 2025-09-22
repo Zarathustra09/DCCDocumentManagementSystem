@@ -53,7 +53,8 @@ class DocumentRegistryEntryCreated extends Notification
 
     public static function sendToAdmins(DocumentRegistrationEntry $entry)
     {
-        $admins = User::role(['SuperAdmin', 'DCCAdmin'])->get();
+        $roles = config('admin_notification_roles');
+        $admins = User::role($roles)->get();
         foreach ($admins as $admin) {
             $admin->notify(new static($entry));
         }
