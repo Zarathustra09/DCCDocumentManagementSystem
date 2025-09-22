@@ -3,6 +3,7 @@
 use App\Http\Controllers\BaseFolderController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DcnController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentRegistrationEntryController;
 use App\Http\Controllers\DocumentRegistrationEntryFileController;
@@ -72,9 +73,23 @@ Route::resource('customers', CustomerController::class);
 
 
 
+Route::prefix('dcn')->name('dcn.')->group(function () {
+    Route::get('/', [DcnController::class, 'index'])->name('index');
+    Route::get('/{entry}', [DcnController::class, 'show'])->name('show');
 
+    // DCN Update Routes
+    Route::post('/{entry}/update-dcn', [DcnController::class, 'updateDcnNumber'])->name('update-dcn');
+    Route::post('/{entry}/clear-dcn', [DcnController::class, 'clearDcnNumber'])->name('clear-dcn');
 
+    // DCN Preview Route
+    Route::post('/preview-dcn', [DcnController::class, 'generateDcnPreview'])->name('preview');
 
+    // Get Entry Data Route
+    Route::get('/{entry}/data', [DcnController::class, 'getEntryData'])->name('entry-data');
+
+    // Bulk Update Route
+    Route::post('/bulk-update', [DcnController::class, 'bulkUpdateDcn'])->name('bulk-update');
+});
 
 
 

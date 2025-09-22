@@ -27,7 +27,8 @@ class DocumentRegistrationEntry extends Model
         'implemented_at',
         'rejection_reason',
         'category_id',
-        'customer_id'
+        'customer_id',
+        'dcn_no'
     ];
 
     protected $casts = [

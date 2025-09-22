@@ -119,7 +119,7 @@
 
 
 
-    @can('submit document for approval')
+        @can('submit document for approval')
             <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}">
                 <a href="{{route('document-registry.index')}}" class="menu-link">
                    <i class="menu-icon tf-icons bx bx-upload"></i>
