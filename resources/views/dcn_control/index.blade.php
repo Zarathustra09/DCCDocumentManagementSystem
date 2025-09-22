@@ -213,9 +213,9 @@
                                                     <i class="bx bx-cog"></i> Manage
                                                 </button>
                                                 <div class="dropdown-menu">
-                                                    <a class="dropdown-item" href="{{ route('dcn.show', $entry) }}">
-                                                        <i class="bx bx-show me-2"></i> View Details
-                                                    </a>
+{{--                                                    <a class="dropdown-item" href="{{ route('dcn.show', $entry) }}">--}}
+{{--                                                        <i class="bx bx-show me-2"></i> View Details--}}
+{{--                                                    </a>--}}
                                                     @if(!$entry->dcn_no)
                                                         <button type="button" class="dropdown-item" onclick="openDcnModal({{ $entry->id }})">
                                                             <i class="bx bx-plus me-2"></i> Assign DCN
