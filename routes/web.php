@@ -74,6 +74,7 @@ Route::resource('customers', CustomerController::class);
 
 
 Route::prefix('dcn')->name('dcn.')->group(function () {
+    Route::get('/export', [DcnController::class, 'export'])->name('export');
     Route::get('/', [DcnController::class, 'index'])->name('index');
     Route::get('/{entry}', [DcnController::class, 'show'])->name('show');
 
@@ -89,6 +90,7 @@ Route::prefix('dcn')->name('dcn.')->group(function () {
 
     // Bulk Update Route
     Route::post('/bulk-update', [DcnController::class, 'bulkUpdateDcn'])->name('bulk-update');
+
 });
 
 

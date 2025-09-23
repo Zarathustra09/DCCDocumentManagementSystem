@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DcnFilteredExport;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\Customer;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DcnController extends Controller
 {
@@ -381,4 +383,51 @@ class DcnController extends Controller
             return null;
         }
     }
+
+    public function export(Request $request)
+    {
+
+        \Log::info('Exporting DCN filtered data', ['request' => $request->all()]);
+        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy.department', 'status']);
+
+        // Apply filters (same as index)
+        if ($request->filled('dcn_status')) {
+            if ($request->dcn_status === 'with_dcn') {
+                $query->whereNotNull('dcn_no');
+            } elseif ($request->dcn_status === 'without_dcn') {
+                $query->whereNull('dcn_no');
+            }
+        }
+        if ($request->filled('customer_id')) {
+            $query->where('customer_id', $request->customer_id);
+        }
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('document_title', 'like', "%{$search}%")
+                    ->orWhere('document_no', 'like', "%{$search}%")
+                    ->orWhere('dcn_no', 'like', "%{$search}%")
+                    ->orWhere('originator_name', 'like', "%{$search}%")
+                    ->orWhere('device_name', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('submitted_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('submitted_at', '<=', $request->date_to);
+        }
+
+        $entries = $query->orderBy('created_at', 'desc')->get();
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\DcnFilteredExport($entries),
+            'dcn_filtered.xlsx'
+        );
+    }
+
+
 }

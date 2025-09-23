@@ -443,12 +443,10 @@
                         text: '<i class="bx bx-download"></i> Export to Excel',
                         className: 'btn btn-success btn-sm',
                         action: function(e, dt, node, config) {
-                            // Add export functionality here if needed
-                            Swal.fire({
-                                title: 'Export Feature',
-                                text: 'Export functionality will be implemented soon.',
-                                icon: 'info'
-                            });
+                            // Get current query string
+                            const query = window.location.search;
+                            // Redirect to export route with filters
+                            window.location.href = 'dcn/export' + query;
                         }
                     }
                 ],
