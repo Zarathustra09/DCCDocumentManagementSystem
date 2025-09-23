@@ -29,7 +29,7 @@
 
 
       @can('approve document registration')
-          <li class="menu-item {{ Route::is('document-registry.list') ? 'active' : '' }}">
+       <li class="menu-item {{ Route::is('document-registry.list') || Route::is('dcn.index') ? 'active' : '' }}">
               <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons bx bx-archive"></i>
                   <div data-i18n="Patient Records">Registry Management</div>
