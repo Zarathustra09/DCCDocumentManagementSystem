@@ -28,14 +28,14 @@ class User extends Authenticatable
         'barcode',
         'email',
         'separationdate',
+        'organization_id',
+        'department_id',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
-
-    // app/Models/User.php
 
     protected $casts = [
         'birthdate' => 'date',
@@ -50,4 +50,10 @@ class User extends Authenticatable
      {
          return trim("{$this->firstname} {$this->lastname}");
      }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
 }

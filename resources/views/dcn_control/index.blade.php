@@ -124,76 +124,45 @@
                             <table class="table table-striped table-hover" id="dcnTable">
                                 <thead>
                                 <tr>
-                                    <th>Control No.</th>
-                                    <th>DCN Number</th>
-                                    <th>Document Title</th>
+                                    <th>DCN No.</th>
+                                    <th>Originator</th>
+                                    <th>Department</th>
+                                    <th>Registration Date</th>
+                                    <th>Effective Date</th>
                                     <th>Document No.</th>
-                                    <th>Rev.</th>
+                                    <th>Revision No.</th>
+                                    <th>Device Name</th>
+                                    <th>Title</th>
                                     <th>Customer</th>
-                                    <th>Category</th>
-                                    <th>Status</th>
-                                    <th>Submitted At</th>
-                                    <th>Actions</th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @forelse($entries as $entry)
                                     <tr>
                                         <td>
-                                            <strong>{{ $entry->control_no ?? '-' }}</strong>
-                                        </td>
-                                        <td>
                                             @if($entry->dcn_no)
                                                 <span class="badge bg-success">
-                                                    <i class='bx bx-check'></i> {{ $entry->dcn_no }}
-                                                </span>
+                    <i class='bx bx-check'></i> {{ $entry->dcn_no }}
+                </span>
                                             @else
                                                 <span class="badge bg-warning text-dark">
-                                                    <i class='bx bx-time'></i> Not Assigned
-                                                </span>
+                    <i class='bx bx-time'></i> Not Assigned
+                </span>
                                             @endif
                                         </td>
                                         <td>
-                                            <strong>{{ $entry->document_title ?? '-' }}</strong>
-                                            @if($entry->device_name)
-                                                <br><small class="text-muted">{{ $entry->device_name }}</small>
-                                            @endif
+                                            {{ $entry->submittedBy?->name ?? '-' }}
                                         </td>
-                                        <td>{{ $entry->document_no ?? '-' }}</td>
-                                        <td>{{ $entry->revision_no ?? '-' }}</td>
                                         <td>
-                                            @if($entry->customer)
-                                                {{ $entry->customer->name }}
-                                                <br><small class="text-muted">Code: {{ $entry->customer->code }}</small>
+                                            @if($entry->submittedBy && $entry->submittedBy->department)
+                                                <div>
+                                                    <strong>{{ $entry->submittedBy->department->department }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ $entry->submittedBy->department->section }}</small>
+                                                </div>
                                             @else
                                                 <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($entry->category)
-                                                {{ $entry->category->name }}
-                                                <br><small class="text-muted">Code: {{ $entry->category->code }}</small>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($entry->status)
-                                                @if($entry->status->name === 'Pending')
-                                                    <span class="badge bg-warning text-dark">
-                                                        <i class='bx bx-time'></i> {{ $entry->status->name }}
-                                                    </span>
-                                                @elseif($entry->status->name === 'Implemented')
-                                                    <span class="badge bg-success text-white">
-                                                        <i class='bx bx-check'></i> {{ $entry->status->name }}
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-danger text-white">
-                                                        <i class='bx bx-x'></i> {{ $entry->status->name }}
-                                                    </span>
-                                                @endif
-                                            @else
-                                                <span class="badge bg-secondary">Unknown</span>
                                             @endif
                                         </td>
                                         <td>
@@ -208,14 +177,39 @@
                                             @endif
                                         </td>
                                         <td>
+                                            @if($entry->implemented_at)
+                                                <small>
+                                                    <i class='bx bx-calendar'></i> {{ $entry->implemented_at->format('m/d/Y') }}
+                                                    <br>
+                                                    <small class="text-muted">{{ $entry->implemented_at->format('g:i A') }}</small>
+                                                </small>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $entry->document_no ?? '-' }}</td>
+                                        <td>{{ $entry->revision_no ?? '-' }}</td>
+                                        <td>{{ $entry->device_name ?? '-' }}</td>
+                                        <td>
+                                            <strong>{{ $entry->document_title ?? '-' }}</strong>
+                                        </td>
+                                        <td>
+                                            @if($entry->customer)
+                                                {{ $entry->customer->name }}
+                                                <br><small class="text-muted">Code: {{ $entry->customer->code }}</small>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
                                             <div class="dropdown">
                                                 <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
                                                     <i class="bx bx-cog"></i> Manage
                                                 </button>
                                                 <div class="dropdown-menu">
-{{--                                                    <a class="dropdown-item" href="{{ route('dcn.show', $entry) }}">--}}
-{{--                                                        <i class="bx bx-show me-2"></i> View Details--}}
-{{--                                                    </a>--}}
+                                                    {{--                                                    <a class="dropdown-item" href="{{ route('dcn.show', $entry) }}">--}}
+                                                    {{--                                                        <i class="bx bx-show me-2"></i> View Details--}}
+                                                    {{--                                                    </a>--}}
                                                     @if(!$entry->dcn_no)
                                                         <button type="button" class="dropdown-item" onclick="openDcnModal({{ $entry->id }})">
                                                             <i class="bx bx-plus me-2"></i> Assign DCN
@@ -231,6 +225,7 @@
                                                 </div>
                                             </div>
                                         </td>
+
                                     </tr>
                                 @empty
                                     <tr>
@@ -243,6 +238,7 @@
                                     </tr>
                                 @endforelse
                                 </tbody>
+
                             </table>
                         </div>
 
@@ -255,7 +251,6 @@
             </div>
         </div>
     </div>
-
     <!-- DCN Update Modal -->
     <div class="modal fade" id="dcnModal" tabindex="-1" aria-labelledby="dcnModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -305,6 +300,47 @@
                             </div>
                         </div>
 
+                        <!-- Additional Read-Only Details -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Originator</label>
+                                <input type="text" class="form-control" id="modalOriginator" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Department</label>
+                                <input type="text" class="form-control" id="modalDepartment" readonly>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Registration Date</label>
+                                <input type="text" class="form-control" id="modalRegistrationDate" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Effective Date</label>
+                                <input type="text" class="form-control" id="modalEffectiveDate" readonly>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Document No.</label>
+                                <input type="text" class="form-control" id="modalDocumentNo" readonly>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Revision No.</label>
+                                <input type="text" class="form-control" id="modalRevisionNo" readonly>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Device Name</label>
+                                <input type="text" class="form-control" id="modalDeviceName" readonly>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" id="modalTitle" readonly>
+                        </div>
+                        <!-- End Additional Details -->
+
                         <div class="mb-3">
                             <label for="dcnSuffix" class="form-label">DCN Suffix (Auto-generated)</label>
                             <input type="text" class="form-control" id="dcnSuffix" name="dcn_suffix"
@@ -325,36 +361,36 @@
                         </div>
 
                         <!-- Format Breakdown -->
-                       <div class="bg-white border border-info p-3 rounded">
-                           <h6 class="mb-2 text-info"><i class='bx bx-info-circle'></i> DCN Format Structure:</h6>
-                           <div class="row text-sm">
-                               <div class="col-3 text-center">
-                                   <div class="fw-bold text-primary">Category Code</div>
-                                   <small class="text-muted">e.g., CNA</small>
-                               </div>
-                               <div class="col-2 text-center">
-                                   <div class="fw-bold text-primary">Year</div>
-                                   <small class="text-muted">e.g., 25</small>
-                               </div>
-                               <div class="col-1 text-center">
-                                   <div class="fw-bold text-info">-</div>
-                               </div>
-                               <div class="col-3 text-center">
-                                   <div class="fw-bold text-primary">Customer Code</div>
-                                   <small class="text-muted">e.g., ALL</small>
-                               </div>
-                               <div class="col-1 text-center">
-                                   <div class="fw-bold text-info">-</div>
-                               </div>
-                               <div class="col-2 text-center">
-                                   <div class="fw-bold text-primary">Suffix</div>
-                                   <small class="text-muted">e.g., 001</small>
-                               </div>
-                           </div>
-                           <div class="text-center mt-2">
-                               <strong class="text-info">Result: CNA25-ALL-001</strong>
-                           </div>
-                       </div>
+                        <div class="bg-white border border-info p-3 rounded">
+                            <h6 class="mb-2 text-info"><i class='bx bx-info-circle'></i> DCN Format Structure:</h6>
+                            <div class="row text-sm">
+                                <div class="col-3 text-center">
+                                    <div class="fw-bold text-primary">Category Code</div>
+                                    <small class="text-muted">e.g., CNA</small>
+                                </div>
+                                <div class="col-2 text-center">
+                                    <div class="fw-bold text-primary">Year</div>
+                                    <small class="text-muted">e.g., 25</small>
+                                </div>
+                                <div class="col-1 text-center">
+                                    <div class="fw-bold text-info">-</div>
+                                </div>
+                                <div class="col-3 text-center">
+                                    <div class="fw-bold text-primary">Customer Code</div>
+                                    <small class="text-muted">e.g., ALL</small>
+                                </div>
+                                <div class="col-1 text-center">
+                                    <div class="fw-bold text-info">-</div>
+                                </div>
+                                <div class="col-2 text-center">
+                                    <div class="fw-bold text-primary">Suffix</div>
+                                    <small class="text-muted">e.g., 001</small>
+                                </div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <strong class="text-info">Result: CNA25-ALL-001</strong>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -567,6 +603,18 @@
                                 // Populate category (read-only)
                                 $('#modalCategory').val(entry.category_id);
                                 $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.category.name + ' (' + entry.category.code + ')');
+
+
+                                //other fields
+
+                                $('#modalOriginator').val(entry.originator_name || '-');
+                                $('#modalDepartment').val(entry.department || '-');
+                                $('#modalRegistrationDate').val(entry.submitted_at || '-');
+                                $('#modalEffectiveDate').val(entry.implemented_at || '-');
+                                $('#modalDocumentNo').val(entry.document_no || '-');
+                                $('#modalRevisionNo').val(entry.revision_no || '-');
+                                $('#modalDeviceName').val(entry.device_name || '-');
+                                $('#modalTitle').val(entry.document_title || '-');
 
                                 // Set suggested suffix
                                 if (entry.suggested_suffix) {

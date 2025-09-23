@@ -13,7 +13,7 @@ class DcnController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy', 'status']);
+        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy.department', 'status']);
 
         // Apply filters based on request parameters
         if ($request->filled('dcn_status')) {
@@ -273,47 +273,64 @@ class DcnController extends Controller
         return view('dcn.show', compact('entry'));
     }
 
-    public function getEntryData(DocumentRegistrationEntry $entry)
-    {
-        try {
-            $entry->load(['customer', 'category']);
+   public function getEntryData(DocumentRegistrationEntry $entry)
+   {
+       try {
+           $entry->load(['customer', 'category', 'submittedBy.department']);
 
-            // Generate next available suffix if customer and category exist
-            $nextSuffix = null;
-            if ($entry->customer_id && $entry->category_id) {
-                $nextSuffix = $this->generateNextSuffix($entry->category_id, $entry->customer_id, $entry->id);
-            }
+           // Generate next available suffix if customer and category exist
+           $nextSuffix = null;
+           if ($entry->customer_id && $entry->category_id) {
+               $nextSuffix = $this->generateNextSuffix($entry->category_id, $entry->customer_id, $entry->id);
+           }
 
-            return response()->json([
-                'success' => true,
-                'entry' => [
-                    'id' => $entry->id,
-                    'document_title' => $entry->document_title,
-                    'customer_id' => $entry->customer_id,
-                    'category_id' => $entry->category_id,
-                    'customer' => $entry->customer ? [
-                        'id' => $entry->customer->id,
-                        'name' => $entry->customer->name,
-                        'code' => $entry->customer->code
-                    ] : null,
-                    'category' => $entry->category ? [
-                        'id' => $entry->category->id,
-                        'name' => $entry->category->name,
-                        'code' => $entry->category->code
-                    ] : null,
-                    'current_dcn' => $entry->dcn_no,
-                    'suggested_suffix' => $nextSuffix
-                ]
-            ]);
+           // Prepare department string
+           $department = null;
+           if ($entry->submittedBy && $entry->submittedBy->department) {
+               $department = $entry->submittedBy->department->department;
+               if ($entry->submittedBy->department->section) {
+                   $department .= ' / ' . $entry->submittedBy->department->section;
+               }
+           }
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error loading entry data.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+           return response()->json([
+               'success' => true,
+               'entry' => [
+                   'id' => $entry->id,
+                   'document_title' => $entry->document_title,
+                   'customer_id' => $entry->customer_id,
+                   'category_id' => $entry->category_id,
+                   'customer' => $entry->customer ? [
+                       'id' => $entry->customer->id,
+                       'name' => $entry->customer->name,
+                       'code' => $entry->customer->code
+                   ] : null,
+                   'category' => $entry->category ? [
+                       'id' => $entry->category->id,
+                       'name' => $entry->category->name,
+                       'code' => $entry->category->code
+                   ] : null,
+                   'current_dcn' => $entry->dcn_no,
+                   'suggested_suffix' => $nextSuffix,
+                   // Additional fields for modal
+                   'originator_name' => $entry->originator_name,
+                   'department' => $department,
+                   'submitted_at' => $entry->submitted_at ? $entry->submitted_at->format('Y-m-d H:i') : null,
+                   'implemented_at' => $entry->implemented_at ? $entry->implemented_at->format('Y-m-d H:i') : null,
+                   'document_no' => $entry->document_no,
+                   'revision_no' => $entry->revision_no,
+                   'device_name' => $entry->device_name,
+               ]
+           ]);
+
+       } catch (\Exception $e) {
+           return response()->json([
+               'success' => false,
+               'message' => 'Error loading entry data.',
+               'error' => $e->getMessage()
+           ], 500);
+       }
+   }
 
     private function generateNextSuffix($categoryId, $customerId, $excludeEntryId = null)
     {
