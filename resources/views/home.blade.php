@@ -1,3 +1,4 @@
+@php($showHelpTour = true)
 @extends('layouts.app')
 
 @section('content')
@@ -290,9 +291,8 @@
 
 @push('driverjs')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('start-driverjs-tour', function() {
     const driver = window.driver.js.driver;
-
     driver({
         showProgress: true,
         steps: [

@@ -128,13 +128,11 @@
         <div class="layout-container">
             <!-- Menu -->
             @include('layouts.header')
-
             <!-- / Menu -->
 
             <!-- Layout container -->
             <div class="layout-page">
                 <!-- Navbar -->
-
                 <nav
                     class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
                     id="layout-navbar"
@@ -210,32 +208,53 @@
                         </ul>
                     </div>
                 </nav>
-
                 <!-- / Navbar -->
-                @endauth
-
 
                 @yield('content')
 
+                <!-- Footer -->
+                {{-- @include('layouts.footer') --}}
+                <!-- / Footer -->
 
-                @auth
-                    <!-- Footer -->
-                    {{--                    @include('layouts.footer')--}}
-                    <!-- / Footer -->
-
-                    <div class="content-backdrop fade"></div>
+                <div class="content-backdrop fade"></div>
             </div>
             <!-- Content wrapper -->
         </div>
         <!-- / Layout page -->
     </div>
-
     <!-- Overlay -->
     <div class="layout-overlay layout-menu-toggle"></div>
-    </div>
     <!-- / Layout wrapper -->
 
+    @if(!empty($showHelpTour))
+        <!-- Floating Help Button -->
+        <button id="help-tour-btn" style="
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 1050;
+            background: #fff;
+            border: 2px solid #007bff;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        " title="Show Help">
+            <span style="font-size: 2rem; color: #007bff;">?</span>
+        </button>
+        <script>
+            document.getElementById('help-tour-btn').addEventListener('click', function() {
+                window.dispatchEvent(new CustomEvent('start-driverjs-tour'));
+            });
+        </script>
+    @endif
 @endauth
+
 <!-- Core JS -->
 <!-- build:js assets/vendor/js/core.js -->
 <script src="{{ asset('dashboard/assets/vendor/libs/jquery/jquery.js') }}"></script>
