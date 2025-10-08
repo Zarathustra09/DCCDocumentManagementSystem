@@ -5,7 +5,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
-                <div class="card-header">
+                <div class="card-header" id="dashboard-header">
                     <h3 class="card-title"><i class='bx bx-home'></i> Dashboard</h3>
                 </div>
                 <div class="card-body">
@@ -22,10 +22,10 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="btn-group" role="group" aria-label="Document Actions">
-                                <a href="{{ route('document-registry.create') }}" class="btn btn-primary">
+                                <a href="{{ route('document-registry.create') }}" class="btn btn-primary" id="create-registration-btn">
                                     <i class='bx bx-file-find'></i> Create Registration
                                 </a>
-                                <a href="{{ route('document-registry.index') }}" class="btn btn-outline-primary">
+                                <a href="{{ route('document-registry.index') }}" class="btn btn-outline-primary" id="view-registrations-btn">
                                     <i class='bx bx-file-find'></i> View My Registrations
                                 </a>
                             </div>
@@ -285,5 +285,73 @@
             "order": [[ 2, "desc" ]]
         });
     });
+</script>
+@endpush
+
+@push('driverjs')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const driver = window.driver.js.driver;
+
+    driver({
+        showProgress: true,
+        steps: [
+            {
+                element: '#menu-home',
+                popover: {
+                    title: 'Home',
+                    description: 'Go to your dashboard overview.',
+                    side: 'right',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#menu-my-documents',
+                popover: {
+                    title: 'My Documents',
+                    description: 'Access all your documents here.',
+                    side: 'right',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#menu-my-registrations',
+                popover: {
+                    title: 'My Registrations',
+                    description: 'View and manage your document registrations.',
+                    side: 'right',
+                    align: 'start'
+                }
+            },
+            {
+                element: '.dropdown-user',
+                popover: {
+                    title: 'Profile Menu',
+                    description: 'Access your profile, role, and logout options here.',
+                    side: 'bottom',
+                    align: 'end'
+                }
+            },
+            {
+                element: '#create-registration-btn',
+                popover: {
+                    title: 'Create Registration',
+                    description: 'Click here to create a new document registration.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#view-registrations-btn',
+                popover: {
+                    title: 'View My Registrations',
+                    description: 'Click here to view your submitted document registrations.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            }
+        ]
+    }).drive();
+});
 </script>
 @endpush

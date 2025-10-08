@@ -15,7 +15,7 @@
     </li>
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
-        <li class="menu-item {{Route::is('home*') ? 'active' : ''}}">
+        <li class="menu-item {{Route::is('home*') ? 'active' : ''}}" id="menu-home">
             <a href="{{route('home')}}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-alt"></i>
                 <div data-i18n="Analytics">Home</div>
@@ -82,7 +82,7 @@
             </li>
         @endcanany
 
-        <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}">
+        <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}" id="menu-my-documents">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-folder"></i>
                 <div data-i18n="Account Settings">My Documents</div>
@@ -120,7 +120,7 @@
 
 
         @can('submit document for approval')
-            <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}">
+            <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}" id="menu-my-registrations">
                 <a href="{{route('document-registry.index')}}" class="menu-link">
                    <i class="menu-icon tf-icons bx bx-upload"></i>
                     <div data-i18n="Patient Records">My Registrations</div>
