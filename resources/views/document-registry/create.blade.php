@@ -1,3 +1,4 @@
+@php($showHelpTour = true)
 @extends('layouts.app')
 
 @section('content')
@@ -32,7 +33,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h3 class="card-title"><i class='bx bx-plus'></i> New Document Registration</h3>
-                        <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">
+                        <a href="{{ route('document-registry.index') }}" class="btn btn-secondary" id="back-to-registry-btn">
                             <i class='bx bx-arrow-back'></i> Back to Registry
                         </a>
                     </div>
@@ -83,7 +84,7 @@
                                 <!-- Customer Field (add this after the category field) -->
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="customer" class="form-label">
+                                        <label for="customer_id" class="form-label">
                                             <i class='bx bx-building'></i> Customer
                                         </label>
                                         <select class="form-control" id="customer_id" name="customer_id">
@@ -214,7 +215,7 @@
 
                             <!-- Form Actions -->
                             <div class="d-flex justify-content-end gap-2">
-                                <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">
+                                <a href="{{ route('document-registry.index') }}" class="btn btn-secondary" id="cancel-btn">
                                     <i class='bx bx-x'></i> Cancel
                                 </a>
                                 <button type="button" id="submitBtn" class="btn btn-primary">
@@ -549,4 +550,107 @@ document.addEventListener('DOMContentLoaded', function() {
     cursor: pointer;
 }
 </style>
+@endpush
+
+@push('driverjs')
+<script>
+window.addEventListener('start-driverjs-tour', function() {
+    const driver = window.driver.js.driver;
+    driver({
+        showProgress: true,
+        steps: [
+            {
+                element: '#document_title',
+                popover: {
+                    title: 'Document Title',
+                    description: 'Begin by entering the title of your document. For example, "IT Equipment Preventive Maintenance Procedure.pdf". This field is required and should clearly describe the document\'s purpose.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#category_display',
+                popover: {
+                    title: 'Category Selection',
+                    description: 'Select the appropriate category for your document. Categories help organize documents and ensure they are routed correctly. For instance, choose "Mechatronics and Automation" if your document relates to that category.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#customer_id',
+                popover: {
+                    title: 'Customer',
+                    description: 'Optionally, select a customer associated with this document. This is useful for documents specific to a client or company. For example, select "Acme Corp" if the document is for that customer.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#document_no',
+                popover: {
+                    title: 'Document Number',
+                    description: 'Provide a unique document number, such as "DOC-2024-001". This helps in tracking and referencing the document throughout its lifecycle.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#revision_no',
+                popover: {
+                    title: 'Revision Number',
+                    description: 'Specify the revision number for your document. For initial submissions, use "01". For updates, increment the number, e.g., "02" or "03".',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#device_name',
+                popover: {
+                    title: 'Device Name',
+                    description: 'If applicable, enter the device name related to this document. For example, "Servo Motor X100". Leave blank if not relevant.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#originator_name',
+                popover: {
+                    title: 'Originator Name',
+                    description: 'This field is automatically set to your name, indicating who is submitting the document. You cannot change this value.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#document_file',
+                popover: {
+                    title: 'Document File Upload',
+                    description: 'Upload your document file here. Accepted formats include PDF, Word, Excel, PowerPoint, and Text files. The maximum file size is 10MB. For example, upload "IT Equipment Preventive Maintenance Procedure.pdf".',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#remarks',
+                popover: {
+                    title: 'Remarks',
+                    description: 'Add any additional notes or remarks that may help reviewers understand your submission. For example, "This document outlines the preventive maintenance procedures for IT equipment."',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#submitBtn',
+                popover: {
+                    title: 'Submit for Registration',
+                    description: 'Once all required fields are filled, click this button to submit your document for registration. You will be able to edit details while the document is in pending status.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            }
+        ]
+    }).drive();
+});
+</script>
 @endpush
