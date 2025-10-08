@@ -215,7 +215,8 @@
                                                                 @endif
                                                             <!-- Existing Preview and Download buttons -->
                                                             <button type="button" class="btn btn-sm btn-outline-primary me-2"
-                                                                    onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')">
+                                                                    onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')"
+                                                                    @if($loop->first) id="preview-btn" @endif>
                                                                 <i class="bx bx-show"></i> Preview
                                                             </button>
                                                             <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}?file_id={{ $file->id }}" class="btn btn-sm btn-outline-success">
