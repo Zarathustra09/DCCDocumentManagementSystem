@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
       $this->call([
 //            RolesAndPermissionsSeeder::class,
 //            FolderSeeder::class,
-//          PermissionSeeder::class,
+         PermissionSeeder::class,
 //          RunSqlSeeder::class,
           MinimalRolesAndPermissionsSeeder::class,
 

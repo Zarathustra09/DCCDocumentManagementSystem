@@ -1,7 +1,7 @@
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo">
         <a href="#" class="app-brand-link">
-            <img src="" alt="Logo Here" class="app-brand-logo">
+            <img src="{{ asset('SPIDMS.png') }}" alt="Logo Here" class="app-brand-logo">
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
