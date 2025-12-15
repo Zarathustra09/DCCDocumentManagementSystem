@@ -20,12 +20,12 @@ return new class extends Migration
             $table->string('middlename', 50);
             $table->string('lastname', 50);
             $table->text('address');
-            $table->date('birthdate');
+            $table->date('birthdate')->nullable();
             $table->string('contact_info', 100);
             $table->string('gender', 10);
             $table->date('datehired')->nullable();
             $table->string('profile_image', 200);
-            $table->date('created_on');
+            $table->date('created_on')->nullable();
             $table->string('barcode', 60);
             $table->string('email', 60)->nullable();
             $table->date('separationdate')->nullable();
