@@ -59,7 +59,7 @@
             z-index: 1000;
         }
 
-        /* And for the custom SweetAlert classes */
+        /* Custom SweetAlert classes */
         .custom-swal-container {
             z-index: 9999 !important;
         }
@@ -155,7 +155,7 @@
                                         <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                             <img
                                                 src="{{ auth()->user()->profile_image ? asset('storage/' . auth()->user()->profile_image) : 'https://placehold.co/40' }}"
-                                                alt="User Avatar"
+                                                alt="User avatar"
                                                 class="img-fluid"
                                                 style="width: 100%; height: 100%; object-fit: cover;"
                                             />
@@ -171,7 +171,8 @@
                                                         <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                                             <img
                                                                 src="{{ auth()->user()->profile_image ? asset('storage/' . auth()->user()->profile_image) : 'https://placehold.co/40' }}"
-                                                                alt class="img-fluid"
+                                                                alt="User avatar"
+                                                                class="img-fluid"
                                                                 style="width: 100%; height: 100%; object-fit: cover;"
                                                             />
                                                         </div>
@@ -190,13 +191,13 @@
                                     <li>
                                         <a class="dropdown-item" href="{{route('profile.index')}}">
                                             <i class="bx bx-user me-2"></i>
-                                            <span class="align-middle">My Profile</span>
+                                            <span class="align-middle">My profile</span>
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             <i class="bx bx-power-off me-2"></i>
-                                            <span class="align-middle">Log Out</span>
+                                            <span class="align-middle">Log out</span>
                                         </a>
                                         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                             @csrf
@@ -227,7 +228,7 @@
     <!-- / Layout wrapper -->
 
     @if(!empty($showHelpTour))
-        <!-- Floating Help Button -->
+        <!-- Floating help button -->
         <button id="help-tour-btn" style="
             position: fixed;
             bottom: 32px;
@@ -244,7 +245,7 @@
             justify-content: center;
             cursor: pointer;
             transition: background 0.2s;
-        " title="Show Help">
+        " title="Show help">
             <span style="font-size: 2rem; color: #007bff;">?</span>
         </button>
         <script>

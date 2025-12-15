@@ -73,18 +73,30 @@ class DocumentRegistrationEntryController extends Controller
             abort(403);
         }
 
-        $request->validate([
+        // Basic rules (customer rule set conditionally below)
+        $rules = [
             'document_no' => 'required|string|max:100|unique:document_registration_entries',
             'document_title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'customer_id' => 'required|exists:customers,id',
+            // 'customer_id' rule set after we detect category
             'revision_no' => 'required|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
-//            'customer' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
             'document_file' => 'nullable|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:10240'
-        ]);
+        ];
+
+        // Detect if selected category is an in-house SPI type (allow null customer)
+        $category = Category::find($request->input('category_id'));
+        $isInHouseSPI = false;
+        if ($category) {
+            $code = strtolower($category->code ?? '');
+            $name = strtolower($category->name ?? '');
+            $isInHouseSPI = ($code === 'cn2') || str_contains($name, 'spi') || str_contains($name, 'in-house');
+        }
+        $rules['customer_id'] = $isInHouseSPI ? 'nullable|exists:customers,id' : 'required|exists:customers,id';
+
+        $request->validate($rules);
 
         $pendingStatus = DocumentRegistrationEntryStatus::where('name', 'Pending')->first();
 
