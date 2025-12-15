@@ -82,24 +82,27 @@
                                 </div>
 
                                 <!-- Customer Field (add this after the category field) -->
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="customer_id" class="form-label">
-                                            <i class='bx bx-building'></i> Customer
-                                        </label>
-                                        <select class="form-control" id="customer_id" name="customer_id">
-                                            <option value="">Select Customer (Optional)</option>
-                                            @foreach($customers as $customer)
-                                                <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                                    {{ $customer->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('customer_id')
-                                        <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
+                                <div class="col-md-6" id="customer_group">
+                                     <div class="form-group">
+                                         <label for="customer_id" class="form-label">
+                                             <i class='bx bx-building'></i> Customer
+                                         </label>
+                                         <select class="form-control" id="customer_id" name="customer_id">
+                                             <option value="">Select Customer (Optional)</option>
+                                             @foreach($customers as $customer)
+                                                 <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
+                                                     {{ $customer->name }}
+                                                 </option>
+                                             @endforeach
+                                         </select>
+                                         @error('customer_id')
+                                         <div class="text-danger">{{ $message }}</div>
+                                         @enderror
+                                        <small id="customer_helper" class="form-text text-muted d-none">
+                                            In-house category selected — customer not required.
+                                        </small>
+                                     </div>
+                                 </div>
 
                                 <!-- Document Number -->
                                 <div class="col-md-6 mb-3">
@@ -403,6 +406,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Set display field to show the full category name (no code)
         document.getElementById('category_display').value = category.name;
+
+        // Handle customer visibility/clearing for In-House SPI categories
+        const customerGroup = document.getElementById('customer_group');
+        const customerSelect = document.getElementById('customer_id');
+        const customerHelper = document.getElementById('customer_helper');
+        const categoryCode = category.code ? String(category.code).toLowerCase() : '';
+        const categoryName = category.name ? String(category.name).toLowerCase() : '';
+        const isInHouseSPI = categoryCode === 'cn2' || categoryName.includes('spi') || categoryName.includes('in-house');
+
+        if (isInHouseSPI) {
+            if (customerSelect) customerSelect.value = '';
+            if (customerGroup) customerGroup.style.display = 'none';
+            if (customerHelper) customerHelper.classList.remove('d-none');
+        } else {
+            if (customerGroup) customerGroup.style.display = '';
+            if (customerHelper) customerHelper.classList.add('d-none');
+        }
 
         // Hide loading, show form
         document.getElementById('loadingContainer').style.display = 'none';
