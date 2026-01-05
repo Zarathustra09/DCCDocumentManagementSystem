@@ -411,11 +411,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const customerGroup = document.getElementById('customer_group');
         const customerSelect = document.getElementById('customer_id');
         const customerHelper = document.getElementById('customer_helper');
-        const categoryCode = category.code ? String(category.code).toLowerCase() : '';
-        const categoryName = category.name ? String(category.name).toLowerCase() : '';
-        const isInHouseSPI = categoryCode === 'cn2' || categoryName.includes('spi') || categoryName.includes('in-house');
+        const normalizedCategoryName = category.name ? category.name.trim().toLowerCase() : '';
+        const shouldHideCustomer = normalizedCategoryName === 'spi in-house specification';
 
-        if (isInHouseSPI) {
+        if (shouldHideCustomer) {
             if (customerSelect) customerSelect.value = '';
             if (customerGroup) customerGroup.style.display = 'none';
             if (customerHelper) customerHelper.classList.remove('d-none');
