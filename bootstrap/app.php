@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
            'redirect.if.authenticated.to.home' => \App\Http\Middleware\RedirectIfAuthenticatedToHome::class,
        ]);
    })
+    ->withCommands([
+       \App\Console\Commands\SyncEmployeesToUsers::class,
+   ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
