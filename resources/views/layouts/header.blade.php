@@ -82,12 +82,24 @@
             </li>
         @endcanany
 
+
+        @can('submit document for approval')
+            <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}" id="menu-my-registrations">
+                <a href="{{route('document-registry.index')}}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-upload"></i>
+                    <div data-i18n="Patient Records">My Registrations</div>
+                </a>
+            </li>
+        @endcan
+
         <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}" id="menu-my-documents">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-folder"></i>
                 <div data-i18n="Account Settings">My Documents</div>
             </a>
             <ul class="menu-sub">
+
+
                 <li class="menu-item {{Route::is('folders.*') ? 'active' : ''}}">
                     <a href="{{route('folders.index')}}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-file"></i>
@@ -95,60 +107,52 @@
                     </a>
                 </li>
 
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
-                        <i class="menu-icon tf-icons bx bx-star"></i>
-                        <div data-i18n="Account">Favorites</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
-                        <i class="menu-icon tf-icons bx bx-time"></i>
-                        <div data-i18n="Connections">Recent</div>
-                    </a>
-                </li>
+{{--                <li class="menu-item">--}}
+{{--                    <a href="#" class="menu-link">--}}
+{{--                        <i class="menu-icon tf-icons bx bx-star"></i>--}}
+{{--                        <div data-i18n="Account">Favorites</div>--}}
+{{--                    </a>--}}
+{{--                </li>--}}
+{{--                <li class="menu-item">--}}
+{{--                    <a href="#" class="menu-link">--}}
+{{--                        <i class="menu-icon tf-icons bx bx-time"></i>--}}
+{{--                        <div data-i18n="Connections">Recent</div>--}}
+{{--                    </a>--}}
+{{--                </li>--}}
 
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
-                        <i class="menu-icon tf-icons bx bx-trash"></i>
-                        <div data-i18n="Staff">Trash</div>
-                    </a>
-                </li>
+{{--                <li class="menu-item">--}}
+{{--                    <a href="#" class="menu-link">--}}
+{{--                        <i class="menu-icon tf-icons bx bx-trash"></i>--}}
+{{--                        <div data-i18n="Staff">Trash</div>--}}
+{{--                    </a>--}}
+{{--                </li>--}}
             </ul>
         </li>
 
 
 
-        @can('submit document for approval')
-            <li class="menu-item {{Route::is('document-registry.index') || Route::is('document-registry.create') ? 'active' : ''}}" id="menu-my-registrations">
-                <a href="{{route('document-registry.index')}}" class="menu-link">
-                   <i class="menu-icon tf-icons bx bx-upload"></i>
-                    <div data-i18n="Patient Records">My Registrations</div>
-                </a>
-            </li>
-        @endcan
 
 
 
 
 
-        <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">Collaboration</span>
-        </li>
+{{--        <li class="menu-header small text-uppercase">--}}
+{{--            <span class="menu-header-text">Collaboration</span>--}}
+{{--        </li>--}}
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-share-alt"></i>
-                <div data-i18n="Patient Records">Shared with me</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-share-alt"></i>--}}
+{{--                <div data-i18n="Patient Records">Shared with me</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
 
-        <li class="menu-item">
-            <a href="#" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-comment"></i>
-                <div data-i18n="Patient Records">Comments</div>
-            </a>
-        </li>
+{{--        <li class="menu-item">--}}
+{{--            <a href="#" class="menu-link">--}}
+{{--                <i class="menu-icon tf-icons bx bx-comment"></i>--}}
+{{--                <div data-i18n="Patient Records">Comments</div>--}}
+{{--            </a>--}}
+{{--        </li>--}}
         @can('manage users')
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Tools</span>
