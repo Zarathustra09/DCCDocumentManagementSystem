@@ -50,7 +50,7 @@ class DocumentRegistryExport implements FromCollection, WithHeadings, WithMappin
             $entry->originator_name,
             $entry->customer ?? '',
             $entry->remarks ?? '',
-            ucfirst($entry->status)
+            ucfirst($entry->status->name ?? 'Unknown')
         ];
     }
 

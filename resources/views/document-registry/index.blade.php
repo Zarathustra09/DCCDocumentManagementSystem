@@ -1,3 +1,4 @@
+@php($showHelpTour = true)
 @extends('layouts.app')
 
 @section('content')
@@ -8,25 +9,54 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title"><i class='bx bx-folder-open'></i> My Registrations</h3>
                     @can('submit document for approval')
-                        <a href="{{ route('document-registry.create') }}" class="btn btn-primary">
+                        <a href="{{ route('document-registry.create') }}" class="btn btn-primary" id="create-registration-btn">
                             <i class='bx bx-plus'></i> Register New Document
                         </a>
                     @endcan
                 </div>
 
                 <div class="card-body">
+                    <!-- Filter Form -->
+                    <form method="GET" action="{{ route('document-registry.index') }}" class="mb-4" id="registry-filter-form">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select name="status" class="form-select" id="filter-status">
+                                    <option value="">All Statuses</option>
+                                    <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="Implemented" {{ request('status') == 'Implemented' ? 'selected' : '' }}>Implemented</option>
+                                    <option value="Cancelled" {{ request('status') == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="category_id" class="form-select" id="filter-category">
+                                    <option value="">All Categories</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary" id="filter-btn">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+
                     <!-- Entries Table -->
                     <div class="table-responsive">
                         <table class="table table-striped table-hover" id="documentRegistry">
                             <thead>
                                 <tr>
+                                    <th>Control No.</th>
                                     <th>Document Title</th>
+                                    <th>Category</th>
                                     <th>Device Part Number</th>
                                     <th>Document No.</th>
                                     <th>Rev.</th>
                                     <th>Originator</th>
                                     <th>Customer</th>
-                                    <th>Submitted By</th>
+                                    <th>Submitted At</th>
                                     <th>Implemented By</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -36,7 +66,19 @@
                                 @forelse($entries as $entry)
                                     <tr>
                                         <td>
+                                            <strong>{{$entry->control_no ?? '-'}}</strong>
+                                        </td>
+                                        <td>
                                             <strong>{{ $entry->document_title ?? '-' }}</strong>
+                                        </td>
+                                        <td>
+                                            @if($entry->category)
+{{--                                                <span class="badge bg-info">{{ $entry->category->code }}</span>--}}
+{{--                                                <br>--}}
+                                                <small>{{ $entry->category->name }}</small>
+                                            @else
+                                                -
+                                            @endif
                                         </td>
                                         <td>
                                             {{ $entry->device_name ?? '-'}}
@@ -44,21 +86,21 @@
                                         <td>{{ $entry->document_no ?? '-' }}</td>
                                         <td>{{ $entry->revision_no ?? '-' }}</td>
                                         <td>{{ $entry->originator_name ?? '-' }}</td>
-                                        <td>{{ $entry->customer ?? '-' }}</td>
-
+                                        <td>{{ $entry->customer->name ?? '-' }}</td>
                                         <td>
                                             <small>
-                                                <i class='bx bx-user'></i> {{ $entry->submittedBy?->name ?? '-' }}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('M d, Y') ?? '-' }}
+                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('m/d/Y') ?? '-' }}
+                                                <br>
+                                                <small class="text-muted">{{ $entry->submitted_at->format('g:i A') }}</small>
                                             </small>
                                         </td>
                                         <td>
                                             <small>
                                                 <i class='bx bx-user'></i> {{ $entry->approvedBy?->name ?? '-' }}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at?->format('M d, Y') ?? '-' }}
+                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at?->format('m/d/Y') ?? '-' }}
+                                                <small class="text-muted">{{ $entry->implemented_at?->format('g:i A') }}</small>
                                             </small>
                                         </td>
-
                                         <td>
                                             @if($entry->status->name === 'Pending')
                                                 <span class="badge bg-warning text-dark">
@@ -96,7 +138,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="text-center py-4">
+                                        <td colspan="12" class="text-center py-4">
                                             <i class='bx bx-info-circle'></i> No document registrations found.
                                         </td>
                                     </tr>
@@ -130,15 +172,73 @@
 </style>
 @endsection
 
+@push('driverjs')
+<script>
+window.addEventListener('start-driverjs-tour', function() {
+    const driver = window.driver.js.driver;
+    driver({
+        showProgress: true,
+        steps: [
+            {
+                element: '#create-registration-btn',
+                popover: {
+                    title: 'Register New Document',
+                    description: 'Click here to register a new document.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#filter-status',
+                popover: {
+                    title: 'Status Filter',
+                    description: 'Filter registrations by their status.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#filter-category',
+                popover: {
+                    title: 'Category Filter',
+                    description: 'Filter registrations by category.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#filter-btn',
+                popover: {
+                    title: 'Apply Filters',
+                    description: 'Click to apply the selected filters.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#documentRegistry',
+                popover: {
+                    title: 'Registrations Table',
+                    description: 'View and manage all your document registrations here.',
+                    side: 'top',
+                    align: 'center'
+                }
+            }
+        ]
+    }).drive();
+});
+</script>
+@endpush
+
 @push('scripts')
     <script>
         $(document).ready(function() {
             $('#documentRegistry').DataTable({
                 responsive: true,
-                order: [[6, 'desc']],
+                order: [[8, 'desc']],
                 pageLength: 10,
                 columnDefs: [
-                    { orderable: false, targets: [0, 9] }
+                    { orderable: false, targets: [0, 11] }
                 ],
                 language: {
                     search: "Search entries:",

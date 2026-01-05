@@ -6,13 +6,13 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-folder-open'></i> Document Registry - Advanced List</h3>
+                    <h3 class="card-title"><i class='bx bx-folder-open'></i>Tracking of Registered Documents</h3>
                 </div>
                 <div class="card-body">
                     <!-- Advanced Filters -->
                     <form method="GET" action="{{ route('document-registry.list') }}" class="mb-4">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label for="status">Status</label>
                                     <select name="status" id="status" class="form-select">
@@ -25,7 +25,20 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="category_id">Category</label>
+                                    <select name="category_id" id="category_id" class="form-select">
+                                        <option value="">All Categories</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="form-group mb-3">
                                     <label for="search">Search</label>
                                     <input type="text" name="search" id="search" class="form-control"
@@ -102,14 +115,16 @@
                         <table class="table table-striped table-hover" id="documentRegistry">
                             <thead>
                                 <tr>
+                                    <th>Control No.</th>
                                     <th>Document Title</th>
+                                    <th>Category</th>
                                     <th>Device Part Number</th>
                                     <th>Document No.</th>
                                     <th>Rev.</th>
                                     <th>Originator</th>
                                     <th>Customer</th>
                                     <th>Status</th>
-                                    <th>Submitted By</th>
+                                    <th>Submitted At</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -117,7 +132,19 @@
                                 @forelse($entries as $entry)
                                     <tr>
                                         <td>
+                                            <strong>{{$entry->control_no ?? '-'}}</strong>
+                                        </td>
+                                        <td>
                                             <strong>{{ $entry->document_title ?? '-'}}</strong>
+                                        </td>
+                                        <td>
+                                            @if($entry->category)
+{{--                                                <span class="badge bg-info">{{ $entry->category->code }}</span>--}}
+{{--                                                <br>--}}
+                                                <small>{{ $entry->category->name }}</small>
+                                            @else
+                                                -
+                                            @endif
                                         </td>
                                         <td>
                                             {{ $entry->device_name ?? '-'}}
@@ -125,7 +152,7 @@
                                         <td>{{ $entry->document_no ?? '-'}}</td>
                                         <td>{{ $entry->revision_no ?? '-'}}</td>
                                         <td>{{ $entry->originator_name ?? '-'}}</td>
-                                        <td>{{ $entry->customer ?? '-' }}</td>
+                                        <td>{{ $entry->customer->name ?? '-' }}</td>
                                         <td>
                                             @if($entry->status->name === 'Pending')
                                                 <span class="badge bg-warning text-dark">
@@ -143,8 +170,9 @@
                                         </td>
                                         <td>
                                             <small>
-                                                <i class='bx bx-user'></i> {{ $entry->submittedBy->name ?? '-'}}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('M d, Y') }}
+                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at->format('m/d/Y') }}
+                                                <br>
+                                                <small class="text-muted">{{ $entry->submitted_at->format('g:i A') }}</small>
                                             </small>
                                         </td>
                                         <td>

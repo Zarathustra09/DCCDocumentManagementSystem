@@ -6,13 +6,15 @@
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5">
                 <div class="card shadow">
-                    <div class="card-header text-center">{{ __('Login') }}</div>
+                    <div class="card-header text-center">
+                        <img src="{{asset('logo.png')}}" alt="Logo" class="mb-3" style="max-height: 60px;">
+{{--                        <div>{{ __('Login') }}</div>--}}
+                    </div>
 
                     <div class="card-body">
                         <form method="POST" action="{{ route('login') }}">
                             @csrf
 
-                            {{-- resources/views/auth/login.blade.php --}}
                             <div class="mb-3">
                                 <label for="username" class="form-label">{{ __('Username') }}</label>
                                 <input id="username" type="text" class="form-control @error('username') is-invalid @enderror" name="username" value="{{ old('username') }}" required autocomplete="username" autofocus>
@@ -47,14 +49,6 @@
                                     {{ __('Login') }}
                                 </button>
                             </div>
-
-{{--                            @if (Route::has('password.request'))--}}
-{{--                                <div class="text-center mt-3">--}}
-{{--                                    <a class="btn btn-link" href="{{ route('password.request') }}">--}}
-{{--                                        {{ __('Forgot Your Password?') }}--}}
-{{--                                    </a>--}}
-{{--                                </div>--}}
-{{--                            @endif--}}
                         </form>
                     </div>
                 </div>

@@ -1,11 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+    @php $showHelpTour = true; @endphp
     <div class="container-fluid">
         <!-- Header Section -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom" data-driver="breadcrumb">
                     <div>
                         <nav aria-label="breadcrumb" class="d-none d-md-block">
                             <ol class="breadcrumb m-0">
@@ -15,13 +16,13 @@
                                     </a>
                                 </li>
                                 <li class="breadcrumb-item active" aria-current="page">
-                                    {{ $documentRegistrationEntry->document_no ?? '-' }}
+                                    {{ $documentRegistrationEntry->document_title ?? '-' }}
                                 </li>
                             </ol>
                         </nav>
                         <h4 class="mb-0 mt-2">
-                            <i class="bx bx-file-find me-2"></i>
-                            {{ $documentRegistrationEntry->document_title ?? '-'}}
+{{--                            <i class="bx bx-file-find me-2"></i>--}}
+                            Registration: {{ $documentRegistrationEntry->control_no ?? '-'}}
                         </h4>
                     </div>
                 </div>
@@ -39,7 +40,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                 <div class="card-header d-flex justify-content-between align-items-center">
+                 <div class="card-header d-flex justify-content-between align-items-center" data-driver="card-header">
                      <h3 class="card-title">
                          @if(auth()->id() === $documentRegistrationEntry->submitted_by)
                              My Registration
@@ -55,7 +56,7 @@
                         <div class="row">
                             <!-- Left Column - Document Information -->
                             <div class="col-md-8">
-                                <div class="row mb-4">
+                                <div class="row mb-4" data-driver="document-info">
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label text-muted">Document Number</label>
@@ -80,14 +81,22 @@
                                         @if($documentRegistrationEntry->customer)
                                             <div class="mb-3">
                                                 <label class="form-label text-muted">Customer</label>
-                                                <p class="mb-0">{{ $documentRegistrationEntry->customer }}</p>
+                                                <p class="mb-0">{{ $documentRegistrationEntry->customer->name }}</p>
                                             </div>
                                         @endif
+
+                                            @if($documentRegistrationEntry->category)
+                                                <div class="mb-3">
+                                                    <label class="form-label text-muted">Category</label>
+                                                    <p class="mb-0">{{ $documentRegistrationEntry->category->name }}</p>
+                                                </div>
+                                            @endif
+
                                     </div>
                                 </div>
 
                                 @if($documentRegistrationEntry->remarks)
-                                    <div class="mb-3">
+                                    <div class="mb-3" data-driver="remarks">
                                         <label class="form-label text-muted">Remarks</label>
                                         <div class="p-3 bg-light rounded">
                                             {{ $documentRegistrationEntry->remarks }}
@@ -100,7 +109,7 @@
                                     $file = $documentRegistrationEntry->files->first();
                                 @endphp
                                 @if($documentRegistrationEntry->files->count())
-                                    <div class="mb-3">
+                                    <div class="mb-3" data-driver="file-table">
                                         <label class="form-label text-muted">Attached Files</label>
                                         <div class="table-responsive">
                                             <table class="table table-bordered table-sm align-middle" id="fileTable">
@@ -128,7 +137,7 @@
                                                             </span>
                                                         </td>
                                                         <td>
-                                                            {{ $file->created_at?->format('M d, Y \a\t g:i A') ?? '-' }}
+                                                            {{ $file->created_at?->format('m/d/Y g:ia') ?? '-' }}
                                                         </td>
                                                         <td>
                                                             @if($file->status->name === 'Pending' && auth()->user()->can('approve document registration'))
@@ -161,7 +170,7 @@
                                                                                 </div>
                                                                                 <div class="modal-footer">
                                                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                                                    <button type="submit" class="btn btn-danger">Reject</button>
+                                                                                    <button type="submit" class="btn btn-danger">Return</button>
                                                                                 </div>
                                                                             </form>
                                                                         </div>
@@ -192,7 +201,7 @@
                                                                                         <div class="text-muted">
                                                                                             <small>
                                                                                                 <strong>Returned by:</strong> {{ $file->approvedBy->name }}<br>
-                                                                                                <strong>Date:</strong> {{ $file->implemented_at->format('M d, Y \a\t g:i A') }}
+                                                                                                <strong>Date:</strong> {{ $file->implemented_at->format('m/d/Y') }}
                                                                                             </small>
                                                                                         </div>
                                                                                     @endif
@@ -206,7 +215,8 @@
                                                                 @endif
                                                             <!-- Existing Preview and Download buttons -->
                                                             <button type="button" class="btn btn-sm btn-outline-primary me-2"
-                                                                    onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')">
+                                                                    onclick="previewDocument({{ $file->id }}, '{{ addslashes($file->mime_type) }}', '{{ addslashes($file->original_filename) }}')"
+                                                                    @if($loop->first) id="preview-btn" @endif>
                                                                 <i class="bx bx-show"></i> Preview
                                                             </button>
                                                             <a href="{{ route('document-registry.download', $documentRegistrationEntry) }}?file_id={{ $file->id }}" class="btn btn-sm btn-outline-success">
@@ -225,7 +235,7 @@
                             <!-- Right Column - Status and Actions -->
                             <div class="col-md-4">
                                 <!-- Status Card -->
-                                <div class="card mb-3">
+                                <div class="card mb-3" data-driver="status-card">
                                     <div class="card-header">
                                         <h5 class="mb-0"><i class='bx bx-info-circle'></i> Status Information</h5>
                                     </div>
@@ -252,9 +262,11 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label class="form-label text-muted">Submitted By</label>
+                                            <label class="form-label text-muted">Originator Name</label>
                                             <p class="mb-0">{{ $documentRegistrationEntry->submittedBy->name }}</p>
-                                            <small class="text-muted">{{ $documentRegistrationEntry->submitted_at->format('M d, Y \a\t g:i A') }}</small>
+                                            <small class="text-muted">{{ $documentRegistrationEntry->submitted_at->format('m/d/Y') }}</small>
+                                            <small class="text-muted">{{ $documentRegistrationEntry->submitted_at->format('g:i A') }}</small>
+
                                         </div>
 
                                         @if($documentRegistrationEntry->implemented_by)
@@ -267,7 +279,9 @@
                                                     @endif
                                                 </label>
                                                 <p class="mb-0">{{ $documentRegistrationEntry->approvedBy->name }}</p>
-                                                <small class="text-muted">{{ $documentRegistrationEntry->implemented_at->format('M d, Y \a\t g:i A') }}</small>
+                                                <small class="text-muted">{{ $documentRegistrationEntry->implemented_at->format('m/d/Y') }}</small>
+                                                <small class="text-muted">{{ $documentRegistrationEntry->implemented_at->format('g:i A') }}</small>
+
                                             </div>
                                         @endif
 
@@ -303,7 +317,7 @@
                                 </div>
 
                                 @if($documentRegistrationEntry->status->name === 'Pending' && auth()->user()->can('submit document for approval'))
-                                    <div class="card mb-3">
+                                    <div class="card mb-3" data-driver="upload-card">
                                         <div class="card-header">
                                             <h5 class="mb-0"><i class="bx bx-upload"></i> Upload File</h5>
                                         </div>
@@ -324,7 +338,7 @@
                                 @endif
 
                                 @if($documentRegistrationEntry->status->name !== 'Pending')
-                                    <div class="card mb-3">
+                                    <div class="card mb-3" data-driver="upload-disabled">
                                         <div class="card-header">
                                             <h5 class="mb-0"><i class="bx bx-block"></i> Upload Disabled</h5>
                                         </div>
@@ -355,7 +369,7 @@
         @if($file)
             <div class="row mt-4">
                 <div class="col-12">
-                    <div class="card" id="preview-card" style="display: none;">
+                    <div class="card" id="preview-card" style="display: none;" data-driver="preview-section">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class='bx bx-show'></i> Document Preview</h5>
                             <button class="btn btn-sm btn-outline-secondary" onclick="hidePreview()">
@@ -376,7 +390,7 @@
         @if($documentRegistrationEntry->status->name === 'Implemented' && $documentRegistrationEntry->documents->count() > 0)
             <div class="row mt-4">
                 <div class="col-12">
-                    <div class="card">
+                    <div class="card" data-driver="referenced-docs">
                         <div class="card-header">
                             <h5 class="mb-0"><i class='bx bx-file'></i> Referenced Documents</h5>
                         </div>
@@ -407,7 +421,7 @@
                                             <td>{{ number_format($document->file_size / 1024, 2) }} KB</td>
                                             <td>
                                                 <small class="text-muted">
-                                                    {{ $document->created_at->format('M d, Y') }}
+                                                    {{ $document->created_at->format('m/d/Y g:ia') }}
                                                 </small>
                                             </td>
                                             <td>
@@ -449,7 +463,7 @@
                         <div class="text-muted">
                             <small>
                                 <strong>Cancelled by:</strong> {{ $documentRegistrationEntry->approvedBy->name }}<br>
-                                <strong>Date:</strong> {{ $documentRegistrationEntry->implemented_at->format('M d, Y \a\t g:i A') }}
+                                <strong>Date:</strong> {{ $documentRegistrationEntry->implemented_at->format('m/d/Y') }}
                             </small>
                         </div>
                     @endif
@@ -750,4 +764,120 @@
             document.getElementById('preview-card').style.display = 'none';
         }
     </script>
+@endpush
+
+
+@push('driverjs')
+<script>
+window.addEventListener('start-driverjs-tour', function() {
+    const driver = window.driver.js.driver;
+    driver({
+        showProgress: true,
+        steps: [
+            {
+                element: '[data-driver="breadcrumb"]',
+                popover: {
+                    title: 'Navigation Breadcrumb',
+                    description: 'This shows your current location in the system. You can click on "My Registrations" to go back to the main list.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '[data-driver="card-header"]',
+                popover: {
+                    title: 'Document Header',
+                    description: 'This displays the document registration title and provides a back button to return to the registry list.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '[data-driver="document-info"]',
+                popover: {
+                    title: 'Document Information',
+                    description: 'Here you can view all the details of the document registration including document number, revision, originator, and other metadata.',
+                    side: 'top',
+                    align: 'start'
+                }
+            },
+            @if($documentRegistrationEntry->remarks)
+            {
+                element: '[data-driver="remarks"]',
+                popover: {
+                    title: 'Document Remarks',
+                    description: 'Any additional notes or comments about this document registration are displayed here.',
+                    side: 'top',
+                    align: 'start'
+                }
+            },
+            @endif
+            @if($documentRegistrationEntry->files->count())
+            {
+                element: '[data-driver="file-table"]',
+                popover: {
+                    title: 'Attached Files',
+                    description: 'This table shows all files attached to this registration. You can preview, download, and see the status of each file. Authorized users can approve or return files.',
+                    side: 'top',
+                    align: 'start'
+                }
+            },
+            @endif
+            {
+                element: '[data-driver="status-card"]',
+                popover: {
+                    title: 'Status Information',
+                    description: 'This card displays the current status of the registration, who submitted it, when it was submitted, and any approval/rejection information.',
+                    side: 'left',
+                    align: 'start'
+                }
+            },
+            @if($documentRegistrationEntry->status->name === 'Pending' && auth()->user()->can('submit document for approval'))
+            {
+                element: '[data-driver="upload-card"]',
+                popover: {
+                    title: 'File Upload',
+                    description: 'While the registration is pending, you can upload additional files here. Only certain file types are accepted.',
+                    side: 'left',
+                    align: 'start'
+                }
+            },
+            @endif
+            @if($documentRegistrationEntry->status->name !== 'Pending')
+            {
+                element: '[data-driver="upload-disabled"]',
+                popover: {
+                    title: 'Upload Status',
+                    description: 'File uploads are disabled because this registration has been {{ $documentRegistrationEntry->status->name }}. No further files can be added.',
+                    side: 'left',
+                    align: 'start'
+                }
+            },
+            @endif
+            @if($file)
+            {
+                element: '[data-driver="preview-section"]',
+                popover: {
+                    title: 'Document Preview',
+                    description: 'When you click the preview button on any file, the document preview will appear here. You can view PDFs, images, and text files directly in the browser.',
+                    side: 'top',
+                    align: 'start'
+                }
+            },
+            @endif
+            @if($documentRegistrationEntry->status->name === 'Implemented' && $documentRegistrationEntry->documents->count() > 0)
+            {
+                element: '[data-driver="referenced-docs"]',
+                popover: {
+                    title: 'Referenced Documents',
+                    description: 'This section shows any documents that reference this registration. These appear after the registration is implemented.',
+                    side: 'top',
+                    align: 'start'
+                }
+            }
+            @endif
+        ]
+    }).drive();
+});
+</script>
 @endpush

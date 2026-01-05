@@ -45,6 +45,9 @@
     <!-- Page CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
     <!-- Helpers -->
     <script src="{{ asset('dashboard/assets/vendor/js/helpers.js') }}"></script>
 
@@ -56,7 +59,7 @@
             z-index: 1000;
         }
 
-        /* And for the custom SweetAlert classes */
+        /* Custom SweetAlert classes */
         .custom-swal-container {
             z-index: 9999 !important;
         }
@@ -125,13 +128,11 @@
         <div class="layout-container">
             <!-- Menu -->
             @include('layouts.header')
-
             <!-- / Menu -->
 
             <!-- Layout container -->
             <div class="layout-page">
                 <!-- Navbar -->
-
                 <nav
                     class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
                     id="layout-navbar"
@@ -154,7 +155,7 @@
                                         <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                             <img
                                                 src="{{ auth()->user()->profile_image ? asset('storage/' . auth()->user()->profile_image) : 'https://placehold.co/40' }}"
-                                                alt="User Avatar"
+                                                alt="User avatar"
                                                 class="img-fluid"
                                                 style="width: 100%; height: 100%; object-fit: cover;"
                                             />
@@ -170,7 +171,8 @@
                                                         <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                                             <img
                                                                 src="{{ auth()->user()->profile_image ? asset('storage/' . auth()->user()->profile_image) : 'https://placehold.co/40' }}"
-                                                                alt class="img-fluid"
+                                                                alt="User avatar"
+                                                                class="img-fluid"
                                                                 style="width: 100%; height: 100%; object-fit: cover;"
                                                             />
                                                         </div>
@@ -189,13 +191,13 @@
                                     <li>
                                         <a class="dropdown-item" href="{{route('profile.index')}}">
                                             <i class="bx bx-user me-2"></i>
-                                            <span class="align-middle">My Profile</span>
+                                            <span class="align-middle">My profile</span>
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             <i class="bx bx-power-off me-2"></i>
-                                            <span class="align-middle">Log Out</span>
+                                            <span class="align-middle">Log out</span>
                                         </a>
                                         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                             @csrf
@@ -207,32 +209,56 @@
                         </ul>
                     </div>
                 </nav>
-
                 <!-- / Navbar -->
-                @endauth
-
 
                 @yield('content')
 
+                <!-- Footer -->
+                {{-- @include('layouts.footer') --}}
+                <!-- / Footer -->
 
-                @auth
-                    <!-- Footer -->
-                    {{--                    @include('layouts.footer')--}}
-                    <!-- / Footer -->
-
-                    <div class="content-backdrop fade"></div>
+                <div class="content-backdrop fade"></div>
             </div>
             <!-- Content wrapper -->
         </div>
         <!-- / Layout page -->
     </div>
-
     <!-- Overlay -->
     <div class="layout-overlay layout-menu-toggle"></div>
-    </div>
     <!-- / Layout wrapper -->
 
+    @if(!empty($showHelpTour))
+        <!-- Floating help button -->
+        <button id="help-tour-btn" style="
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 1050;
+            background: #fff;
+            border: 2px solid #007bff;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        " title="Show help">
+            <span style="font-size: 2rem; color: #007bff;">?</span>
+        </button>
+        <script>
+            document.getElementById('help-tour-btn').addEventListener('click', function() {
+                window.dispatchEvent(new CustomEvent('start-driverjs-tour'));
+            });
+        </script>
+    @endif
 @endauth
+
+@guest
+    @yield('content')
+@endguest
 <!-- Core JS -->
 <!-- build:js assets/vendor/js/core.js -->
 <script src="{{ asset('dashboard/assets/vendor/libs/jquery/jquery.js') }}"></script>
@@ -257,5 +283,6 @@
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @stack('scripts')
+@stack('driverjs')
 </body>
 </html>

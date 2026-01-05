@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class DocumentRegistrationEntry extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'document_title',
@@ -16,7 +18,7 @@ class DocumentRegistrationEntry extends Model
         'revision_no',
         'device_name',
         'originator_name',
-        'customer',
+//        'customer',
         'remarks',
         'status_id',
         'submitted_by',
@@ -24,12 +26,27 @@ class DocumentRegistrationEntry extends Model
         'submitted_at',
         'implemented_at',
         'rejection_reason',
+        'category_id',
+        'customer_id',
+        'dcn_no'
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
         'implemented_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
     public function status()
     {
@@ -104,5 +121,21 @@ class DocumentRegistrationEntry extends Model
         return $query->whereHas('status', function ($q) {
             $q->where('name', 'Cancelled');
         });
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->control_no)) {
+                $model->control_no = 'DCC-' . \Illuminate\Support\Str::random(9);
+            }
+        });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logAll();
     }
 }
