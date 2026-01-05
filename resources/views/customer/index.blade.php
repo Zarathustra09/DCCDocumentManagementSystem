@@ -98,9 +98,21 @@ function openCreateModal() {
                 body: JSON.stringify({
                     name: formData.get('name'),
                     code: formData.get('code'),
-                    is_active: formData.get('is_active') ? true : false
+                    is_active: !!formData.get('is_active')
                 })
-            }).then(response => response.json());
+            }).then(async response => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(
+                        data.message ||
+                        Object.values(data.errors || {})[0]?.[0] ||
+                        'Failed to create customer.'
+                    );
+                }
+                return data;
+            }).catch(error => {
+                Swal.showValidationMessage(error.message);
+            });
         }
     }).then((result) => {
         if (result.isConfirmed && result.value.success) {
@@ -146,9 +158,21 @@ function editCustomer(id, name, code, isActive) {
                 body: JSON.stringify({
                     name: formData.get('name'),
                     code: formData.get('code'),
-                    is_active: formData.get('is_active') ? true : false
+                    is_active: !!formData.get('is_active')
                 })
-            }).then(response => response.json());
+            }).then(async response => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(
+                        data.message ||
+                        Object.values(data.errors || {})[0]?.[0] ||
+                        'Failed to update customer.'
+                    );
+                }
+                return data;
+            }).catch(error => {
+                Swal.showValidationMessage(error.message);
+            });
         }
     }).then((result) => {
         if (result.isConfirmed && result.value.success) {
@@ -176,13 +200,16 @@ function deleteCustomer(id, name) {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Content-Type': 'application/json',
                 }
-            }).then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success').then(() => {
-                        location.reload();
-                    });
+            }).then(async response => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to delete customer.');
                 }
+                Swal.fire('Deleted!', data.message, 'success').then(() => {
+                    location.reload();
+                });
+            }).catch(error => {
+                Swal.fire('Error', error.message, 'error');
             });
         }
     });

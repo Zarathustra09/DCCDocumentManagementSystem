@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class CustomerController extends Controller
 {
@@ -22,17 +24,25 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create customer');
+
         try {
-            $request->validate([
+            $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:3|unique:customers,code',
                 'is_active' => 'boolean'
             ]);
 
-            Customer::create($request->all());
+            Customer::create($validated);
 
             return response()->json(['success' => true, 'message' => 'Customer created successfully']);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
+            Log::error('Failed to create customer', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Failed to create customer.'], 500);
         }
     }
@@ -40,17 +50,28 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer)
     {
         $this->authorize('edit customer');
+
         try {
-            $request->validate([
+            $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:3|unique:customers,code,' . $customer->id,
                 'is_active' => 'boolean'
             ]);
 
-            $customer->update($request->all());
+            $customer->update($validated);
 
             return response()->json(['success' => true, 'message' => 'Customer updated successfully']);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
+            Log::error('Failed to update customer', [
+                'error' => $e->getMessage(),
+                'customer_id' => $customer->id,
+            ]);
             return response()->json(['success' => false, 'message' => 'Failed to update customer.'], 500);
         }
     }
@@ -58,10 +79,15 @@ class CustomerController extends Controller
     public function destroy(Customer $customer)
     {
         $this->authorize('delete customer');
+
         try {
             $customer->delete();
             return response()->json(['success' => true, 'message' => 'Customer deleted successfully']);
         } catch (\Exception $e) {
+            Log::error('Failed to delete customer', [
+                'error' => $e->getMessage(),
+                'customer_id' => $customer->id,
+            ]);
             return response()->json(['success' => false, 'message' => 'Failed to delete customer.'], 500);
         }
     }
