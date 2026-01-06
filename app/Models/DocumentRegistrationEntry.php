@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -28,6 +29,7 @@ class DocumentRegistrationEntry extends Model
         'rejection_reason',
         'category_id',
         'customer_id',
+        'control_no',
         'dcn_no'
     ];
 
@@ -129,8 +131,42 @@ class DocumentRegistrationEntry extends Model
 
         static::creating(function ($model) {
             if (empty($model->control_no)) {
-                $model->control_no = 'DCC-' . \Illuminate\Support\Str::random(9);
+                $model->control_no = static::generateControlNumber();
             }
+        });
+    }
+
+    protected static function generateControlNumber(): string
+    {
+        return DB::transaction(function () {
+            $year = now()->format('y');
+
+            $tracker = DB::table('last_control_numbers')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$tracker) {
+                $trackerId = DB::table('last_control_numbers')->insertGetId([
+                    'last_number' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $tracker = (object)[
+                    'id' => $trackerId,
+                    'last_number' => 0,
+                ];
+            }
+
+            $nextNumber = $tracker->last_number + 1;
+
+            DB::table('last_control_numbers')
+                ->where('id', $tracker->id)
+                ->update([
+                    'last_number' => $nextNumber,
+                    'updated_at' => now(),
+                ]);
+
+            return sprintf('%s-%04d', $year, $nextNumber);
         });
     }
 
