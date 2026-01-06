@@ -13,9 +13,9 @@
                         <span class="badge bg-{{ $documentRegistrationEntry->status->name === 'Pending' ? 'warning' : ($documentRegistrationEntry->status->name === 'Implemented' ? 'success' : 'danger') }}">
                             {{ $documentRegistrationEntry->status->name }}
                         </span>
-                        <a href="{{ route('document-registry.show', $documentRegistrationEntry) }}" class="btn btn-secondary">
-                            <i class='bx bx-arrow-back'></i> Back to Details
-                        </a>
+                  <a href="{{ url()->previous() }}" class="btn btn-secondary">
+                      <i class='bx bx-arrow-back'></i> Back to Details
+                  </a>
                     </div>
                 </div>
 
