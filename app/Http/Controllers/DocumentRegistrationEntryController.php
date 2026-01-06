@@ -75,11 +75,11 @@ class DocumentRegistrationEntryController extends Controller
 
         // Basic rules (customer rule set conditionally below)
         $rules = [
-            'document_no' => 'required|string|max:100|unique:document_registration_entries',
+            'document_no' => 'nullable|string|max:100',
             'document_title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             // 'customer_id' rule set after we detect category
-            'revision_no' => 'required|string|max:50',
+            'revision_no' => 'nullable|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
             'remarks' => 'nullable|string',
@@ -242,7 +242,7 @@ class DocumentRegistrationEntryController extends Controller
             'document_title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'customer_id' => 'nullable|exists:customers,id',
-            'revision_no' => 'required|string|max:50',
+            'revision_no' => 'nullable|string|max:50',
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
             'remarks' => 'nullable|string',
