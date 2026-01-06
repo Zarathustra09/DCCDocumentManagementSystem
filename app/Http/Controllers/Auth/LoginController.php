@@ -52,8 +52,22 @@ class LoginController extends Controller
             auth()->login($user, $request->filled('remember'));
             return true;
         }
-        Log::warning('Login attempt failed for username: ' . $request->input('username'));
-        session()->flash('error', 'Invalid username or password.');
+       $logContext = [
+           'username'   => $request->input('username'),
+           'ip'         => $request->ip(),
+           'user_agent' => $request->header('User-Agent'),
+           'time'       => now()->toDateTimeString(),
+           'user_exists'=> (bool) $user,
+       ];
+
+       if (! $user) {
+           Log::warning('Login attempt failed: user not found.', $logContext);
+       } else {
+           $logContext['reason'] = 'invalid_password';
+           Log::warning('Login attempt failed: invalid credentials.', $logContext);
+       }
+
+       session()->flash('error', 'Invalid username or password.');
 
         return false;
     }

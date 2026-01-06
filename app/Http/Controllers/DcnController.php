@@ -66,23 +66,16 @@ class DcnController extends Controller
 
     public function updateDcnNumber(Request $request, DocumentRegistrationEntry $entry)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'customer_id' => 'required|exists:customers,id',
-            'dcn_suffix' => 'required|string|size:3|regex:/^[0-9]{3}$/',
-        ]);
+        // Check if manual mode
+        $isManual = $request->boolean('is_manual');
 
-        DB::beginTransaction();
+        if ($isManual) {
+            // Manual DCN override - minimal validation
+            $request->validate([
+                'manual_dcn' => 'required|string|max:100',
+            ]);
 
-        try {
-            // Get category and customer codes
-            $category = Category::findOrFail($request->category_id);
-            $customer = Customer::findOrFail($request->customer_id);
-            $currentYear = date('y'); // 2-digit year (e.g., 25 for 2025)
-
-            // Generate DCN number: CategoryCode + Year + CustomerCode + Suffix
-            // Format: CNA25-ALL-001
-            $dcnNumber = $category->code . $currentYear . '-' . $customer->code . '-' . $request->dcn_suffix;
+            $dcnNumber = trim($request->manual_dcn);
 
             // Check if DCN number already exists (excluding current entry)
             $existingEntry = DocumentRegistrationEntry::where('dcn_no', $dcnNumber)
@@ -92,33 +85,93 @@ class DcnController extends Controller
             if ($existingEntry) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This DCN number already exists. Please use a different 3-digit suffix.',
-                    'errors' => ['dcn_suffix' => ['DCN number already exists']]
+                    'message' => 'This DCN number already exists in the system.',
+                    'errors' => ['manual_dcn' => ['DCN number already exists']]
                 ], 422);
             }
 
-            // Update the entry with new DCN number and related fields
-            $entry->update([
-                'dcn_no' => $dcnNumber,
-                'category_id' => $request->category_id,
-                'customer_id' => $request->customer_id,
+            DB::beginTransaction();
+
+            try {
+                // Update the entry with manual DCN number
+                $entry->update([
+                    'dcn_no' => $dcnNumber,
+                    // Don't update customer_id or category_id in manual mode
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'DCN number saved successfully (Manual Override).',
+                    'dcn_number' => $dcnNumber
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while saving the DCN number.',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+
+        } else {
+            // Auto-generated mode - standard validation
+            $request->validate([
+                'category_id' => 'required|exists:categories,id',
+                'customer_id' => 'required|exists:customers,id',
+                'dcn_suffix' => 'required|string|size:3|regex:/^[0-9]{3}$/',
             ]);
 
-            DB::commit();
+            DB::beginTransaction();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'DCN number updated successfully.',
-                'dcn_number' => $dcnNumber
-            ]);
+            try {
+                // Get category and customer codes
+                $category = Category::findOrFail($request->category_id);
+                $customer = Customer::findOrFail($request->customer_id);
+                $currentYear = date('y'); // 2-digit year (e.g., 25 for 2025)
 
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while updating the DCN number.',
-                'error' => $e->getMessage()
-            ], 500);
+                // Generate DCN number: CategoryCode + Year + CustomerCode + Suffix
+                // Format: CNA25-ALL-001
+                $dcnNumber = $category->code . $currentYear . '-' . $customer->code . '-' . $request->dcn_suffix;
+
+                // Check if DCN number already exists (excluding current entry)
+                $existingEntry = DocumentRegistrationEntry::where('dcn_no', $dcnNumber)
+                    ->where('id', '!=', $entry->id)
+                    ->first();
+
+                if ($existingEntry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This DCN number already exists. Please use a different 3-digit suffix.',
+                        'errors' => ['dcn_suffix' => ['DCN number already exists']]
+                    ], 422);
+                }
+
+                // Update the entry with new DCN number and related fields
+                $entry->update([
+                    'dcn_no' => $dcnNumber,
+                    'category_id' => $request->category_id,
+                    'customer_id' => $request->customer_id,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'DCN number updated successfully.',
+                    'dcn_number' => $dcnNumber
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while updating the DCN number.',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
         }
     }
 
@@ -286,12 +339,16 @@ class DcnController extends Controller
                $nextSuffix = $this->generateNextSuffix($entry->category_id, $entry->customer_id, $entry->id);
            }
 
-           // Prepare department string
+           // Prepare department string with both department and section
            $department = null;
            if ($entry->submittedBy && $entry->submittedBy->department) {
-               $department = $entry->submittedBy->department->department;
-               if ($entry->submittedBy->department->section) {
-                   $department .= ' / ' . $entry->submittedBy->department->section;
+               $dept = $entry->submittedBy->department->department;
+               $section = $entry->submittedBy->department->section;
+
+               if ($dept && $section) {
+                   $department = $dept . ' - ' . $section;
+               } elseif ($dept) {
+                   $department = $dept;
                }
            }
 
@@ -317,8 +374,8 @@ class DcnController extends Controller
                    // Additional fields for modal
                    'originator_name' => $entry->originator_name,
                    'department' => $department,
-                   'submitted_at' => $entry->submitted_at ? $entry->submitted_at->format('Y-m-d H:i') : null,
-                   'implemented_at' => $entry->implemented_at ? $entry->implemented_at->format('Y-m-d H:i') : null,
+                   'submitted_at' => $entry->submitted_at ? $entry->submitted_at->toIso8601String() : null,
+                   'implemented_at' => $entry->implemented_at ? $entry->implemented_at->toIso8601String() : null,
                    'document_no' => $entry->document_no,
                    'revision_no' => $entry->revision_no,
                    'device_name' => $entry->device_name,

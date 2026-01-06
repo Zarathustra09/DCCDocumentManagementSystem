@@ -137,18 +137,6 @@
                                                                 </button>
                                                             </form>
                                                         @endif
-                                                        @if(auth()->user()->can('approve document registration') && $entry->status->name === 'Pending')
-                                                            <div class="dropdown-divider"></div>
-                                                            <button type="button" class="dropdown-item text-success" onclick="approveRegistration({{ $entry->id }})">
-                                                                <i class="bx bx-check me-2"></i> Approve
-                                                            </button>
-                                                            <button type="button" class="dropdown-item text-danger" onclick="showRejectModal({{ $entry->id }}, '{{ $entry->document_title }}')">
-                                                                <i class="bx bx-x me-2"></i> Reject
-                                                            </button>
-                                                            <button type="button" class="dropdown-item text-warning" onclick="showRevisionModal({{ $entry->id }}, '{{ $entry->document_title }}')">
-                                                                <i class="bx bx-edit me-2"></i> Require Revision
-                                                            </button>
-                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>
@@ -187,99 +175,10 @@
     @endif
 </div>
 
-<!-- Quick Reject Modal -->
-<div class="modal fade" id="quickRejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Reject Document Registration</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="quickRejectForm" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <p>You are about to reject: <strong id="rejectDocumentTitle"></strong></p>
-                    <div class="form-group">
-                        <label for="quick_rejection_reason" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="quick_rejection_reason" name="rejection_reason" rows="4" required
-                                  placeholder="Please provide a reason for rejection..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Reject Registration</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Revision Modal -->
-<div class="modal fade" id="quickRevisionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Require Revision</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="quickRevisionForm" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <p>You are requesting revision for: <strong id="revisionDocumentTitle"></strong></p>
-                    <div class="form-group">
-                        <label for="quick_revision_notes" class="form-label">Revision Notes <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="quick_revision_notes" name="revision_notes" rows="4" required
-                                  placeholder="Please specify what needs to be revised..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Request Revision</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @endsection
 
 @push('scripts')
 <script>
-    function approveRegistration(entryId) {
-        if (confirm('Are you sure you want to approve this document registration?')) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/document-registry/${entryId}/approve`;
-
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = '{{ csrf_token() }}';
-
-            form.appendChild(csrfToken);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-
-    function showRejectModal(entryId, documentTitle) {
-        document.getElementById('rejectDocumentTitle').textContent = documentTitle;
-        document.getElementById('quickRejectForm').action = `/document-registry/${entryId}/reject`;
-        document.getElementById('quick_rejection_reason').value = '';
-
-        const modal = new bootstrap.Modal(document.getElementById('quickRejectModal'));
-        modal.show();
-    }
-
-    function showRevisionModal(entryId, documentTitle) {
-        document.getElementById('revisionDocumentTitle').textContent = documentTitle;
-        document.getElementById('quickRevisionForm').action = `/document-registry/${entryId}/require-revision`;
-        document.getElementById('quick_revision_notes').value = '';
-
-        const modal = new bootstrap.Modal(document.getElementById('quickRevisionModal'));
-        modal.show();
-    }
-
     $(document).ready(function() {
         $('#documentRegistry').DataTable({
             "pageLength": 10,

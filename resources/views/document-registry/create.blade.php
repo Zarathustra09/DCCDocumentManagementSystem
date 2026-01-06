@@ -98,23 +98,19 @@
                                          @error('customer_id')
                                          <div class="text-danger">{{ $message }}</div>
                                          @enderror
-                                        <small id="customer_helper" class="form-text text-muted d-none">
-                                            In-house category selected — customer not required.
-                                        </small>
                                      </div>
                                  </div>
 
                                 <!-- Document Number -->
                                 <div class="col-md-6 mb-3">
                                     <label for="document_no" class="form-label">
-                                        <i class='bx bx-hash'></i> Document Number <span class="text-danger">*</span>
+                                        <i class='bx bx-hash'></i> Document Number (Optional)
                                     </label>
                                     <input type="text"
                                            class="form-control @error('document_no') is-invalid @enderror"
                                            id="document_no"
                                            name="document_no"
                                            value="{{ old('document_no') }}"
-                                           required
                                            placeholder="e.g., DOC-2024-001">
                                     @error('document_no')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -124,15 +120,14 @@
                                 <!-- Revision Number -->
                                 <div class="col-md-6 mb-3">
                                     <label for="revision_no" class="form-label">
-                                        <i class='bx bx-revision'></i> Revision Number <span class="text-danger">*</span>
+                                        <i class='bx bx-revision'></i> Revision Number (Optional)
                                     </label>
                                     <input type="text"
                                            class="form-control @error('revision_no') is-invalid @enderror"
                                            id="revision_no"
                                            pattern="\d{1,2}"
                                            name="revision_no"
-                                           value="{{ old('revision_no', '0') }}"
-                                           required
+                                           value="{{ old('revision_no', '') }}"
                                            placeholder="e.g., 0, 1, 2">
                                     @error('revision_no')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -403,25 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function selectCategory(category) {
         // Set the category values
         document.getElementById('category_id').value = category.id;
-
-        // Set display field to show the full category name (no code)
         document.getElementById('category_display').value = category.name;
-
-        // Handle customer visibility/clearing for In-House SPI categories
-        const customerGroup = document.getElementById('customer_group');
-        const customerSelect = document.getElementById('customer_id');
-        const customerHelper = document.getElementById('customer_helper');
-        const normalizedCategoryName = category.name ? category.name.trim().toLowerCase() : '';
-        const shouldHideCustomer = normalizedCategoryName === 'spi in-house specification';
-
-        if (shouldHideCustomer) {
-            if (customerSelect) customerSelect.value = '';
-            if (customerGroup) customerGroup.style.display = 'none';
-            if (customerHelper) customerHelper.classList.remove('d-none');
-        } else {
-            if (customerGroup) customerGroup.style.display = '';
-            if (customerHelper) customerHelper.classList.add('d-none');
-        }
 
         // Hide loading, show form
         document.getElementById('loadingContainer').style.display = 'none';
