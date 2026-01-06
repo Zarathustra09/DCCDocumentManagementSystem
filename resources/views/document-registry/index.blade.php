@@ -125,13 +125,15 @@
                                                     <a class="dropdown-item" href="{{ route('document-registry.show', $entry) }}">
                                                         <i class="bx bx-show me-2"></i> View Details
                                                     </a>
-                                                    @if($entry->status->name === 'Pending' &&
-                                                        $entry->submitted_by === auth()->id() &&
-                                                        auth()->user()->can('edit document registration details'))
+                                                    @if(
+                                                            $entry->submitted_by === auth()->id() ||
+                                                            auth()->user()->can('edit document registration details')
+                                                        )
                                                         <a class="dropdown-item" href="{{ route('document-registry.edit', $entry) }}">
                                                             <i class="bx bx-edit-alt me-2"></i> Edit
                                                         </a>
                                                     @endif
+
                                                 </div>
                                             </div>
                                         </td>
