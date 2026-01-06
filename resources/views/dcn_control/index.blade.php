@@ -242,10 +242,7 @@
                             </table>
                         </div>
 
-                        <!-- Pagination -->
-                        <div class="d-flex justify-content-center">
-                            {{ $entries->links() }}
-                        </div>
+                        {{-- Removed Laravel pagination: DataTables handles pagination --}}
                     </div>
                 </div>
             </div>
