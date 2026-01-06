@@ -589,6 +589,48 @@
                         if (response.success && response.entry) {
                             const entry = response.entry;
 
+                            // Populate read-only fields
+                            $('#modalOriginator').val(entry.originator_name || '-');
+                            $('#modalDepartment').val(entry.department || '-');
+
+                            // Format and populate dates
+                            if (entry.submitted_at) {
+                                const submittedDate = new Date(entry.submitted_at);
+                                const formattedSubmitted = submittedDate.toLocaleDateString('en-US', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    year: 'numeric'
+                                }) + ' ' + submittedDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                                $('#modalRegistrationDate').val(formattedSubmitted);
+                            } else {
+                                $('#modalRegistrationDate').val('-');
+                            }
+
+                            if (entry.implemented_at) {
+                                const implementedDate = new Date(entry.implemented_at);
+                                const formattedImplemented = implementedDate.toLocaleDateString('en-US', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    year: 'numeric'
+                                }) + ' ' + implementedDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                                $('#modalEffectiveDate').val(formattedImplemented);
+                            } else {
+                                $('#modalEffectiveDate').val('-');
+                            }
+
+                            $('#modalDocumentNo').val(entry.document_no || '-');
+                            $('#modalRevisionNo').val(entry.revision_no || '-');
+                            $('#modalDeviceName').val(entry.device_name || '-');
+                            $('#modalTitle').val(entry.document_title || '-');
+
                             // Check if both customer and category exist
                             if (entry.customer_id && entry.category_id && entry.customer && entry.category) {
                                 // Populate customer (read-only)
@@ -598,18 +640,6 @@
                                 // Populate category (read-only)
                                 $('#modalCategory').val(entry.category_id);
                                 $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.category.name + ' (' + entry.category.code + ')');
-
-
-                                //other fields
-
-                                $('#modalOriginator').val(entry.originator_name || '-');
-                                $('#modalDepartment').val(entry.department || '-');
-                                $('#modalRegistrationDate').val(entry.submitted_at || '-');
-                                $('#modalEffectiveDate').val(entry.implemented_at || '-');
-                                $('#modalDocumentNo').val(entry.document_no || '-');
-                                $('#modalRevisionNo').val(entry.revision_no || '-');
-                                $('#modalDeviceName').val(entry.device_name || '-');
-                                $('#modalTitle').val(entry.document_title || '-');
 
                                 // Set suggested suffix
                                 if (entry.suggested_suffix) {

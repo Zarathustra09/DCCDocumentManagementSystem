@@ -286,12 +286,16 @@ class DcnController extends Controller
                $nextSuffix = $this->generateNextSuffix($entry->category_id, $entry->customer_id, $entry->id);
            }
 
-           // Prepare department string
+           // Prepare department string with both department and section
            $department = null;
            if ($entry->submittedBy && $entry->submittedBy->department) {
-               $department = $entry->submittedBy->department->department;
-               if ($entry->submittedBy->department->section) {
-                   $department .= ' / ' . $entry->submittedBy->department->section;
+               $dept = $entry->submittedBy->department->department;
+               $section = $entry->submittedBy->department->section;
+
+               if ($dept && $section) {
+                   $department = $dept . ' - ' . $section;
+               } elseif ($dept) {
+                   $department = $dept;
                }
            }
 
@@ -317,8 +321,8 @@ class DcnController extends Controller
                    // Additional fields for modal
                    'originator_name' => $entry->originator_name,
                    'department' => $department,
-                   'submitted_at' => $entry->submitted_at ? $entry->submitted_at->format('Y-m-d H:i') : null,
-                   'implemented_at' => $entry->implemented_at ? $entry->implemented_at->format('Y-m-d H:i') : null,
+                   'submitted_at' => $entry->submitted_at ? $entry->submitted_at->toIso8601String() : null,
+                   'implemented_at' => $entry->implemented_at ? $entry->implemented_at->toIso8601String() : null,
                    'document_no' => $entry->document_no,
                    'revision_no' => $entry->revision_no,
                    'device_name' => $entry->device_name,
