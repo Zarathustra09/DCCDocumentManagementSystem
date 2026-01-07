@@ -69,7 +69,7 @@
         /* Make yield content container sit above the layout chrome */
         .app-yield-content {
             position: relative;
-            z-index: 2000; /* higher than layout chrome so content inside @yield shows on top */
+            z-index: 2000; /* higher than layout chrome so content inside yield shows on top */
         }
 
         /* Reduce navbar specific stacking so it doesn't override yield content */
