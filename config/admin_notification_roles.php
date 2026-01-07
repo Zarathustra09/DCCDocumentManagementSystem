@@ -2,6 +2,6 @@
 
 return [
     'SuperAdmin',
-//    'DCCAdmin',
+    'DCCAdmin',
 ];
 
