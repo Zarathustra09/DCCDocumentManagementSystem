@@ -469,8 +469,7 @@
                     }
                 ],
                 responsive: true,
-                order: [[0, 'desc']],
-                pageLength: 25,
+                pageLength: 10,
                 columnDefs: [
                     { orderable: false, targets: [9] }
                 ],
