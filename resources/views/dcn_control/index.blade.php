@@ -126,7 +126,6 @@
                                 <tr>
                                     <th>DCN No.</th>
                                     <th>Originator</th>
-                                    <th>Department</th>
                                     <th>Registration Date</th>
                                     <th>Effective Date</th>
                                     <th>Document No.</th>
@@ -153,17 +152,6 @@
                                         </td>
                                         <td>
                                             {{ $entry->submittedBy?->name ?? '-' }}
-                                        </td>
-                                        <td>
-                                            @if($entry->submittedBy && $entry->submittedBy->department)
-                                                <div>
-                                                    <strong>{{ $entry->submittedBy->department->department }}</strong>
-                                                    <br>
-                                                    <small class="text-muted">{{ $entry->submittedBy->department->section }}</small>
-                                                </div>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
                                         </td>
                                         <td>
                                             @if($entry->submitted_at)
@@ -304,30 +292,26 @@
                                 <input type="text" class="form-control" id="modalOriginator" readonly>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Department</label>
-                                <input type="text" class="form-control" id="modalDepartment" readonly>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Registration Date</label>
                                 <input type="text" class="form-control" id="modalRegistrationDate" readonly>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Effective Date</label>
                                 <input type="text" class="form-control" id="modalEffectiveDate" readonly>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Document No.</label>
                                 <input type="text" class="form-control" id="modalDocumentNo" readonly>
                             </div>
-                            <div class="col-md-4 mb-3">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Revision No.</label>
                                 <input type="text" class="form-control" id="modalRevisionNo" readonly>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Device Name</label>
                                 <input type="text" class="form-control" id="modalDeviceName" readonly>
                             </div>
@@ -485,8 +469,8 @@
                     }
                 ],
                 responsive: true,
-                order: [[8, 'desc']],
-                pageLength: 10,
+                order: [[0, 'desc']],
+                pageLength: 25,
                 columnDefs: [
                     { orderable: false, targets: [9] }
                 ],
@@ -767,7 +751,6 @@
 
                             // Populate read-only fields
                             $('#modalOriginator').val(entry.originator_name || '-');
-                            $('#modalDepartment').val(entry.department || '-');
 
                             // Format and populate dates
                             if (entry.submitted_at) {
