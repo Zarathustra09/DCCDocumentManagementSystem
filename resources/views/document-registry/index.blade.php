@@ -51,7 +51,7 @@
                                     <th>Control No.</th>
                                     <th>Document Title</th>
                                     <th>Category</th>
-                                    <th>Device Part Number</th>
+                                    <th>Device Name / Part Number</th>
                                     <th>Document No.</th>
                                     <th>Rev.</th>
                                     <th>Originator</th>

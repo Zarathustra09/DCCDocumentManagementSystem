@@ -130,7 +130,7 @@
                                     <th>Effective Date</th>
                                     <th>Document No.</th>
                                     <th>Revision No.</th>
-                                    <th>Device Name</th>
+                                    <th>Device Name / Part Number</th>
                                     <th>Title</th>
                                     <th>Customer</th>
                                     <th>Action</th>
