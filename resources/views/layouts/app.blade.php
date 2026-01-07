@@ -55,8 +55,26 @@
     <script src="{{ asset('dashboard/assets/js/config.js') }}"></script>
     @stack('styles')
     <style>
+        /* Lower baseline layout chrome so yield content can appear above it */
+        .layout-wrapper,
+        .layout-container,
+        .layout-page,
+        nav.layout-navbar,
+        .layout-menu,
+        .layout-overlay {
+            position: relative; /* ensure z-index applies */
+            z-index: 100; /* low baseline for app shell */
+        }
+
+        /* Make yield content container sit above the layout chrome */
+        .app-yield-content {
+            position: relative;
+            z-index: 2000; /* higher than layout chrome so content inside @yield shows on top */
+        }
+
+        /* Reduce navbar specific stacking so it doesn't override yield content */
         .navbar-nav-right {
-            z-index: 1000;
+            z-index: 150; /* was 1000 */
         }
 
         /* Custom SweetAlert classes */
@@ -211,7 +229,10 @@
                 </nav>
                 <!-- / Navbar -->
 
-                @yield('content')
+                <!-- wrap yield content so it sits above the layout chrome -->
+                <div class="app-yield-content">
+                    @yield('content')
+                </div>
 
                 <!-- Footer -->
                 {{-- @include('layouts.footer') --}}
@@ -233,7 +254,7 @@
             position: fixed;
             bottom: 32px;
             right: 32px;
-            z-index: 1050;
+            z-index: 150; /* lowered so yield content (app-yield-content) has priority */
             background: #fff;
             border: 2px solid #007bff;
             border-radius: 50%;
