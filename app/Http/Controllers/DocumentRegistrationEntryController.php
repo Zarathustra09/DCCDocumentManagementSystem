@@ -449,7 +449,7 @@ class DocumentRegistrationEntryController extends Controller
 
     private function canEditEntry(DocumentRegistrationEntry $entry)
     {
-        return (Auth::user()->can('edit document registration details') && $entry->submitted_by === Auth::id() && $entry->status->name === 'Pending')
+        return (Auth::user()->can('edit document registration details') || $entry->submitted_by === Auth::id() && $entry->status->name === 'Pending')
             || ($entry->submitted_by === Auth::id() && $entry->status->name === 'Pending');
     }
 
