@@ -38,13 +38,13 @@
                   <li class="menu-item {{ Route::is('document-registry.list') ? 'active' : '' }}">
                       <a href="{{ route('document-registry.list') }}" class="menu-link">
                           <i class="menu-icon tf-icons bx bx-list-ul"></i>
-                          <div data-i18n="Tracking Registration">Tracking of Registration</div>
+                          <div data-i18n="Tracking Registration">Registration Tracking</div>
                       </a>
                   </li>
                   <li class="menu-item">
                       <a href="{{route('dcn.index')}}" class="menu-link">
                           <i class="menu-icon tf-icons bx bx-cog"></i>
-                          <div data-i18n="DCN Control">DCN Management</div>
+                          <div data-i18n="DCN Control">Assign DCN</div>
                       </a>
                   </li>
 

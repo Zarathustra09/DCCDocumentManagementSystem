@@ -13,9 +13,9 @@
                         <span class="badge bg-{{ $documentRegistrationEntry->status->name === 'Pending' ? 'warning' : ($documentRegistrationEntry->status->name === 'Implemented' ? 'success' : 'danger') }}">
                             {{ $documentRegistrationEntry->status->name }}
                         </span>
-                  <a href="{{ url()->previous() }}" class="btn btn-secondary">
-                      <i class='bx bx-arrow-back'></i> Back to Details
-                  </a>
+                        <a href="{{ url()->previous() }}" class="btn btn-secondary">
+                            <i class='bx bx-arrow-back'></i> Back to Details
+                        </a>
                     </div>
                 </div>
 
@@ -88,12 +88,12 @@
                             <!-- Document Number (Read-only) -->
                             <div class="col-md-6 mb-3">
                                 <label for="document_no" class="form-label">
-                                    <i class='bx bx-hash'></i> Document Number
+                                    <i class='bx bx-hash'></i> Document Number (Optional)
                                 </label>
                                 <input type="text"
                                        class="form-control"
                                        id="document_no"
-                                       value="{{ $documentRegistrationEntry->document_no }}"
+                                       value="{{ $documentRegistrationEntry->document_no ?: 'Not specified' }}"
                                        readonly>
                                 <small class="form-text text-muted">
                                     <i class='bx bx-info-circle'></i> Document number cannot be changed
@@ -103,14 +103,14 @@
                             <!-- Revision Number -->
                             <div class="col-md-6 mb-3">
                                 <label for="revision_no" class="form-label">
-                                    <i class='bx bx-revision'></i> Revision Number <span class="text-danger">*</span>
+                                    <i class='bx bx-revision'></i> Revision Number (Optional)
                                 </label>
                                 <input type="text"
                                        class="form-control @error('revision_no') is-invalid @enderror"
                                        id="revision_no"
                                        name="revision_no"
+                                       pattern="\d{1,2}"
                                        value="{{ old('revision_no', $documentRegistrationEntry->revision_no) }}"
-                                       required
                                        placeholder="e.g., 0, 1, 2">
                                 @error('revision_no')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -209,4 +209,18 @@
             color: #ffffff !important;
         }
     </style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revision number input validation (same as create form)
+    const revisionInput = document.getElementById('revision_no');
+    if (revisionInput) {
+        revisionInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9A-Za-z.-]/g, '');
+        });
+    }
+});
+</script>
 @endpush

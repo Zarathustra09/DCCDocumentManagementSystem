@@ -15,7 +15,7 @@ class DcnController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy.department', 'status']);
+        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy', 'status']);
 
         // Apply filters based on request parameters
         if ($request->filled('dcn_status')) {
@@ -53,10 +53,7 @@ class DcnController extends Controller
             $query->whereDate('submitted_at', '<=', $request->date_to);
         }
 
-        $entries = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        // Preserve query parameters in pagination links
-        $entries->appends($request->query());
+        $entries = $query->orderBy('id', 'desc')->get();
 
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
         $categories = Category::where('is_active', true)->orderBy('name')->get();
@@ -331,25 +328,12 @@ class DcnController extends Controller
    public function getEntryData(DocumentRegistrationEntry $entry)
    {
        try {
-           $entry->load(['customer', 'category', 'submittedBy.department']);
+           $entry->load(['customer', 'category', 'submittedBy']);
 
            // Generate next available suffix if customer and category exist
            $nextSuffix = null;
            if ($entry->customer_id && $entry->category_id) {
                $nextSuffix = $this->generateNextSuffix($entry->category_id, $entry->customer_id, $entry->id);
-           }
-
-           // Prepare department string with both department and section
-           $department = null;
-           if ($entry->submittedBy && $entry->submittedBy->department) {
-               $dept = $entry->submittedBy->department->department;
-               $section = $entry->submittedBy->department->section;
-
-               if ($dept && $section) {
-                   $department = $dept . ' - ' . $section;
-               } elseif ($dept) {
-                   $department = $dept;
-               }
            }
 
            return response()->json([
@@ -373,7 +357,6 @@ class DcnController extends Controller
                    'suggested_suffix' => $nextSuffix,
                    // Additional fields for modal
                    'originator_name' => $entry->originator_name,
-                   'department' => $department,
                    'submitted_at' => $entry->submitted_at ? $entry->submitted_at->toIso8601String() : null,
                    'implemented_at' => $entry->implemented_at ? $entry->implemented_at->toIso8601String() : null,
                    'document_no' => $entry->document_no,
@@ -445,7 +428,7 @@ class DcnController extends Controller
     {
 
         \Log::info('Exporting DCN filtered data', ['request' => $request->all()]);
-        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy.department', 'status']);
+        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy', 'status']);
 
         // Apply filters (same as index)
         if ($request->filled('dcn_status')) {
@@ -478,7 +461,7 @@ class DcnController extends Controller
             $query->whereDate('submitted_at', '<=', $request->date_to);
         }
 
-        $entries = $query->orderBy('created_at', 'desc')->get();
+        $entries = $query->orderBy('submitted_at', 'desc')->orderBy('created_at', 'desc')->get();
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\DcnFilteredExport($entries),

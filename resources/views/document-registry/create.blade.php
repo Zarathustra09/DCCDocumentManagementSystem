@@ -137,7 +137,7 @@
                                 <!-- Device Name -->
                                 <div class="col-md-6 mb-3">
                                     <label for="device_name" class="form-label">
-                                        <i class='bx bx-chip'></i> Device Name
+                                        <i class='bx bx-chip'></i> Device Name / Part Number
                                     </label>
                                     <input type="text"
                                            class="form-control @error('device_name') is-invalid @enderror"
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p><strong>Category:</strong> ${categoryDisplay}</p>
                         <p><strong>Document Number:</strong> ${documentNo}</p>
                         <p><strong>Revision Number:</strong> ${revisionNo}</p>
-                        <p><strong>Device Name:</strong> ${deviceName}</p>
+                        <p><strong>Device Name / Part Number:</strong> ${deviceName}</p>
                         <p><strong>Customer:</strong> ${customerText}<br></p>
                         <p><strong>File:</strong> ${fileName}</p>
                         <p><strong>Remarks:</strong> ${remarks.substring(0, 100)}${remarks.length > 100 ? '...' : ''}</p>

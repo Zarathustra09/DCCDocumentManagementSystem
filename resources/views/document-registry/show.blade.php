@@ -74,7 +74,7 @@
                                     <div class="col-md-6">
                                         @if($documentRegistrationEntry->device_name)
                                             <div class="mb-3">
-                                                <label class="form-label text-muted">Device Part Number</label>
+                                                <label class="form-label text-muted">Device Name / Part Number</label>
                                                 <p class="mb-0">{{ $documentRegistrationEntry->device_name }}</p>
                                             </div>
                                         @endif
