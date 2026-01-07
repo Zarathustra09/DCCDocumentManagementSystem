@@ -55,16 +55,16 @@
     <script src="{{ asset('dashboard/assets/js/config.js') }}"></script>
     @stack('styles')
     <style>
-        /* Lower baseline layout chrome so yield content can appear above it */
-        .layout-wrapper,
-        .layout-container,
-        .layout-page,
-        nav.layout-navbar,
-        .layout-menu,
-        .layout-overlay {
-            position: relative; /* ensure z-index applies */
-            z-index: 100; /* low baseline for app shell */
-        }
+        /*!* Lower baseline layout chrome so yield content can appear above it *!*/
+        /*.layout-wrapper,*/
+        /*.layout-container,*/
+        /*.layout-page,*/
+        /*nav.layout-navbar,*/
+        /*.layout-menu,*/
+        /*.layout-overlay {*/
+        /*    position: relative; !* ensure z-index applies *!*/
+        /*    z-index: 100; !* low baseline for app shell *!*/
+        /*}*/
 
         /* Make yield content container sit above the layout chrome */
         .app-yield-content {
@@ -230,9 +230,9 @@
                 <!-- / Navbar -->
 
                 <!-- wrap yield content so it sits above the layout chrome -->
-                <div class="app-yield-content">
+{{--                <div class="app-yield-content">--}}
                     @yield('content')
-                </div>
+{{--                </div>--}}
 
                 <!-- Footer -->
                 {{-- @include('layouts.footer') --}}
