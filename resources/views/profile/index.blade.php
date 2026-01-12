@@ -18,7 +18,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-start align-items-sm-center gap-4 mb-4">
                                 <img
-                                    src="{{ $user->profile_image ? asset('storage/' . $user->profile_image) : 'https://placehold.co/100' }}"
+                                    src="{{ auth()->user()->profile_image ? 'http://172.16.0.3:8012/images/' . ltrim(auth()->user()->profile_image, '/') : 'https://placehold.co/40' }}"
                                     alt="user-avatar"
                                     class="d-block rounded"
                                     height="100"
