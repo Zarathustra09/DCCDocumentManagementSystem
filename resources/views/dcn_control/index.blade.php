@@ -125,6 +125,7 @@
                                 <thead>
                                 <tr>
                                     <th>DCN No.</th>
+                                    <th>Status</th>
                                     <th>Originator</th>
                                     <th>Registration Date</th>
                                     <th>Effective Date</th>
@@ -148,6 +149,21 @@
                                                 <span class="badge bg-warning text-dark">
                     <i class='bx bx-time'></i> Not Assigned
                 </span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($entry->status->name === 'Pending')
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class='bx bx-time'></i> {{ $entry->status->name }}
+                                                </span>
+                                            @elseif($entry->status->name === 'Implemented')
+                                                <span class="badge bg-success text-white">
+                                                    <i class='bx bx-check'></i> {{ $entry->status->name }}
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger text-white">
+                                                    <i class='bx bx-x'></i> {{ $entry->status->name }}
+                                                </span>
                                             @endif
                                         </td>
                                         <td>
