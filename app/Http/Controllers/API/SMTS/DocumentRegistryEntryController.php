@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\SMTS;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\DocumentRegistrationEntry;
+use Illuminate\Support\Facades\Log;
 
 class DocumentRegistryEntryController extends Controller
 {
@@ -35,14 +36,46 @@ class DocumentRegistryEntryController extends Controller
         // Search
         $search = trim((string) $request->query('q', ''));
 
+        // Limit which user fields are returned to avoid exposing sensitive fields.
         $query = DocumentRegistrationEntry::with([
             'category',
             'customer',
             'status',
-            'submittedBy',
-            'approvedBy',
-            'files'
+            'files',
+            // Only return a minimal set of user fields for submittedBy and approvedBy
+            'submittedBy' => function ($q) {
+                $q->select(
+                    'id',
+                    'employee_no',
+                    'firstname',
+                    'middlename',
+                    'lastname',
+                    'barcode',
+                    'email',
+                    'email_verified_at',
+                    'created_at',
+                    'updated_at'
+                );
+            },
+            'approvedBy' => function ($q) {
+                $q->select(
+                    'id',
+                    'employee_no',
+                    'firstname',
+                    'middlename',
+                    'lastname',
+                    'barcode',
+                    'email',
+                    'email_verified_at',
+                    'created_at',
+                    'updated_at'
+                );
+            },
         ]);
+
+
+
+        Log::info('Search term: ' . $search);
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -73,8 +106,42 @@ class DocumentRegistryEntryController extends Controller
     // Example resource stubs (implement as needed)
     public function show($id)
     {
-        $item = DocumentRegistrationEntry::with(['category','customer','status','submittedBy','approvedBy','files'])
-            ->findOrFail($id);
+        // Load the entry with limited user fields to avoid leaking sensitive user data
+        $item = DocumentRegistrationEntry::with([
+            'category',
+            'customer',
+            'status',
+            'files',
+            'submittedBy' => function ($q) {
+                $q->select(
+                    'id',
+                    'employee_no',
+                    'firstname',
+                    'middlename',
+                    'lastname',
+                    'barcode',
+                    'email',
+                    'email_verified_at',
+                    'created_at',
+                    'updated_at'
+                );
+            },
+            'approvedBy' => function ($q) {
+                $q->select(
+                    'id',
+                    'employee_no',
+                    'firstname',
+                    'middlename',
+                    'lastname',
+                    'barcode',
+                    'email',
+                    'email_verified_at',
+                    'created_at',
+                    'updated_at'
+                );
+            },
+        ])->findOrFail($id);
+
         return response()->json($item);
     }
 
