@@ -352,7 +352,7 @@ class DocumentRegistrationEntryController extends Controller
             $query->whereDate('submitted_at', '<=', $request->date_to);
         }
 
-        $entries = $query->latest('submitted_at')->get();
+        $entries = $query->latest('id')->get();
 
         // Calculate counts using relationships
         $pendingCount = DocumentRegistrationEntry::whereHas('status', function ($q) {

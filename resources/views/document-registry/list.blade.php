@@ -261,10 +261,10 @@
                     }
                 ],
                 responsive: true,
-                order: [[7, 'desc']],
+                order: [[0, 'desc']],
                 pageLength: 10,
                 columnDefs: [
-                    { orderable: false, targets: [0, 8] }
+                    { orderable: false, targets: [10] }
                 ],
                 language: {
                     search: "Search entries:",
