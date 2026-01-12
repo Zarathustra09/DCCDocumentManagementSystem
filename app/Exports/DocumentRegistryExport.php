@@ -33,7 +33,9 @@ class DocumentRegistryExport implements FromCollection, WithHeadings, WithMappin
             'Rev. No.',
             'Device Name',
             'Originator Name',
-            'Customer',
+            'Customer Name',
+            'Customer Code',
+            'isActive',
             'Remarks',
             'Registration Status'
         ];
@@ -48,7 +50,12 @@ class DocumentRegistryExport implements FromCollection, WithHeadings, WithMappin
             $entry->revision_no,
             $entry->device_name ?? '',
             $entry->originator_name,
-            $entry->customer ?? '',
+            // Customer Name
+            $entry->customer ? ($entry->customer->name ?? '') : '',
+            // Customer Code
+            $entry->customer ? ($entry->customer->code ?? '') : '',
+            // isActive as integer (1 or 0)
+            $entry->customer ? (int)($entry->customer->is_active ?? 0) : 0,
             $entry->remarks ?? '',
             ucfirst($entry->status->name ?? 'Unknown')
         ];
