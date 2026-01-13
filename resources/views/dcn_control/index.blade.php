@@ -15,109 +15,103 @@
                     </div>
                     <div class="card-body">
                         <!-- Advanced Filters -->
-                        <form method="GET" action="{{ route('dcn.index') }}" class="mb-4">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="dcn_status">DCN Status</label>
-                                        <select name="dcn_status" id="dcn_status" class="form-select">
-                                            <option value="">All Entries</option>
-                                            <option value="with_dcn" {{ request('dcn_status') == 'with_dcn' ? 'selected' : '' }}>
-                                                With DCN Assigned
-                                            </option>
-                                            <option value="without_dcn" {{ request('dcn_status') == 'without_dcn' ? 'selected' : '' }}>
-                                                Without DCN
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="customer_id">Customer</label>
-                                        <select name="customer_id" id="customer_id" class="form-select">
-                                            <option value="">All Customers</option>
-                                            @foreach($customers as $customer)
-                                                <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
-                                                    {{ $customer->name }} ({{ $customer->code }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="category_id">Category</label>
-                                        <select name="category_id" id="category_id" class="form-select">
-                                            <option value="">All Categories</option>
-                                            @foreach($categories as $category)
-                                                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                                    {{ $category->name }} ({{ $category->code }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="search">Search</label>
-                                        <input type="text" name="search" id="search" class="form-control"
-                                               value="{{ request('search') }}"
-                                               placeholder="Document title, number, DCN number...">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="date_from">Date From</label>
-                                        <input type="date" name="date_from" id="date_from" class="form-control"
-                                               value="{{ request('date_from') }}">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="date_to">Date To</label>
-                                        <input type="date" name="date_to" id="date_to" class="form-control"
-                                               value="{{ request('date_to') }}">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
+                        <form id="filterForm" method="GET" action="{{ route('dcn.index') }}" class="mb-4">
+                            <div class="row mb-2">
                                 <div class="col-12">
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class='bx bx-search'></i> Apply Filters
-                                        </button>
-                                        <a href="{{ route('dcn.index') }}" class="btn btn-secondary">
-                                            <i class='bx bx-x'></i> Clear Filters
-                                        </a>
+                                    <!-- authoritative checkbox is kept for form submission but hidden;
+                                         a visible toggle is injected into the DataTables search bar -->
+                                    <div class="form-check form-switch d-none" id="advancedToggleContainer">
+                                        <input class="form-check-input" type="checkbox" id="advancedToggle" name="advanced" value="1" {{ request('advanced') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="advancedToggle">
+                                            <i class="bx bx-filter"></i> Show Advanced Filters
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="advancedFilters" style="{{ request('advanced') ? '' : 'display:none;' }}">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="dcn_status">DCN Status</label>
+                                            <select name="dcn_status" id="dcn_status" class="form-select">
+                                                <option value="">All Entries</option>
+                                                <option value="with_dcn" {{ request('dcn_status') == 'with_dcn' ? 'selected' : '' }}>
+                                                    With DCN Assigned
+                                                </option>
+                                                <option value="without_dcn" {{ request('dcn_status') == 'without_dcn' ? 'selected' : '' }}>
+                                                    Without DCN
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="customer_id">Customer</label>
+                                            <select name="customer_id" id="customer_id" class="form-select">
+                                                <option value="">All Customers</option>
+                                                @foreach($customers as $customer)
+                                                    <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
+                                                        {{ $customer->name }} ({{ $customer->code }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="category_id">Category</label>
+                                            <select name="category_id" id="category_id" class="form-select">
+                                                <option value="">All Categories</option>
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                                        {{ $category->name }} ({{ $category->code }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="search">Search</label>
+                                            <input type="text" name="search" id="search" class="form-control"
+                                                   value="{{ request('search') }}"
+                                                   placeholder="Document title, number, DCN number...">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="date_from">Date From</label>
+                                            <input type="date" name="date_from" id="date_from" class="form-control"
+                                                   value="{{ request('date_from') }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="date_to">Date To</label>
+                                            <input type="date" name="date_to" id="date_to" class="form-control"
+                                                   value="{{ request('date_to') }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Apply / Clear placed inside advancedFilters so they hide with the rest -->
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" id="applyFiltersBtn" class="btn btn-primary">
+                                                <i class='bx bx-search'></i> Apply Filters
+                                            </button>
+                                            <a href="{{ route('dcn.index') }}" id="clearFiltersBtn" class="btn btn-secondary">
+                                                <i class='bx bx-x'></i> Clear Filters
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </form>
-
-                        <!-- Results Summary -->
-                        <div class="row mb-3">
-                            <div class="col-md-8">
-                                <p class="text-muted mb-0">
-                                    <i class='bx bx-info-circle'></i>
-                                    Showing {{ $entries->count() }} entries
-                                    @if(request()->hasAny(['dcn_status', 'customer_id', 'category_id', 'search', 'date_from', 'date_to']))
-                                        (filtered)
-                                    @endif
-                                </p>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <div class="d-flex justify-content-end gap-2">
-                                    @php
-                                        $withDcnCount = $entries->whereNotNull('dcn_no')->count();
-                                        $withoutDcnCount = $entries->whereNull('dcn_no')->count();
-                                    @endphp
-                                    <span class="badge bg-success">{{ $withDcnCount }} With DCN</span>
-                                    <span class="badge bg-warning text-dark">{{ $withoutDcnCount }} Without DCN</span>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Entries Table -->
                         <div class="table-responsive">
@@ -235,7 +229,7 @@
                                     <tr>
                                         <td colspan="10" class="text-center py-4">
                                             <i class='bx bx-info-circle'></i> No document registrations found.
-                                            @if(request()->hasAny(['dcn_status', 'customer_id', 'category_id', 'search', 'date_from', 'date_to']))
+                                            @if(request('advanced') && request()->hasAny(['dcn_status', 'customer_id', 'category_id', 'search', 'date_from', 'date_to']))
                                                 <br><small class="text-muted">Try adjusting your filters.</small>
                                             @endif
                                         </td>
@@ -474,6 +468,46 @@
             background-color: #dc3545 !important;
             color: #ffffff !important;
         }
+
+        /* DT advanced toggle: pill-style button to match Bootstrap look */
+        #dtAdvancedToggle .btn {
+            padding: 0.275rem 0.55rem;
+            font-size: 0.82rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        #dtAdvancedToggle .btn .bx {
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+        #dtAdvancedToggle .btn-active {
+            color: #fff;
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.1rem rgba(13,110,253,0.12);
+        }
+        #dtAdvancedToggle .btn-inactive {
+            color: #495057;
+            background-color: transparent;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* compact toolbar badges beside Export button */
+        #dcnToolbarCounts .badge {
+            font-size: 0.78rem;
+            padding: 0.22rem 0.45rem;
+            line-height: 1;
+        }
+        /* keep small gap and vertical alignment with dt buttons */
+        #dcnToolbarCounts {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
     </style>
 @endpush
 
@@ -484,17 +518,48 @@
 
     <script>
         $(document).ready(function() {
-            // Initialize DataTables
-            $('#dcnTable').DataTable({
+            // Expose DCN counts for toolbar badges (evaluated server-side)
+            const withDcnCount = {{ $entries->whereNotNull('dcn_no')->count() }};
+            const withoutDcnCount = {{ $entries->whereNull('dcn_no')->count() }};
+
+            // Advanced filters: sync UI and disable inputs/buttons when advanced is off
+            const advancedChecked = $('#advancedToggle').is(':checked');
+            if (!advancedChecked) {
+                // disable selects/inputs/buttons inside advancedFilters to avoid submission
+                $('#advancedFilters').find('select, input, button').prop('disabled', true);
+            }
+            // authoritative checkbox change handler toggles visibility & enabled state
+            $('#advancedToggle').on('change', function() {
+                const show = $(this).is(':checked');
+                if (show) {
+                    $('#advancedFilters').slideDown();
+                } else {
+                    $('#advancedFilters').slideUp();
+                }
+                $('#advancedFilters').find('select, input, button').prop('disabled', !show);
+
+                // sync visible DT toggle button (if present)
+                const $dtBtn = $('#dtAdvancedToggle').find('button');
+                if ($dtBtn.length) {
+                    if (show) {
+                        $dtBtn.removeClass('btn-inactive').addClass('btn-active');
+                        $dtBtn.attr('aria-pressed', 'true');
+                    } else {
+                        $dtBtn.removeClass('btn-active').addClass('btn-inactive');
+                        $dtBtn.attr('aria-pressed', 'false');
+                    }
+                }
+            });
+
+             // Initialize DataTables
+             $('#dcnTable').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
                     {
                         text: '<i class="bx bx-download"></i> Export to Excel',
-                        className: 'btn btn-success btn-sm',
+                        className: 'btn btn-success btn-sm dt-export-btn',
                         action: function(e, dt, node, config) {
-                            // Get current query string
                             const query = window.location.search;
-                            // Redirect to export route with filters
                             window.location.href = 'dcn/export' + query;
                         }
                     }
@@ -512,13 +577,53 @@
                     lengthMenu: "Show _MENU_ entries per page",
                     info: "Showing _START_ to _END_ of _TOTAL_ entries"
                 }
-            });
+                ,
+                initComplete: function() {
+                    // inject a compact, pill-style button to the right of the DataTables search input
+                    const isChecked = $('#advancedToggle').is(':checked');
+                    const btnClass = isChecked ? 'btn-active' : 'btn-inactive';
+                    const toggleHtml = `
+                        <div id="dtAdvancedToggle" style="display:inline-block; margin-left:12px; vertical-align:middle;">
+                            <button type="button" id="dtAdvancedVisibleToggle" class="btn btn-sm ${btnClass}" aria-pressed="${isChecked ? 'true' : 'false'}" title="Toggle advanced filters">
+                                <i class="bx bx-filter"></i>
+                                <span class="d-none d-sm-inline">Advanced</span>
+                            </button>
+                        </div>
+                    `;
 
-            // Initialize Bootstrap Modal
-            let dcnModal = new bootstrap.Modal(document.getElementById('dcnModal'));
-            let currentEntryId = null;
+                    // append next to the search input (on the right)
+                    $(this.api().table().container()).find('.dataTables_filter').append(toggleHtml);
 
-            // Manual DCN mode toggle
+                    // when visible toggle clicked, toggle authoritative checkbox and trigger its change
+                    $('#dtAdvancedVisibleToggle').on('click', function() {
+                        const currently = $('#advancedToggle').is(':checked');
+                        $('#advancedToggle').prop('checked', !currently).trigger('change');
+                        // visual toggle handled by authoritative checkbox change handler (keeps in sync)
+                    });
+
+                    // append DCN counts (with same markup structure) next to Export button
+                    const badgeHtml = `
+                        <div id="dcnToolbarCounts" aria-hidden="true">
+                            <span class="badge bg-success">${withDcnCount} With DCN</span>
+                            <span class="badge bg-warning text-dark">${withoutDcnCount} Without DCN</span>
+                        </div>
+                    `;
+                    const $container = $(this.api().table().container());
+                    const $exportBtn = $container.find('.dt-export-btn').first();
+                    if ($exportBtn.length) {
+                        $exportBtn.after(badgeHtml);
+                    } else {
+                        // fallback: append to dt-buttons group
+                        $container.find('.dt-buttons').append(badgeHtml);
+                    }
+                 }
+             });
+
+             // Initialize Bootstrap Modal
+             let dcnModal = new bootstrap.Modal(document.getElementById('dcnModal'));
+             let currentEntryId = null;
+
+             // Manual DCN mode toggle
             document.getElementById('manualDcnMode').addEventListener('change', function(e) {
                 const isManual = e.target.checked;
 
