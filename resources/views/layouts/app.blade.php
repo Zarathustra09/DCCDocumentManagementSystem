@@ -172,7 +172,7 @@
                                     <div class="avatar avatar-online">
                                         <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                             <img
-                                                src="{{ auth()->user()->profile_image ? asset('storage/' . auth()->user()->profile_image) : 'https://placehold.co/40' }}"
+                                                src="{{ auth()->user()->profile_image ? 'http://172.16.0.3:8012/images/' . ltrim(auth()->user()->profile_image, '/') : 'https://placehold.co/40' }}"
                                                 alt="User avatar"
                                                 class="img-fluid"
                                                 style="width: 100%; height: 100%; object-fit: cover;"
@@ -188,7 +188,7 @@
                                                     <div class="avatar avatar-online">
                                                         <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                                             <img
-                                                                src="{{ auth()->user()->profile_image ? asset('storage/' . auth()->user()->profile_image) : 'https://placehold.co/40' }}"
+                                                                src="{{ auth()->user()->profile_image ? 'http://172.16.0.3:8012/images/' . ltrim(auth()->user()->profile_image, '/') : 'https://placehold.co/40' }}"
                                                                 alt="User avatar"
                                                                 class="img-fluid"
                                                                 style="width: 100%; height: 100%; object-fit: cover;"

@@ -48,9 +48,9 @@
                              Document Registry
                          @endif
                      </h3>
-                     <a href="{{ route('document-registry.index') }}" class="btn btn-secondary">
-                         <i class='bx bx-arrow-back'></i> Back to Registry
-                     </a>
+                   <a href="{{ auth()->id() === $documentRegistrationEntry->submitted_by ? route('document-registry.index') : url()->previous() }}" class="btn btn-secondary">
+                       <i class='bx bx-arrow-back'></i> Back to Registry
+                   </a>
                  </div>
                     <div class="card-body">
                         <div class="row">

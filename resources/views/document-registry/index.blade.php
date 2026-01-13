@@ -233,21 +233,21 @@ window.addEventListener('start-driverjs-tour', function() {
 @endpush
 
 @push('scripts')
-    <script>
-        $(document).ready(function() {
-            $('#documentRegistry').DataTable({
-                responsive: true,
-                order: [[8, 'desc']],
-                pageLength: 10,
-                columnDefs: [
-                    { orderable: false, targets: [0, 11] }
-                ],
-                language: {
-                    search: "Search entries:",
-                    lengthMenu: "Show _MENU_ entries per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries"
-                }
-            });
+<script>
+    $(document).ready(function() {
+        $('#documentRegistry').DataTable({
+            responsive: true,
+            order: [], // respect server-provided DOM order (controller orders by id desc)
+            pageLength: 10,
+            columnDefs: [
+                { orderable: false, targets: [0, 11] }
+            ],
+            language: {
+                search: "Search entries:",
+                lengthMenu: "Show _MENU_ entries per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries"
+            }
         });
-    </script>
+    });
+</script>
 @endpush

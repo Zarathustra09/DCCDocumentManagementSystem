@@ -15,109 +15,103 @@
                     </div>
                     <div class="card-body">
                         <!-- Advanced Filters -->
-                        <form method="GET" action="{{ route('dcn.index') }}" class="mb-4">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="dcn_status">DCN Status</label>
-                                        <select name="dcn_status" id="dcn_status" class="form-select">
-                                            <option value="">All Entries</option>
-                                            <option value="with_dcn" {{ request('dcn_status') == 'with_dcn' ? 'selected' : '' }}>
-                                                With DCN Assigned
-                                            </option>
-                                            <option value="without_dcn" {{ request('dcn_status') == 'without_dcn' ? 'selected' : '' }}>
-                                                Without DCN
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="customer_id">Customer</label>
-                                        <select name="customer_id" id="customer_id" class="form-select">
-                                            <option value="">All Customers</option>
-                                            @foreach($customers as $customer)
-                                                <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
-                                                    {{ $customer->name }} ({{ $customer->code }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="category_id">Category</label>
-                                        <select name="category_id" id="category_id" class="form-select">
-                                            <option value="">All Categories</option>
-                                            @foreach($categories as $category)
-                                                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                                    {{ $category->name }} ({{ $category->code }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="search">Search</label>
-                                        <input type="text" name="search" id="search" class="form-control"
-                                               value="{{ request('search') }}"
-                                               placeholder="Document title, number, DCN number...">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="date_from">Date From</label>
-                                        <input type="date" name="date_from" id="date_from" class="form-control"
-                                               value="{{ request('date_from') }}">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mb-3">
-                                        <label for="date_to">Date To</label>
-                                        <input type="date" name="date_to" id="date_to" class="form-control"
-                                               value="{{ request('date_to') }}">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
+                        <form id="filterForm" method="GET" action="{{ route('dcn.index') }}" class="mb-4">
+                            <div class="row mb-2">
                                 <div class="col-12">
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class='bx bx-search'></i> Apply Filters
-                                        </button>
-                                        <a href="{{ route('dcn.index') }}" class="btn btn-secondary">
-                                            <i class='bx bx-x'></i> Clear Filters
-                                        </a>
+                                    <!-- authoritative checkbox is kept for form submission but hidden;
+                                         a visible toggle is injected into the DataTables search bar -->
+                                    <div class="form-check form-switch d-none" id="advancedToggleContainer">
+                                        <input class="form-check-input" type="checkbox" id="advancedToggle" name="advanced" value="1" {{ request('advanced') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="advancedToggle">
+                                            <i class="bx bx-filter"></i> Show Advanced Filters
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="advancedFilters" style="{{ request('advanced') ? '' : 'display:none;' }}">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="dcn_status">DCN Status</label>
+                                            <select name="dcn_status" id="dcn_status" class="form-select">
+                                                <option value="">All Entries</option>
+                                                <option value="with_dcn" {{ request('dcn_status') == 'with_dcn' ? 'selected' : '' }}>
+                                                    With DCN Assigned
+                                                </option>
+                                                <option value="without_dcn" {{ request('dcn_status') == 'without_dcn' ? 'selected' : '' }}>
+                                                    Without DCN
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="customer_id">Customer</label>
+                                            <select name="customer_id" id="customer_id" class="form-select">
+                                                <option value="">All Customers</option>
+                                                @foreach($customers as $customer)
+                                                    <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
+                                                        {{ $customer->name }} ({{ $customer->code }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="category_id">Category</label>
+                                            <select name="category_id" id="category_id" class="form-select">
+                                                <option value="">All Categories</option>
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                                        {{ $category->name }} ({{ $category->code }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="search">Search</label>
+                                            <input type="text" name="search" id="search" class="form-control"
+                                                   value="{{ request('search') }}"
+                                                   placeholder="Document title, number, DCN number...">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="date_from">Date From</label>
+                                            <input type="date" name="date_from" id="date_from" class="form-control"
+                                                   value="{{ request('date_from') }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label for="date_to">Date To</label>
+                                            <input type="date" name="date_to" id="date_to" class="form-control"
+                                                   value="{{ request('date_to') }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Apply / Clear placed inside advancedFilters so they hide with the rest -->
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" id="applyFiltersBtn" class="btn btn-primary">
+                                                <i class='bx bx-search'></i> Apply Filters
+                                            </button>
+                                            <a href="{{ route('dcn.index') }}" id="clearFiltersBtn" class="btn btn-secondary">
+                                                <i class='bx bx-x'></i> Clear Filters
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </form>
-
-                        <!-- Results Summary -->
-                        <div class="row mb-3">
-                            <div class="col-md-8">
-                                <p class="text-muted mb-0">
-                                    <i class='bx bx-info-circle'></i>
-                                    Showing {{ $entries->count() }} entries
-                                    @if(request()->hasAny(['dcn_status', 'customer_id', 'category_id', 'search', 'date_from', 'date_to']))
-                                        (filtered)
-                                    @endif
-                                </p>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <div class="d-flex justify-content-end gap-2">
-                                    @php
-                                        $withDcnCount = $entries->whereNotNull('dcn_no')->count();
-                                        $withoutDcnCount = $entries->whereNull('dcn_no')->count();
-                                    @endphp
-                                    <span class="badge bg-success">{{ $withDcnCount }} With DCN</span>
-                                    <span class="badge bg-warning text-dark">{{ $withoutDcnCount }} Without DCN</span>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Entries Table -->
                         <div class="table-responsive">
@@ -235,7 +229,7 @@
                                     <tr>
                                         <td colspan="10" class="text-center py-4">
                                             <i class='bx bx-info-circle'></i> No document registrations found.
-                                            @if(request()->hasAny(['dcn_status', 'customer_id', 'category_id', 'search', 'date_from', 'date_to']))
+                                            @if(request('advanced') && request()->hasAny(['dcn_status', 'customer_id', 'category_id', 'search', 'date_from', 'date_to']))
                                                 <br><small class="text-muted">Try adjusting your filters.</small>
                                             @endif
                                         </td>
@@ -270,7 +264,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="modalCustomer" class="form-label">Customer</label>
-                                    <select class="form-select" id="modalCustomer" name="customer_id" disabled>
+                                    <select class="form-select" id="modalCustomer" name="customer_id">
                                         <option value="">Select Customer</option>
                                         @foreach($customers as $customer)
                                             <option value="{{ $customer->id }}" data-code="{{ $customer->code }}">
@@ -286,7 +280,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="modalCategory" class="form-label">Category</label>
-                                    <select class="form-select" id="modalCategory" name="category_id" disabled>
+                                    <select class="form-select" id="modalCategory" name="category_id">
                                         <option value="">Select Category</option>
                                         @foreach($categories as $category)
                                             <option value="{{ $category->id }}" data-code="{{ $category->code }}">
@@ -298,6 +292,15 @@
                                         <span id="categoryStatus" class="text-muted">Category is set from document registry entry</span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Category/Customer Button (hidden by default) -->
+                        <div class="row" id="saveCategoryCustomerRow" style="display: none;">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-info btn-sm mb-3" id="saveCategoryCustomerBtn">
+                                    <i class='bx bx-save'></i> Save Category & Customer Changes
+                                </button>
                             </div>
                         </div>
 
@@ -357,6 +360,12 @@
                                        maxlength="3" placeholder="e.g., 001">
                                 <div class="form-text">
                                     <span id="suffixStatus" class="text-muted">Enter a unique 3-digit number (001-999)</span>
+                                </div>
+                                <!-- Live auto-completion line (purely frontend) -->
+                                <div class="small mt-1 text-muted" id="suffixAutoCompletion" style="display:none;">
+                                    <i class="bx bx-barcode"></i>
+                                    <span>Auto-complete preview: </span>
+                                    <span class="fw-bold text-primary" id="suffixAutoCompletionValue"></span>
                                 </div>
                                 <div class="invalid-feedback" id="suffixError">
                                     Please enter a valid 3-digit number.
@@ -459,6 +468,46 @@
             background-color: #dc3545 !important;
             color: #ffffff !important;
         }
+
+        /* DT advanced toggle: pill-style button to match Bootstrap look */
+        #dtAdvancedToggle .btn {
+            padding: 0.275rem 0.55rem;
+            font-size: 0.82rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        #dtAdvancedToggle .btn .bx {
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+        #dtAdvancedToggle .btn-active {
+            color: #fff;
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.1rem rgba(13,110,253,0.12);
+        }
+        #dtAdvancedToggle .btn-inactive {
+            color: #495057;
+            background-color: transparent;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* compact toolbar badges beside Export button */
+        #dcnToolbarCounts .badge {
+            font-size: 0.78rem;
+            padding: 0.22rem 0.45rem;
+            line-height: 1;
+        }
+        /* keep small gap and vertical alignment with dt buttons */
+        #dcnToolbarCounts {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
     </style>
 @endpush
 
@@ -469,38 +518,112 @@
 
     <script>
         $(document).ready(function() {
-            // Initialize DataTables
-            $('#dcnTable').DataTable({
+            // Expose DCN counts for toolbar badges (evaluated server-side)
+            const withDcnCount = {{ $entries->whereNotNull('dcn_no')->count() }};
+            const withoutDcnCount = {{ $entries->whereNull('dcn_no')->count() }};
+
+            // Advanced filters: sync UI and disable inputs/buttons when advanced is off
+            const advancedChecked = $('#advancedToggle').is(':checked');
+            if (!advancedChecked) {
+                // disable selects/inputs/buttons inside advancedFilters to avoid submission
+                $('#advancedFilters').find('select, input, button').prop('disabled', true);
+            }
+            // authoritative checkbox change handler toggles visibility & enabled state
+            $('#advancedToggle').on('change', function() {
+                const show = $(this).is(':checked');
+                if (show) {
+                    $('#advancedFilters').slideDown();
+                } else {
+                    $('#advancedFilters').slideUp();
+                }
+                $('#advancedFilters').find('select, input, button').prop('disabled', !show);
+
+                // sync visible DT toggle button (if present)
+                const $dtBtn = $('#dtAdvancedToggle').find('button');
+                if ($dtBtn.length) {
+                    if (show) {
+                        $dtBtn.removeClass('btn-inactive').addClass('btn-active');
+                        $dtBtn.attr('aria-pressed', 'true');
+                    } else {
+                        $dtBtn.removeClass('btn-active').addClass('btn-inactive');
+                        $dtBtn.attr('aria-pressed', 'false');
+                    }
+                }
+            });
+
+             // Initialize DataTables
+             $('#dcnTable').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
                     {
                         text: '<i class="bx bx-download"></i> Export to Excel',
-                        className: 'btn btn-success btn-sm',
+                        className: 'btn btn-success btn-sm dt-export-btn',
                         action: function(e, dt, node, config) {
-                            // Get current query string
                             const query = window.location.search;
-                            // Redirect to export route with filters
                             window.location.href = 'dcn/export' + query;
                         }
                     }
                 ],
                 responsive: true,
+                // Sort by first column (DCN No.) descending to match backend orderBy('id', 'desc')
+                order: [[0, 'desc']],
                 pageLength: 10,
                 columnDefs: [
-                    { orderable: false, targets: [9] }
+                    // Action column (last column) should not be orderable
+                    { orderable: false, targets: [10] }
                 ],
                 language: {
                     search: "Search entries:",
                     lengthMenu: "Show _MENU_ entries per page",
                     info: "Showing _START_ to _END_ of _TOTAL_ entries"
                 }
-            });
+                ,
+                initComplete: function() {
+                    // inject a compact, pill-style button to the right of the DataTables search input
+                    const isChecked = $('#advancedToggle').is(':checked');
+                    const btnClass = isChecked ? 'btn-active' : 'btn-inactive';
+                    const toggleHtml = `
+                        <div id="dtAdvancedToggle" style="display:inline-block; margin-left:12px; vertical-align:middle;">
+                            <button type="button" id="dtAdvancedVisibleToggle" class="btn btn-sm ${btnClass}" aria-pressed="${isChecked ? 'true' : 'false'}" title="Toggle advanced filters">
+                                <i class="bx bx-filter"></i>
+                                <span class="d-none d-sm-inline">Advanced</span>
+                            </button>
+                        </div>
+                    `;
 
-            // Initialize Bootstrap Modal
-            let dcnModal = new bootstrap.Modal(document.getElementById('dcnModal'));
-            let currentEntryId = null;
+                    // append next to the search input (on the right)
+                    $(this.api().table().container()).find('.dataTables_filter').append(toggleHtml);
 
-            // Manual DCN mode toggle
+                    // when visible toggle clicked, toggle authoritative checkbox and trigger its change
+                    $('#dtAdvancedVisibleToggle').on('click', function() {
+                        const currently = $('#advancedToggle').is(':checked');
+                        $('#advancedToggle').prop('checked', !currently).trigger('change');
+                        // visual toggle handled by authoritative checkbox change handler (keeps in sync)
+                    });
+
+                    // append DCN counts (with same markup structure) next to Export button
+                    const badgeHtml = `
+                        <div id="dcnToolbarCounts" aria-hidden="true">
+                            <span class="badge bg-success">${withDcnCount} With DCN</span>
+                            <span class="badge bg-warning text-dark">${withoutDcnCount} Without DCN</span>
+                        </div>
+                    `;
+                    const $container = $(this.api().table().container());
+                    const $exportBtn = $container.find('.dt-export-btn').first();
+                    if ($exportBtn.length) {
+                        $exportBtn.after(badgeHtml);
+                    } else {
+                        // fallback: append to dt-buttons group
+                        $container.find('.dt-buttons').append(badgeHtml);
+                    }
+                 }
+             });
+
+             // Initialize Bootstrap Modal
+             let dcnModal = new bootstrap.Modal(document.getElementById('dcnModal'));
+             let currentEntryId = null;
+
+             // Manual DCN mode toggle
             document.getElementById('manualDcnMode').addEventListener('change', function(e) {
                 const isManual = e.target.checked;
 
@@ -612,18 +735,372 @@
                 }
             }
 
+            // Add event listeners for category/customer changes
+            document.getElementById('modalCategory').addEventListener('change', function() {
+                const saveCategoryCustomerRow = document.getElementById('saveCategoryCustomerRow');
+                if (saveCategoryCustomerRow && saveCategoryCustomerRow.style.display !== 'none') {
+                    updateDcnPreview();
+                }
+            });
+
+            document.getElementById('modalCustomer').addEventListener('change', function() {
+                const saveCategoryCustomerRow = document.getElementById('saveCategoryCustomerRow');
+                if (saveCategoryCustomerRow && saveCategoryCustomerRow.style.display !== 'none') {
+                    updateDcnPreview();
+                }
+            });
+
+            // Save category/customer changes using existing update route
+            const saveCategoryCustomerBtn = document.getElementById('saveCategoryCustomerBtn');
+            if (saveCategoryCustomerBtn) {
+                saveCategoryCustomerBtn.addEventListener('click', function() {
+                    const entryId = currentEntryId;
+                    const categoryId = document.getElementById('modalCategory').value;
+                    const customerId = document.getElementById('modalCustomer').value;
+
+                    if (!categoryId || !customerId) {
+                        // Show inline warning instead of SweetAlert
+                        $('#categoryCustomerSuccessRow').hide();
+                        $('#categoryCustomerErrorRow').remove();
+                        const warningHtml = `
+                            <div class="row" id="categoryCustomerWarningRow">
+                                <div class="col-12">
+                                    <div class="alert alert-warning mb-3" role="alert">
+                                        <i class='bx bx-error-circle'></i>
+                                        <strong>Incomplete!</strong> Please select both category and customer before saving.
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        $('#saveCategoryCustomerRow').after(warningHtml);
+
+                        // Auto-remove warning after 3 seconds
+                        setTimeout(() => {
+                            $('#categoryCustomerWarningRow').fadeOut(300, function() {
+                                $(this).remove();
+                            });
+                        }, 3000);
+                        return;
+                    }
+
+                    // Remove any existing warnings or errors
+                    $('#categoryCustomerWarningRow').remove();
+                    $('#categoryCustomerErrorRow').remove();
+
+                    // Show loading state on button
+                    const saveBtn = document.getElementById('saveCategoryCustomerBtn');
+                    const originalBtnHtml = saveBtn.innerHTML;
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+                    // Use the existing update route
+                    $.ajax({
+                        url: `/document-registry/${entryId}`,
+                        method: 'PUT',
+                        data: {
+                            category_id: categoryId,
+                            customer_id: customerId,
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Hide the save button row
+                                $('#saveCategoryCustomerRow').hide();
+
+                                // Show success message inline
+                                $('#categoryCustomerSuccessRow').show();
+
+                                // Update the UI to reflect saved state
+                                if (response.entry.category) {
+                                    $('#modalCategory').val(response.entry.category_id).prop('disabled', true);
+                                    $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' +
+                                        response.entry.category.name + ' (' + response.entry.category.code + ')');
+                                }
+
+                                if (response.entry.customer) {
+                                    $('#modalCustomer').val(response.entry.customer_id).prop('disabled', true);
+                                    $('#customerStatus').html('<i class="bx bx-check-circle text-success"></i> ' +
+                                        response.entry.customer.name + ' (' + response.entry.customer.code + ')');
+                                }
+
+                                // Clear any DCN status warnings
+                                $('#dcnStatus').html('');
+
+                                // Update suffix status to indicate readiness
+                                $('#suffixStatus').html('<i class="bx bx-info-circle text-info"></i> Enter a unique 3-digit number (001-999)');
+
+                                // Enable DCN suffix field and update preview
+                                document.getElementById('dcnSuffix').disabled = false;
+
+                                // Generate next available suffix for the new category/customer combination
+                                $.ajax({
+                                    url: `/dcn/${entryId}/data`,
+                                    method: 'GET',
+                                    success: function(dataResponse) {
+                                        if (dataResponse.success && dataResponse.entry) {
+                                            // Populate suggested suffix if available
+                                            if (dataResponse.entry.suggested_suffix) {
+                                                $('#dcnSuffix').val(dataResponse.entry.suggested_suffix);
+                                                $('#suffixStatus').html('<i class="bx bx-lightbulb text-warning"></i> Suggested next available suffix: ' + dataResponse.entry.suggested_suffix);
+                                            }
+
+                                            // Update DCN preview
+                                            updateDcnPreview();
+
+                                            // Focus on suffix field
+                                            document.getElementById('dcnSuffix').focus();
+                                        }
+                                    },
+                                    error: function() {
+                                        // Still update preview even if we can't get suggested suffix
+                                        updateDcnPreview();
+                                        document.getElementById('dcnSuffix').focus();
+                                    }
+                                });
+
+                                // Enable save DCN button
+                                document.getElementById('saveDcnBtn').disabled = false;
+
+                                // Auto-hide success message after 5 seconds
+                                setTimeout(function() {
+                                    $('#categoryCustomerSuccessRow').fadeOut(300);
+                                }, 5000);
+                            }
+                        },
+                        error: function(xhr) {
+                            // Restore button state
+                            saveBtn.disabled = false;
+                            saveBtn.innerHTML = originalBtnHtml;
+
+                            const response = xhr.responseJSON;
+                            let errorMessage = 'An error occurred while saving changes.';
+                            if (response && response.message) {
+                                errorMessage = response.message;
+                            } else if (response && response.errors) {
+                                errorMessage = Object.values(response.errors).flat().join('<br>');
+                            }
+
+                            // Show error inline instead of SweetAlert
+                            $('#categoryCustomerSuccessRow').hide();
+                            $('#categoryCustomerErrorRow').remove();
+                            const errorHtml = `
+                                <div class="row" id="categoryCustomerErrorRow">
+                                    <div class="col-12">
+                                        <div class="alert alert-danger mb-3" role="alert">
+                                            <i class='bx bx-error-circle'></i>
+                                            <strong>Error!</strong> ${errorMessage}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            $('#saveCategoryCustomerRow').after(errorHtml);
+
+                            // Auto-remove error after 5 seconds
+                            setTimeout(() => {
+                                $('#categoryCustomerErrorRow').fadeOut(300, function() {
+                                    $(this).remove();
+                                });
+                            }, 5000);
+                        }
+                    });
+                });
+            }
+
             // Add event listener for suffix input
             document.getElementById('dcnSuffix').addEventListener('input', function(e) {
-                // Only allow digits
-                this.value = this.value.replace(/\D/g, '');
+                const suffix = e.target.value.trim();
 
-                // Limit to 3 characters
-                if (this.value.length > 3) {
-                    this.value = this.value.slice(0, 3);
+                // Update auto-completion preview
+                const autoCompletionDiv = document.getElementById('suffixAutoCompletion');
+                const suffixValueDiv = document.getElementById('suffixAutoCompletionValue');
+
+                if (suffix.length === 3) {
+                    // Show auto-completion line
+                    autoCompletionDiv.style.display = 'block';
+
+                    // Get current category and customer codes
+                    const categoryCode = document.getElementById('modalCategory').selectedOptions[0]?.dataset.code || '';
+                    const customerCode = document.getElementById('modalCustomer').selectedOptions[0]?.dataset.code || '';
+
+                    // Generate and show the auto-complete DCN value
+                    const currentYear = new Date().getFullYear().toString().slice(-2);
+                    const autoCompleteDcn = `${categoryCode}${currentYear}-${customerCode}-${suffix}`;
+                    suffixValueDiv.innerText = autoCompleteDcn;
+
+                    // Update the main preview as well
+                    document.getElementById('dcnPreview').innerHTML = `<i class='bx bx-barcode'></i> ${autoCompleteDcn}`;
+                    document.getElementById('dcnStatus').innerHTML = '<div class="alert alert-success alert-sm mb-0"><i class="bx bx-check-circle"></i> DCN ready to assign</div>';
+                    document.getElementById('saveDcnBtn').disabled = false;
+                } else {
+                    // Hide auto-completion line
+                    autoCompletionDiv.style.display = 'none';
+
+                    // Reset the main preview
+                    document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-barcode"></i> Select category, customer, and suffix to preview DCN';
+                    document.getElementById('dcnStatus').innerHTML = '';
+                    document.getElementById('saveDcnBtn').disabled = true;
                 }
-
-                updateDcnPreview();
             });
+
+            // Extract loadEntryData as a reusable function
+            function loadEntryData(entryId) {
+                $.ajax({
+                    url: `/dcn/${entryId}/data`,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.success && response.entry) {
+                            const entry = response.entry;
+
+                            // Populate read-only fields
+                            $('#modalOriginator').val(entry.originator_name || '-');
+
+                            // Format and populate dates
+                            if (entry.submitted_at) {
+                                const submittedDate = new Date(entry.submitted_at);
+                                const formattedSubmitted = submittedDate.toLocaleDateString('en-US', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    year: 'numeric'
+                                }) + ' ' + submittedDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                                $('#modalRegistrationDate').val(formattedSubmitted);
+                            } else {
+                                $('#modalRegistrationDate').val('-');
+                            }
+
+                            if (entry.implemented_at) {
+                                const implementedDate = new Date(entry.implemented_at);
+                                const formattedImplemented = implementedDate.toLocaleDateString('en-US', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    year: 'numeric'
+                                }) + ' ' + implementedDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                                $('#modalEffectiveDate').val(formattedImplemented);
+                            } else {
+                                $('#modalEffectiveDate').val('-');
+                            }
+
+                            $('#modalDocumentNo').val(entry.document_no || '-');
+                            $('#modalRevisionNo').val(entry.revision_no || '-');
+                            $('#modalDeviceName').val(entry.device_name || '-');
+                            $('#modalTitle').val(entry.document_title || '-');
+
+                            // Check if both customer and category exist
+                            if (entry.customer_id && entry.category_id && entry.customer && entry.category) {
+                                // Populate customer (read-only)
+                                $('#modalCustomer').val(entry.customer_id).prop('disabled', true);
+                                $('#customerStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.customer.name + ' (' + entry.customer.code + ')');
+
+                                // Populate category (read-only)
+                                $('#modalCategory').val(entry.category_id).prop('disabled', true);
+                                $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.category.name + ' (' + entry.category.code + ')');
+
+                                // Hide save button and success message
+                                $('#saveCategoryCustomerRow').hide();
+                                $('#categoryCustomerSuccessRow').hide();
+
+                                // Populate suggested suffix if available
+                                if (entry.suggested_suffix) {
+                                    $('#dcnSuffix').val(entry.suggested_suffix);
+                                    $('#suffixStatus').html('<i class="bx bx-lightbulb text-warning"></i> Suggested next available suffix: ' + entry.suggested_suffix);
+                                }
+
+                                // If current DCN exists, extract and show its suffix OR populate manual field
+                                if (entry.current_dcn) {
+                                    const suffixMatch = entry.current_dcn.match(/-(\d{3})$/);
+                                    if (suffixMatch) {
+                                        // Standard format - populate suffix field
+                                        $('#dcnSuffix').val(suffixMatch[1]);
+                                    } else {
+                                        // Non-standard format - switch to manual mode and populate
+                                        document.getElementById('manualDcnMode').checked = true;
+                                        document.getElementById('autoGeneratedSection').style.display = 'none';
+                                        document.getElementById('manualDcnSection').style.display = 'block';
+                                        document.getElementById('formatBreakdown').style.display = 'none';
+                                        document.getElementById('dcnSuffix').disabled = true;
+                                        document.getElementById('manualDcnInput').disabled = false;
+                                        document.getElementById('manualDcnInput').value = entry.current_dcn;
+                                    }
+
+                                    const currentDcnHtml = `
+                                        <div class="alert alert-info alert-sm mb-2">
+                                            <i class="bx bx-info-circle"></i>
+                                            <strong>Current DCN:</strong> ${entry.current_dcn}
+                                        </div>
+                                    `;
+                                    document.getElementById('dcnStatus').innerHTML = currentDcnHtml;
+                                }
+
+                                // Enable DCN save button
+                                document.getElementById('saveDcnBtn').disabled = false;
+
+                                // Update preview with loaded data
+                                updateDcnPreview();
+
+                            } else {
+                                // Missing customer or category - enable editing
+                                let missingFields = [];
+
+                                if (!entry.customer_id || !entry.customer) {
+                                    $('#modalCustomer').prop('disabled', false);
+                                    $('#customerStatus').html('<i class="bx bx-exclamation-triangle text-warning"></i> No customer assigned - select one below');
+                                    missingFields.push('Customer');
+                                } else {
+                                    $('#modalCustomer').val(entry.customer_id).prop('disabled', false);
+                                    $('#customerStatus').html('<i class="bx bx-info-circle text-info"></i> ' + entry.customer.name + ' (' + entry.customer.code + ') - can be changed');
+                                }
+
+                                if (!entry.category_id || !entry.category) {
+                                    $('#modalCategory').prop('disabled', false);
+                                    $('#categoryStatus').html('<i class="bx bx-exclamation-triangle text-warning"></i> No category assigned - select one below');
+                                    missingFields.push('Category');
+                                } else {
+                                    $('#modalCategory').val(entry.category_id).prop('disabled', false);
+                                    $('#categoryStatus').html('<i class="bx bx-info-circle text-info"></i> ' + entry.category.name + ' (' + entry.category.code + ') - can be changed');
+                                }
+
+                                // Show save button for category/customer
+                                $('#saveCategoryCustomerRow').show();
+                                $('#categoryCustomerSuccessRow').hide();
+
+                                $('#suffixStatus').html('<i class="bx bx-info-circle text-info"></i> Select category & customer, then save changes before assigning DCN');
+
+                                document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-info-circle"></i> Select and save Category & Customer first';
+                                document.getElementById('dcnStatus').innerHTML = `
+                                    <div class="alert alert-warning alert-sm mb-0">
+                                        <i class="bx bx-exclamation-triangle"></i>
+                                        ${missingFields.join(' and ')} not assigned.
+                                        <strong>Select values above and click "Save Category & Customer Changes"</strong> before assigning DCN.
+                                    </div>
+                                `;
+
+                                // Disable DCN save button until category/customer are saved
+                                document.getElementById('saveDcnBtn').disabled = true;
+                            }
+                        } else {
+                            // Error loading data
+                            document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-error-circle"></i> Error loading entry data';
+                            $('#customerStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
+                            $('#categoryStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
+                            $('#suffixStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading entry data:', xhr);
+                        document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-error-circle"></i> Error loading entry data';
+                        $('#customerStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
+                        $('#categoryStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
+                        $('#suffixStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
+                    }
+                });
+            }
 
             // Save DCN - updated to handle both modes
             document.getElementById('saveDcnBtn').addEventListener('click', function() {
@@ -738,6 +1215,12 @@
                 document.getElementById('dcnStatus').innerHTML = '';
                 document.getElementById('saveDcnBtn').disabled = true;
 
+                // Hide save category/customer button and all alert messages by default
+                $('#saveCategoryCustomerRow').hide();
+                $('#categoryCustomerSuccessRow').hide();
+                $('#categoryCustomerWarningRow').remove();
+                $('#categoryCustomerErrorRow').remove();
+
                 // Reset to auto-generated mode by default
                 document.getElementById('manualDcnMode').checked = false;
                 document.getElementById('autoGeneratedSection').style.display = 'block';
@@ -757,145 +1240,7 @@
                 document.getElementById('manualDcnStatus').innerHTML = '<span class="text-muted">Enter any DCN format you need</span>';
 
                 // Load existing entry data
-                $.ajax({
-                    url: `/dcn/${entryId}/data`,
-                    method: 'GET',
-                    success: function(response) {
-                        if (response.success && response.entry) {
-                            const entry = response.entry;
-
-                            // Populate read-only fields
-                            $('#modalOriginator').val(entry.originator_name || '-');
-
-                            // Format and populate dates
-                            if (entry.submitted_at) {
-                                const submittedDate = new Date(entry.submitted_at);
-                                const formattedSubmitted = submittedDate.toLocaleDateString('en-US', {
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    year: 'numeric'
-                                }) + ' ' + submittedDate.toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                });
-                                $('#modalRegistrationDate').val(formattedSubmitted);
-                            } else {
-                                $('#modalRegistrationDate').val('-');
-                            }
-
-                            if (entry.implemented_at) {
-                                const implementedDate = new Date(entry.implemented_at);
-                                const formattedImplemented = implementedDate.toLocaleDateString('en-US', {
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    year: 'numeric'
-                                }) + ' ' + implementedDate.toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                });
-                                $('#modalEffectiveDate').val(formattedImplemented);
-                            } else {
-                                $('#modalEffectiveDate').val('-');
-                            }
-
-                            $('#modalDocumentNo').val(entry.document_no || '-');
-                            $('#modalRevisionNo').val(entry.revision_no || '-');
-                            $('#modalDeviceName').val(entry.device_name || '-');
-                            $('#modalTitle').val(entry.document_title || '-');
-
-                            // Check if both customer and category exist
-                            if (entry.customer_id && entry.category_id && entry.customer && entry.category) {
-                                // Populate customer (read-only)
-                                $('#modalCustomer').val(entry.customer_id);
-                                $('#customerStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.customer.name + ' (' + entry.customer.code + ')');
-
-                                // Populate category (read-only)
-                                $('#modalCategory').val(entry.category_id);
-                                $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.category.name + ' (' + entry.category.code + ')');
-
-                                // Show suggested suffix as help text (but don't auto-fill)
-                                if (entry.suggested_suffix) {
-                                    $('#suffixStatus').html('<i class="bx bx-info-circle text-info"></i> Suggested next available: ' + entry.suggested_suffix + ' (or enter your own)');
-                                }
-
-                                // If current DCN exists, extract and show its suffix OR populate manual field
-                                if (entry.current_dcn) {
-                                    const suffixMatch = entry.current_dcn.match(/-(\d{3})$/);
-                                    if (suffixMatch) {
-                                        // Standard format - populate suffix field
-                                        $('#dcnSuffix').val(suffixMatch[1]);
-                                    } else {
-                                        // Non-standard format - switch to manual mode and populate
-                                        document.getElementById('manualDcnMode').checked = true;
-                                        document.getElementById('autoGeneratedSection').style.display = 'none';
-                                        document.getElementById('manualDcnSection').style.display = 'block';
-                                        document.getElementById('formatBreakdown').style.display = 'none';
-                                        document.getElementById('dcnSuffix').disabled = true;
-                                        document.getElementById('manualDcnInput').disabled = false;
-                                        document.getElementById('manualDcnInput').value = entry.current_dcn;
-                                    }
-
-                                    const currentDcnHtml = `
-                                        <div class="alert alert-info alert-sm mb-2">
-                                            <i class="bx bx-info-circle"></i>
-                                            <strong>Current DCN:</strong> ${entry.current_dcn}
-                                        </div>
-                                    `;
-                                    document.getElementById('dcnStatus').innerHTML = currentDcnHtml;
-                                }
-
-                                // Update preview with loaded data
-                                updateDcnPreview();
-
-                            } else {
-                                // Missing customer or category - show warning but allow manual override
-                                let missingFields = [];
-
-                                if (!entry.customer_id || !entry.customer) {
-                                    $('#customerStatus').html('<i class="bx bx-error-circle text-danger"></i> No customer assigned');
-                                    missingFields.push('Customer');
-                                } else {
-                                    $('#modalCustomer').val(entry.customer_id);
-                                    $('#customerStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.customer.name + ' (' + entry.customer.code + ')');
-                                }
-
-                                if (!entry.category_id || !entry.category) {
-                                    $('#categoryStatus').html('<i class="bx bx-error-circle text-danger"></i> No category assigned');
-                                    missingFields.push('Category');
-                                } else {
-                                    $('#modalCategory').val(entry.category_id);
-                                    $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.category.name + ' (' + entry.category.code + ')');
-                                }
-
-                                $('#suffixStatus').html('<i class="bx bx-info-circle text-warning"></i> Customer/Category missing - enable Manual DCN Override to proceed');
-
-                                document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-info-circle"></i> Enable Manual DCN Override to assign DCN';
-                                document.getElementById('dcnStatus').innerHTML = `
-                            <div class="alert alert-warning alert-sm mb-0">
-                                <i class="bx bx-exclamation-triangle"></i>
-                                ${missingFields.join(' and ')} not assigned.
-                                <strong>Enable "Manual DCN Override"</strong> above to enter a DCN number anyway.
-                            </div>
-                        `;
-                            }
-                        } else {
-                            // Error loading data
-                            document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-error-circle"></i> Error loading entry data';
-                            $('#customerStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                            $('#categoryStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                            $('#suffixStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error loading entry data:', xhr);
-                        document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-error-circle"></i> Error loading entry data';
-                        $('#customerStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                        $('#categoryStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                        $('#suffixStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                    }
-                });
+                loadEntryData(entryId);
 
                 // Show modal
                 dcnModal.show();

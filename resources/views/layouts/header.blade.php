@@ -41,7 +41,7 @@
                           <div data-i18n="Tracking Registration">Registration Tracking</div>
                       </a>
                   </li>
-                  <li class="menu-item">
+                  <li class="menu-item {{ Route::is('dcn.index') ? 'active' : '' }}">
                       <a href="{{route('dcn.index')}}" class="menu-link">
                           <i class="menu-icon tf-icons bx bx-barcode"></i> {{-- changed from bx-cog --}}
                           <div data-i18n="DCN Control">Assign DCN</div>

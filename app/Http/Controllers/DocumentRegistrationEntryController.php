@@ -20,41 +20,41 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class DocumentRegistrationEntryController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status', 'category']);
+   public function index(Request $request)
+   {
+       $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status', 'category']);
 
-        $query->where('submitted_by', Auth::id());
+       $query->where('submitted_by', Auth::id());
 
-        if ($request->has('status') && $request->status !== '' && $request->status !== null) {
-            $query->whereHas('status', function ($q) use ($request) {
-                $q->where('name', $request->status);
-            });
-        }
+       if ($request->has('status') && $request->status !== '' && $request->status !== null) {
+           $query->whereHas('status', function ($q) use ($request) {
+               $q->where('name', $request->status);
+           });
+       }
 
-        if ($request->has('category_id') && $request->category_id !== '' && $request->category_id !== null) {
-            $query->where('category_id', $request->category_id);
-        }
+       if ($request->has('category_id') && $request->category_id !== '' && $request->category_id !== null) {
+           $query->where('category_id', $request->category_id);
+       }
 
-        if ($request->has('search') && $request->search !== '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('document_no', 'like', "%{$search}%")
-                    ->orWhere('document_title', 'like', "%{$search}%")
-                    ->orWhere('device_name', 'like', "%{$search}%")
-                    ->orWhere('originator_name', 'like', "%{$search}%")
-                    ->orWhereHas('category', function($categoryQuery) use ($search) {
-                        $categoryQuery->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                    });
-            });
-        }
+       if ($request->has('search') && $request->search !== '') {
+           $search = $request->search;
+           $query->where(function($q) use ($search) {
+               $q->where('document_no', 'like', "%{$search}%")
+                   ->orWhere('document_title', 'like', "%{$search}%")
+                   ->orWhere('device_name', 'like', "%{$search}%")
+                   ->orWhere('originator_name', 'like', "%{$search}%")
+                   ->orWhereHas('category', function($categoryQuery) use ($search) {
+                       $categoryQuery->where('name', 'like', "%{$search}%")
+                           ->orWhere('code', 'like', "%{$search}%");
+                   });
+           });
+       }
 
-        $entries = $query->latest()->paginate(15);
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+       $entries = $query->orderByDesc('id')->get();
+       $categories = Category::where('is_active', true)->orderBy('name')->get();
 
-        return view('document-registry.index', compact('entries', 'categories'));
-    }
+       return view('document-registry.index', compact('entries', 'categories'));
+   }
 
     public function create()
     {
@@ -237,6 +237,52 @@ class DocumentRegistrationEntryController extends Controller
             abort(403);
         }
 
+        // Detect if this is a minimal update (only category/customer from DCN modal)
+        $isMinimalUpdate = $request->filled('category_id') &&
+                          $request->filled('customer_id') &&
+                          !$request->filled('document_title');
+
+        if ($isMinimalUpdate) {
+            // Minimal validation for category/customer updates from DCN modal
+            $request->validate([
+                'category_id' => 'required|exists:categories,id',
+                'customer_id' => 'required|exists:customers,id',
+            ]);
+
+            $documentRegistrationEntry->update([
+                'category_id' => $request->category_id,
+                'customer_id' => $request->customer_id,
+            ]);
+
+            // Return JSON response for AJAX requests
+            if ($request->wantsJson() || $request->ajax()) {
+                $documentRegistrationEntry->load(['category', 'customer']);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Category and customer updated successfully.',
+                    'entry' => [
+                        'id' => $documentRegistrationEntry->id,
+                        'category_id' => $documentRegistrationEntry->category_id,
+                        'customer_id' => $documentRegistrationEntry->customer_id,
+                        'category' => $documentRegistrationEntry->category ? [
+                            'id' => $documentRegistrationEntry->category->id,
+                            'name' => $documentRegistrationEntry->category->name,
+                            'code' => $documentRegistrationEntry->category->code
+                        ] : null,
+                        'customer' => $documentRegistrationEntry->customer ? [
+                            'id' => $documentRegistrationEntry->customer->id,
+                            'name' => $documentRegistrationEntry->customer->name,
+                            'code' => $documentRegistrationEntry->customer->code
+                        ] : null,
+                    ]
+                ]);
+            }
+
+            return redirect()->route('document-registry.show', $documentRegistrationEntry)
+                ->with('success', 'Category and customer updated successfully.');
+        }
+
+        // Full update validation
         $request->validate([
             'document_title' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -352,7 +398,7 @@ class DocumentRegistrationEntryController extends Controller
             $query->whereDate('submitted_at', '<=', $request->date_to);
         }
 
-        $entries = $query->latest('submitted_at')->get();
+      $entries = $query->orderByDesc('id')->get();
 
         // Calculate counts using relationships
         $pendingCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
