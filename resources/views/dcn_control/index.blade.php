@@ -566,7 +566,7 @@
                 ],
                 responsive: true,
                 // Sort by first column (DCN No.) descending to match backend orderBy('id', 'desc')
-                order: [[0, 'desc']],
+                order: [],
                 pageLength: 10,
                 columnDefs: [
                     // Action column (last column) should not be orderable

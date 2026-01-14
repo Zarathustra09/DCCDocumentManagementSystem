@@ -15,7 +15,11 @@ class DcnController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy', 'status']);
+        // Combined: create query and exclude entries with status name == 'Cancelled'
+        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy', 'status'])
+            ->whereDoesntHave('status', function ($q) {
+                $q->where('name', 'Cancelled');
+            });
 
         // Apply filters based on request parameters
         if ($request->filled('dcn_status')) {
@@ -54,6 +58,7 @@ class DcnController extends Controller
         }
 
         $entries = $query->orderBy('id', 'desc')->get();
+
 
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
         $categories = Category::where('is_active', true)->orderBy('name')->get();

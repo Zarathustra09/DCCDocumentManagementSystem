@@ -334,7 +334,7 @@
                     }
                 ],
                 responsive: true,
-                order: [[0, 'desc']],
+                order: [],
                 pageLength: 10,
                 columnDefs: [
                     { orderable: false, targets: [10] }
