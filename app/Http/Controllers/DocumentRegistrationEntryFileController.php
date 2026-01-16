@@ -22,6 +22,9 @@ class DocumentRegistrationEntryFileController extends Controller
             abort(403);
         }
 
+        // Store the entry ID before operations
+        $entryId = $file->entry_id;
+
         $implementedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
         $entryImplementedStatus = \App\Models\DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
 
@@ -38,17 +41,15 @@ class DocumentRegistrationEntryFileController extends Controller
             'implemented_at' => now(),
         ]);
 
-        $file->refresh();
-
         $user = $file->registrationEntry->submittedBy;
         if ($user) {
             $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
             $user->notify(new DocumentRegistryEntryStatusUpdated($file->registrationEntry, $file->registrationEntry->status));
-
         }
 
-
-        return back()->with('success', 'File approved successfully.');
+        // Use stored entry ID for redirect
+        return redirect()->route('document-registry.show', ['documentRegistrationEntry' => $entryId])
+            ->with('success', 'File approved successfully.');
     }
 
     public function reject(Request $request, $id)
@@ -57,9 +58,13 @@ class DocumentRegistrationEntryFileController extends Controller
         if (!auth()->user()->can('reject document registration') || $file->status->name !== 'Pending') {
             abort(403);
         }
+
         $request->validate([
             'rejection_reason' => 'required|string'
         ]);
+
+        // Store the entry ID before operations
+        $entryId = $file->entry_id;
 
         // Use 'Returned' status for files instead of 'Cancelled'
         $returnedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Returned')->first();
@@ -76,14 +81,14 @@ class DocumentRegistrationEntryFileController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
 
-        $file->refresh();
-
         $user = $file->registrationEntry->submittedBy;
         if ($user) {
             $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
         }
 
-        return back()->with('success', 'File returned for revision.');
+        // Use stored entry ID for redirect
+        return redirect()->route('document-registry.show', ['documentRegistrationEntry' => $entryId])
+            ->with('success', 'File returned for revision.');
     }
 
     public function uploadFile(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
