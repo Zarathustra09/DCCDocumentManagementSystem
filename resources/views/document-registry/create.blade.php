@@ -240,8 +240,24 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Categories data from server
-    const categories = @json($categories);
+    // Main categories with subcategories from server
+    const mainCategories = @json($mainCategories ?? []);
+
+    // Build a flat index of subcategories for quick lookup
+    const subcategoryIndex = {};
+    mainCategories.forEach(mainCategory => {
+        if (!Array.isArray(mainCategory.subcategories)) {
+            return;
+        }
+        mainCategory.subcategories.forEach(subcategory => {
+            subcategoryIndex[subcategory.id] = Object.assign({}, subcategory, {
+                main_category: {
+                    id: mainCategory.id,
+                    name: mainCategory.name
+                }
+            });
+        });
+    });
 
     // Check if there's an old category_id from validation errors
     const oldCategoryId = '{{ old('category_id') }}';
@@ -251,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showCategorySelection();
     } else {
         // If there are validation errors, pre-fill the category and show form
-        const selectedCategory = categories.find(cat => cat.id == oldCategoryId);
+        const selectedCategory = subcategoryIndex[oldCategoryId];
         if (selectedCategory) {
             selectCategory(selectedCategory);
         }
@@ -260,41 +276,63 @@ document.addEventListener('DOMContentLoaded', function() {
     // Change category button handler
     document.getElementById('changeCategoryBtn').addEventListener('click', showCategorySelection);
 
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function formatCategoryLabel(category) {
+        if (!category) {
+            return '';
+        }
+        if (category.main_category && category.main_category.name) {
+            return `${category.name} (${category.main_category.name})`;
+        }
+        return category.name;
+    }
 
     function showCategorySelection() {
-        // Group categories
-        const generalCategories = categories.filter(cat =>
-            !cat.name.toLowerCase().includes('mechatronics')
-        );
-
-        const mechatronicsCategories = categories.filter(cat =>
-            cat.name.toLowerCase().includes('mechatronics')
-        );
-
+        let sectionsRendered = 0;
         let optionsHtml = '<div class="category-groups">';
 
-        // General Categories Section
-        if (generalCategories.length > 0) {
+        mainCategories.forEach(mainCategory => {
+            const subcategories = Array.isArray(mainCategory.subcategories) ? mainCategory.subcategories : [];
+            if (!subcategories.length) {
+                return;
+            }
+
+            sectionsRendered++;
             optionsHtml += `
                 <div class="category-section mb-4">
                     <h5 class="section-title mb-3">
-                        <i class="bx bx-folder text-primary"></i> General Categories
+                        <i class="bx bx-folder text-primary"></i> ${escapeHtml(mainCategory.name || 'Main Category')}
                     </h5>
                     <div class="row">
             `;
 
-            generalCategories.forEach((category, index) => {
+            subcategories.forEach(subcategory => {
+                const codeValue = subcategory.code ? String(subcategory.code).toUpperCase() : null;
+                const codeLabel = codeValue ? `Code: ${escapeHtml(codeValue)}` : 'Code not set';
+
                 optionsHtml += `
                     <div class="col-md-6 mb-3">
-                        <div class="category-option p-3 border rounded cursor-pointer hover-shadow"
-                             data-category-id="${category.id}"
+                        <div class="category-option p-3 border rounded hover-shadow"
+                             data-subcategory-id="${subcategory.id}"
                              style="cursor: pointer; transition: all 0.2s;">
                             <div class="d-flex align-items-center">
                                 <div class="category-icon me-3">
                                     <i class="bx bx-category-alt fs-4 text-primary"></i>
                                 </div>
                                 <div>
-                                    <h6 class="mb-1">${category.name}</h6>
+                                    <h6 class="mb-1">${escapeHtml(subcategory.name || 'Subcategory')}</h6>
+                                    <small class="text-muted">${codeLabel}</small>
                                 </div>
                             </div>
                         </div>
@@ -303,38 +341,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             optionsHtml += '</div></div>';
-        }
+        });
 
-        // Mechatronics Categories Section
-        if (mechatronicsCategories.length > 0) {
+        if (!sectionsRendered) {
             optionsHtml += `
-                <div class="category-section">
-                    <h5 class="section-title mb-3">
-                        <i class="bx bx-cog text-success"></i> Mechatronics and Automation
-                    </h5>
-                    <div class="row">
+                <div class="alert alert-warning mb-0">
+                    <i class="bx bx-info-circle"></i> No active subcategories are available. Please contact your administrator.
+                </div>
             `;
-
-            mechatronicsCategories.forEach((category, index) => {
-                optionsHtml += `
-                    <div class="col-md-6 mb-3">
-                        <div class="category-option p-3 border rounded cursor-pointer hover-shadow"
-                             data-category-id="${category.id}"
-                             style="cursor: pointer; transition: all 0.2s;">
-                            <div class="d-flex align-items-center">
-                                <div class="category-icon me-3">
-                                    <i class="bx bx-chip fs-4 text-success"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">${category.name}</h6>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            optionsHtml += '</div></div>';
         }
 
         optionsHtml += '</div>';
@@ -343,11 +357,11 @@ document.addEventListener('DOMContentLoaded', function() {
             title: '<i class="bx bx-category"></i> Select Document Category',
             html: `
                 <div class="text-start">
-                    <p class="text-muted mb-4">Choose the category that best fits your document:</p>
+                    <p class="text-muted mb-4">Choose the subcategory that best fits your document:</p>
                     ${optionsHtml}
-                    <div class="alert alert-warning mt-3">
+                    <div class="alert alert-warning mt-3 mb-0">
                         <i class="bx bx-info-circle"></i>
-                        <strong>Required:</strong> You must select a category to continue.
+                        <strong>Required:</strong> You must select a subcategory to continue.
                     </div>
                 </div>
             `,
@@ -361,8 +375,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 popup: 'category-selection-popup'
             },
             didOpen: () => {
+                const popup = Swal.getPopup();
+                if (!popup) {
+                    return;
+                }
+
                 // Add hover effects and click handlers
-                const categoryOptions = document.querySelectorAll('.category-option');
+                const categoryOptions = popup.querySelectorAll('.category-option');
                 categoryOptions.forEach(option => {
                     option.addEventListener('mouseenter', function() {
                         this.style.backgroundColor = '#f8f9fa';
@@ -379,11 +398,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
 
                     option.addEventListener('click', function() {
-                        const categoryId = this.getAttribute('data-category-id');
-                        const selectedCategory = categories.find(cat => cat.id == categoryId);
+                        const categoryId = this.getAttribute('data-subcategory-id');
+                        const selectedCategory = subcategoryIndex[categoryId];
+
+                        if (!selectedCategory) {
+                            return;
+                        }
 
                         // Add selected visual feedback
-                        categoryOptions.forEach(opt => opt.style.backgroundColor = '');
+                        categoryOptions.forEach(opt => {
+                            opt.style.backgroundColor = '';
+                            opt.style.borderColor = '';
+                        });
                         this.style.backgroundColor = '#e3f2fd';
                         this.style.borderColor = '#2196f3';
 
@@ -395,10 +421,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
     function selectCategory(category) {
+        if (!category) {
+            Swal.fire('Category Required', 'Please select a category to continue.', 'warning');
+            return;
+        }
+
         // Set the category values
         document.getElementById('category_id').value = category.id;
-        document.getElementById('category_display').value = category.name;
+        document.getElementById('category_display').value = formatCategoryLabel(category);
 
         // Hide loading, show form
         document.getElementById('loadingContainer').style.display = 'none';
@@ -407,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show success message
         Swal.fire({
             title: 'Category Selected!',
-            text: `You have selected: ${category.name}`,
+            text: `You have selected: ${formatCategoryLabel(category)}`,
             icon: 'success',
             timer: 2000,
             showConfirmButton: false,

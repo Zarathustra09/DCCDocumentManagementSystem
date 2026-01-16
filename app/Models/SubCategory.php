@@ -6,13 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\MainCategory;
 use App\Models\DocumentRegistrationEntry;
 
-/*
- This model is kept for backward compatibility.
- The categories table was renamed to subcategories; point this model to the new table.
-*/
-class Category extends Model
+class SubCategory extends Model
 {
-    // map to the renamed table
+    // the migration created table "subcategories" (no underscore), so set explicitly
     protected $table = 'subcategories';
 
     protected $fillable = [
@@ -33,6 +29,19 @@ class Category extends Model
 
     public function documentRegistrationEntries()
     {
+        // kept the existing foreign key name (category_id) for compatibility
         return $this->hasMany(DocumentRegistrationEntry::class, 'category_id');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Prevent deletion if there are related documents
+        static::deleting(function ($subcategory) {
+            if ($subcategory->documentRegistrationEntries()->exists()) {
+                return false;
+            }
+        });
     }
 }

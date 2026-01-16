@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
 use App\Models\DocumentRegistrationEntryStatus;
+use App\Models\MainCategory;
 use App\Models\User;
 use App\Notifications\DocumentRegistryEntryCreated;
 use App\Notifications\DocumentRegistryEntryStatusUpdated;
@@ -62,9 +63,12 @@ class DocumentRegistrationEntryController extends Controller
             abort(403, 'You do not have permission to submit documents for approval.');
         }
 
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $mainCategories = MainCategory::with(['subcategories' => function ($query) {
+            $query->where('is_active', true)->orderBy('name');
+        }])->orderBy('name')->get();
+
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
-        return view('document-registry.create', compact('categories', 'customers'));
+        return view('document-registry.create', compact('mainCategories', 'customers'));
     }
 
     public function store(Request $request)
@@ -77,7 +81,7 @@ class DocumentRegistrationEntryController extends Controller
         $rules = [
             'document_no' => 'nullable|string|max:100',
             'document_title' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'required|exists:subcategories,id',
             'customer_id' => 'nullable|exists:customers,id',
             'revision_no' => 'nullable|string|max:50',
             'device_name' => 'nullable|string|max:255',
@@ -149,9 +153,11 @@ class DocumentRegistrationEntryController extends Controller
             abort(403);
         }
 
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $mainCategories = MainCategory::with(['subcategories' => function ($query) {
+            $query->where('is_active', true)->orderBy('name');
+        }])->orderBy('name')->get();
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
-        return view('document-registry.edit', compact('documentRegistrationEntry', 'categories', 'customers'));
+        return view('document-registry.edit', compact('documentRegistrationEntry', 'mainCategories', 'customers'));
     }
 
 
@@ -245,7 +251,7 @@ class DocumentRegistrationEntryController extends Controller
         if ($isMinimalUpdate) {
             // Minimal validation for category/customer updates from DCN modal
             $request->validate([
-                'category_id' => 'required|exists:categories,id',
+                'category_id' => 'required|exists:subcategories,id',
                 'customer_id' => 'required|exists:customers,id',
             ]);
 
@@ -285,7 +291,7 @@ class DocumentRegistrationEntryController extends Controller
         // Full update validation
         $request->validate([
             'document_title' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'required|exists:subcategories,id',
             'customer_id' => 'nullable|exists:customers,id',
             'revision_no' => 'nullable|string|max:50',
             'device_name' => 'nullable|string|max:255',

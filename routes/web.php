@@ -65,7 +65,15 @@ Route::middleware('auth')->group(function () {
 
 
     Route::resource('base-folder', BaseFolderController::class)->except(['index', 'show']);
-    Route::resource('categories', CategoryController::class);
+    Route::resource('categories', CategoryController::class)->parameters([
+        'categories' => 'subcategory'
+    ]);
+    Route::get('/main-categories', [CategoryController::class, 'index'])->name('main-categories.index');
+    Route::post('/main-categories', [CategoryController::class, 'storeMainCategory'])->name('main-categories.store');
+    Route::put('/main-categories/{mainCategory}', [CategoryController::class, 'updateMainCategory'])->name('main-categories.update');
+    Route::delete('/main-categories/{mainCategory}', [CategoryController::class, 'destroyMainCategory'])->name('main-categories.destroy');
+
+
     Route::resource('customers', CustomerController::class);
 
 
