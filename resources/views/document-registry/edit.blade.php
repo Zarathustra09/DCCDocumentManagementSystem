@@ -120,7 +120,7 @@
                             <!-- Device Name -->
                             <div class="col-md-6 mb-3">
                                 <label for="device_name" class="form-label">
-                                    <i class='bx bx-chip'></i> Device Name
+                                    <i class='bx bx-chip'></i>Device Name / Part Number
                                 </label>
                                 <input type="text"
                                        class="form-control @error('device_name') is-invalid @enderror"

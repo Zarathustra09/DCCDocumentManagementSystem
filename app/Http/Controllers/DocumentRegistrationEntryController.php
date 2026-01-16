@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\SubCategory;
 use App\Models\Customer;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\DocumentRegistrationEntryFile;
@@ -156,8 +157,10 @@ class DocumentRegistrationEntryController extends Controller
         $mainCategories = MainCategory::with(['subcategories' => function ($query) {
             $query->where('is_active', true)->orderBy('name');
         }])->orderBy('name')->get();
+
+        $categories = SubCategory::where('is_active', true)->orderBy('name')->get();
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
-        return view('document-registry.edit', compact('documentRegistrationEntry', 'mainCategories', 'customers'));
+        return view('document-registry.edit', compact('documentRegistrationEntry', 'mainCategories', 'categories', 'customers'));
     }
 
 
