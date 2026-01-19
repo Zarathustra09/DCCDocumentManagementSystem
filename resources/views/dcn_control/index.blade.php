@@ -1,7 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container-fluid">
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -245,208 +247,211 @@
                 </div>
             </div>
         </div>
-    </div>
-    <!-- DCN Update Modal -->
-    <div class="modal fade" id="dcnModal" tabindex="-1" aria-labelledby="dcnModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="dcnModalLabel">
-                        <i class='bx bx-barcode'></i> Update DCN Number
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="dcnForm">
-                        <input type="hidden" id="entryId" name="entry_id">
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="modalCustomer" class="form-label">Customer</label>
-                                    <select class="form-select" id="modalCustomer" name="customer_id">
-                                        <option value="">Select Customer</option>
-                                        @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" data-code="{{ $customer->code }}">
-                                                {{ $customer->name }} ({{ $customer->code }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <div class="form-text">
-                                        <span id="customerStatus" class="text-muted">Customer is set from document registry entry</span>
+        <!-- DCN Update Modal -->
+        <div class="modal fade" id="dcnModal" tabindex="-1" aria-labelledby="dcnModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dcnModalLabel">
+                            <i class='bx bx-barcode'></i> Update DCN Number
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="dcnForm">
+                            <input type="hidden" id="entryId" name="entry_id">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="modalCustomer" class="form-label">Customer</label>
+                                        <select class="form-select" id="modalCustomer" name="customer_id">
+                                            <option value="">Select Customer</option>
+                                            @foreach($customers as $customer)
+                                                <option value="{{ $customer->id }}" data-code="{{ $customer->code }}">
+                                                    {{ $customer->name }} ({{ $customer->code }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="form-text">
+                                            <span id="customerStatus" class="text-muted">Customer is set from document registry entry</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="modalCategory" class="form-label">Category</label>
+                                        <select class="form-select" id="modalCategory" name="category_id">
+                                            <option value="">Select Category</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}" data-code="{{ $category->code }}">
+                                                    {{ $category->name }} ({{ $category->code }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="form-text">
+                                            <span id="categoryStatus" class="text-muted">Category is set from document registry entry</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+
+                            <!-- Save Category/Customer Button (hidden by default) -->
+                            <div class="row" id="saveCategoryCustomerRow" style="display: none;">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-info btn-sm mb-3" id="saveCategoryCustomerBtn">
+                                        <i class='bx bx-save'></i> Save Category & Customer Changes
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Additional Read-Only Details -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Originator</label>
+                                    <input type="text" class="form-control" id="modalOriginator" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Registration Date</label>
+                                    <input type="text" class="form-control" id="modalRegistrationDate" readonly>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Effective Date</label>
+                                    <input type="text" class="form-control" id="modalEffectiveDate" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Document No.</label>
+                                    <input type="text" class="form-control" id="modalDocumentNo" readonly>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Revision No.</label>
+                                    <input type="text" class="form-control" id="modalRevisionNo" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Device Name</label>
+                                    <input type="text" class="form-control" id="modalDeviceName" readonly>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input type="text" class="form-control" id="modalTitle" readonly>
+                            </div>
+                            <!-- End Additional Details -->
+
+                            <!-- DCN Mode Selection -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="manualDcnMode">
+                                    <label class="form-check-label" for="manualDcnMode">
+                                        <i class='bx bx-edit'></i> Manual DCN Override (bypass customer/category requirements)
+                                    </label>
+                                </div>
+                                <small class="text-muted">Enable this to manually enter a complete DCN number without restrictions</small>
+                            </div>
+
+                            <!-- Auto-generated DCN Section -->
+                            <div id="autoGeneratedSection">
                                 <div class="mb-3">
-                                    <label for="modalCategory" class="form-label">Category</label>
-                                    <select class="form-select" id="modalCategory" name="category_id">
-                                        <option value="">Select Category</option>
-                                        @foreach($categories as $category)
-                                            <option value="{{ $category->id }}" data-code="{{ $category->code }}">
-                                                {{ $category->name }} ({{ $category->code }})
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <label for="dcnSuffix" class="form-label">DCN Suffix (3-digit number) <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="dcnSuffix" name="dcn_suffix"
+                                           maxlength="3" placeholder="e.g., 001">
                                     <div class="form-text">
-                                        <span id="categoryStatus" class="text-muted">Category is set from document registry entry</span>
+                                        <span id="suffixStatus" class="text-muted">Enter a unique 3-digit number (001-999)</span>
+                                    </div>
+                                    <!-- Live auto-completion line (purely frontend) -->
+                                    <div class="small mt-1 text-muted" id="suffixAutoCompletion" style="display:none;">
+                                        <i class="bx bx-barcode"></i>
+                                        <span>Auto-complete preview: </span>
+                                        <span class="fw-bold text-primary" id="suffixAutoCompletionValue"></span>
+                                    </div>
+                                    <div class="invalid-feedback" id="suffixError">
+                                        Please enter a valid 3-digit number.
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Save Category/Customer Button (hidden by default) -->
-                        <div class="row" id="saveCategoryCustomerRow" style="display: none;">
-                            <div class="col-12">
-                                <button type="button" class="btn btn-info btn-sm mb-3" id="saveCategoryCustomerBtn">
-                                    <i class='bx bx-save'></i> Save Category & Customer Changes
-                                </button>
+                            <!-- Manual DCN Override Section -->
+                            <div id="manualDcnSection" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="manualDcnInput" class="form-label">Manual DCN Number <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="manualDcnInput" name="manual_dcn"
+                                           placeholder="e.g., CNA25-ALL-001 or any custom format">
+                                    <div class="form-text">
+                                        <span id="manualDcnStatus" class="text-muted">Enter any DCN format you need</span>
+                                    </div>
+                                    <div class="invalid-feedback" id="manualDcnError">
+                                        Please enter a DCN number.
+                                    </div>
+                                </div>
+                                <div class="alert alert-warning alert-sm">
+                                    <i class='bx bx-info-circle'></i>
+                                    <strong>Note:</strong> Manual DCN override allows you to bypass customer and category requirements.
+                                    Ensure the DCN number follows your organization's naming convention.
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Additional Read-Only Details -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Originator</label>
-                                <input type="text" class="form-control" id="modalOriginator" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Registration Date</label>
-                                <input type="text" class="form-control" id="modalRegistrationDate" readonly>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Effective Date</label>
-                                <input type="text" class="form-control" id="modalEffectiveDate" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Document No.</label>
-                                <input type="text" class="form-control" id="modalDocumentNo" readonly>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Revision No.</label>
-                                <input type="text" class="form-control" id="modalRevisionNo" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Device Name</label>
-                                <input type="text" class="form-control" id="modalDeviceName" readonly>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input type="text" class="form-control" id="modalTitle" readonly>
-                        </div>
-                        <!-- End Additional Details -->
-
-                        <!-- DCN Mode Selection -->
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="manualDcnMode">
-                                <label class="form-check-label" for="manualDcnMode">
-                                    <i class='bx bx-edit'></i> Manual DCN Override (bypass customer/category requirements)
-                                </label>
-                            </div>
-                            <small class="text-muted">Enable this to manually enter a complete DCN number without restrictions</small>
-                        </div>
-
-                        <!-- Auto-generated DCN Section -->
-                        <div id="autoGeneratedSection">
                             <div class="mb-3">
-                                <label for="dcnSuffix" class="form-label">DCN Suffix (3-digit number) <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="dcnSuffix" name="dcn_suffix"
-                                       maxlength="3" placeholder="e.g., 001">
-                                <div class="form-text">
-                                    <span id="suffixStatus" class="text-muted">Enter a unique 3-digit number (001-999)</span>
-                                </div>
-                                <!-- Live auto-completion line (purely frontend) -->
-                                <div class="small mt-1 text-muted" id="suffixAutoCompletion" style="display:none;">
-                                    <i class="bx bx-barcode"></i>
-                                    <span>Auto-complete preview: </span>
-                                    <span class="fw-bold text-primary" id="suffixAutoCompletionValue"></span>
-                                </div>
-                                <div class="invalid-feedback" id="suffixError">
-                                    Please enter a valid 3-digit number.
+                                <label class="form-label">DCN Preview</label>
+                                <div class="p-3 bg-light rounded border">
+                                    <div id="dcnPreview" class="fw-bold text-primary fs-4 text-center">
+                                        <i class='bx bx-barcode'></i> Select category, customer, and suffix to preview DCN
+                                    </div>
+                                    <div id="dcnStatus" class="mt-2 text-center"></div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Manual DCN Override Section -->
-                        <div id="manualDcnSection" style="display: none;">
-                            <div class="mb-3">
-                                <label for="manualDcnInput" class="form-label">Manual DCN Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="manualDcnInput" name="manual_dcn"
-                                       placeholder="e.g., CNA25-ALL-001 or any custom format">
-                                <div class="form-text">
-                                    <span id="manualDcnStatus" class="text-muted">Enter any DCN format you need</span>
+                            <!-- Format Breakdown -->
+                            <div class="bg-white border border-info p-3 rounded" id="formatBreakdown">
+                                <h6 class="mb-2 text-info"><i class='bx bx-info-circle'></i> DCN Format Structure:</h6>
+                                <div class="row text-sm">
+                                    <div class="col-3 text-center">
+                                        <div class="fw-bold text-primary">Category Code</div>
+                                        <small class="text-muted">e.g., CNA</small>
+                                    </div>
+                                    <div class="col-2 text-center">
+                                        <div class="fw-bold text-primary">Year</div>
+                                        <small class="text-muted">e.g., 25</small>
+                                    </div>
+                                    <div class="col-1 text-center">
+                                        <div class="fw-bold text-info">-</div>
+                                    </div>
+                                    <div class="col-3 text-center">
+                                        <div class="fw-bold text-primary">Customer Code</div>
+                                        <small class="text-muted">e.g., ALL</small>
+                                    </div>
+                                    <div class="col-1 text-center">
+                                        <div class="fw-bold text-info">-</div>
+                                    </div>
+                                    <div class="col-2 text-center">
+                                        <div class="fw-bold text-primary">Suffix</div>
+                                        <small class="text-muted">e.g., 001</small>
+                                    </div>
                                 </div>
-                                <div class="invalid-feedback" id="manualDcnError">
-                                    Please enter a DCN number.
-                                </div>
-                            </div>
-                            <div class="alert alert-warning alert-sm">
-                                <i class='bx bx-info-circle'></i>
-                                <strong>Note:</strong> Manual DCN override allows you to bypass customer and category requirements.
-                                Ensure the DCN number follows your organization's naming convention.
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">DCN Preview</label>
-                            <div class="p-3 bg-light rounded border">
-                                <div id="dcnPreview" class="fw-bold text-primary fs-4 text-center">
-                                    <i class='bx bx-barcode'></i> Select category, customer, and suffix to preview DCN
-                                </div>
-                                <div id="dcnStatus" class="mt-2 text-center"></div>
-                            </div>
-                        </div>
-
-                        <!-- Format Breakdown -->
-                        <div class="bg-white border border-info p-3 rounded" id="formatBreakdown">
-                            <h6 class="mb-2 text-info"><i class='bx bx-info-circle'></i> DCN Format Structure:</h6>
-                            <div class="row text-sm">
-                                <div class="col-3 text-center">
-                                    <div class="fw-bold text-primary">Category Code</div>
-                                    <small class="text-muted">e.g., CNA</small>
-                                </div>
-                                <div class="col-2 text-center">
-                                    <div class="fw-bold text-primary">Year</div>
-                                    <small class="text-muted">e.g., 25</small>
-                                </div>
-                                <div class="col-1 text-center">
-                                    <div class="fw-bold text-info">-</div>
-                                </div>
-                                <div class="col-3 text-center">
-                                    <div class="fw-bold text-primary">Customer Code</div>
-                                    <small class="text-muted">e.g., ALL</small>
-                                </div>
-                                <div class="col-1 text-center">
-                                    <div class="fw-bold text-info">-</div>
-                                </div>
-                                <div class="col-2 text-center">
-                                    <div class="fw-bold text-primary">Suffix</div>
-                                    <small class="text-muted">e.g., 001</small>
+                                <div class="text-center mt-2">
+                                    <strong class="text-info">Result: CNA25-ALL-001</strong>
                                 </div>
                             </div>
-                            <div class="text-center mt-2">
-                                <strong class="text-info">Result: CNA25-ALL-001</strong>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class='bx bx-x'></i> Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" id="saveDcnBtn">
-                        <i class='bx bx-check'></i> Update DCN
-                    </button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class='bx bx-x'></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="saveDcnBtn">
+                            <i class='bx bx-check'></i> Update DCN
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- / Content -->
+</div>
 @endsection
 
 @push('styles')

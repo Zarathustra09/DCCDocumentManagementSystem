@@ -1,62 +1,66 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-buildings'></i> Customer Management</h3>
-                    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
-                        <i class='bx bx-plus'></i> Add Customer
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="customersTable">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Code</th>
-                                    <th>Status</th>
-                                    <th>Created At</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($customers as $customer)
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title"><i class='bx bx-buildings'></i> Customer Management</h3>
+                        <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+                            <i class='bx bx-plus'></i> Add Customer
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="customersTable">
+                                <thead>
                                     <tr>
-                                        <td>{{ $customer->name }}</td>
-                                        <td><span class="badge bg-info">{{ $customer->code }}</span></td>
-                                        <td>
-                                            @if($customer->is_active)
-                                                <span class="badge bg-success">Active</span>
-                                            @else
-                                                <span class="badge bg-secondary">Inactive</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $customer->created_at->format('m/d/Y g:i A') }}</td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                                        onclick="editCustomer({{ $customer->id }}, '{{ $customer->name }}', '{{ $customer->code }}', {{ $customer->is_active ? 'true' : 'false' }})">
-                                                    <i class="bx bx-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        onclick="deleteCustomer({{ $customer->id }}, '{{ $customer->name }}')">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <th>Name</th>
+                                        <th>Code</th>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                        <th>Actions</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach($customers as $customer)
+                                        <tr>
+                                            <td>{{ $customer->name }}</td>
+                                            <td><span class="badge bg-info">{{ $customer->code }}</span></td>
+                                            <td>
+                                                @if($customer->is_active)
+                                                    <span class="badge bg-success">Active</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $customer->created_at->format('m/d/Y g:i A') }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            onclick="editCustomer({{ $customer->id }}, '{{ $customer->name }}', '{{ $customer->code }}', {{ $customer->is_active ? 'true' : 'false' }})">
+                                                        <i class="bx bx-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                            onclick="deleteCustomer({{ $customer->id }}, '{{ $customer->name }}')">
+                                                        <i class="bx bx-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- / Content -->
 </div>
 @endsection
 

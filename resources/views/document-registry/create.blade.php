@@ -2,32 +2,34 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+        <style>
+            .category-section {
+                border-bottom: 1px solid #e9ecef;
+                padding-bottom: 1rem;
+            }
 
-    <style>
-        .category-section {
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 1rem;
-        }
+            .category-section:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
 
-        .category-section:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
+            .section-title {
+                color: #495057;
+                font-weight: 600;
+                border-bottom: 2px solid #e9ecef;
+                padding-bottom: 0.5rem;
+                margin-bottom: 1rem !important;
+            }
 
-        .section-title {
-            color: #495057;
-            font-weight: 600;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem !important;
-        }
+            .category-groups {
+                max-height: 500px;
+                overflow-y: auto;
+            }
+        </style>
 
-        .category-groups {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-    </style>
-    <div class="container-fluid">
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -233,8 +235,10 @@
                 </div>
             </div>
         </div>
-    </div>
 
+    </div>
+    <!-- / Content -->
+</div>
 @endsection
 
 @push('scripts')

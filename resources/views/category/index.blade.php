@@ -1,137 +1,141 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-                    <h3 class="card-title mb-0">
-                        <i class='bx bx-category'></i> Category Management
-                    </h3>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-primary" onclick="openMainCategoryModal()">
-                            <i class='bx bx-plus-circle'></i> Add Main Category
-                        </button>
-                        <button type="button" class="btn btn-outline-primary" onclick="openSubCategoryModal()">
-                            <i class='bx bx-subdirectory-right'></i> Add Subcategory
-                        </button>
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">
+                            <i class='bx bx-category'></i> Category Management
+                        </h3>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary" onclick="openMainCategoryModal()">
+                                <i class='bx bx-plus-circle'></i> Add Main Category
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="openSubCategoryModal()">
+                                <i class='bx bx-subdirectory-right'></i> Add Subcategory
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Main Category</th>
-                                    <th>Subcategories</th>
-                                    <th class="text-end">Manage</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($mainCategories as $mainCategory)
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead>
                                     <tr>
-                                        <td>
-                                            <strong>{{ $mainCategory->name }}</strong>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-info"
-                                                type="button"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#subcategories-{{ $mainCategory->id }}">
-                                                View ({{ $mainCategory->subcategories->count() }})
-                                            </button>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="btn-group btn-group-sm">
-                                                <button type="button" class="btn btn-outline-secondary"
-                                                    onclick="openMainCategoryModal(this.dataset.mainCategory)"
-                                                    data-main-category="{{ json_encode(['id' => $mainCategory->id, 'name' => $mainCategory->name]) }}">
-                                                    <i class="bx bx-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-outline-danger"
-                                                    onclick="deleteMainCategory({{ $mainCategory->id }}, '{{ addslashes($mainCategory->name) }}')">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-outline-primary"
-                                                    onclick="openSubCategoryModal({{ $mainCategory->id }})">
-                                                    <i class="bx bx-plus"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <th>Main Category</th>
+                                        <th>Subcategories</th>
+                                        <th class="text-end">Manage</th>
                                     </tr>
-                                    <tr class="border-top-0">
-                                        <td colspan="3" class="p-0">
-                                            <div class="collapse" id="subcategories-{{ $mainCategory->id }}">
-                                                <div class="p-3 bg-light">
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm table-hover mb-0">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Name</th>
-                                                                    <th>Code</th>
-                                                                    <th>Status</th>
-                                                                    <th>Created</th>
-                                                                    <th class="text-end">Actions</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @forelse($mainCategory->subcategories as $subcategory)
+                                </thead>
+                                <tbody>
+                                    @forelse($mainCategories as $mainCategory)
+                                        <tr>
+                                            <td>
+                                                <strong>{{ $mainCategory->name }}</strong>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-info"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#subcategories-{{ $mainCategory->id }}">
+                                                    View ({{ $mainCategory->subcategories->count() }})
+                                                </button>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="btn-group btn-group-sm">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        onclick="openMainCategoryModal(this.dataset.mainCategory)"
+                                                        data-main-category="{{ json_encode(['id' => $mainCategory->id, 'name' => $mainCategory->name]) }}">
+                                                        <i class="bx bx-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                        onclick="deleteMainCategory({{ $mainCategory->id }}, '{{ addslashes($mainCategory->name) }}')">
+                                                        <i class="bx bx-trash"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-primary"
+                                                        onclick="openSubCategoryModal({{ $mainCategory->id }})">
+                                                        <i class="bx bx-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-top-0">
+                                            <td colspan="3" class="p-0">
+                                                <div class="collapse" id="subcategories-{{ $mainCategory->id }}">
+                                                    <div class="p-3 bg-light">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm table-hover mb-0">
+                                                                <thead>
                                                                     <tr>
-                                                                        <td>{{ $subcategory->name }}</td>
-                                                                        <td><span class="badge bg-info">{{ $subcategory->code }}</span></td>
-                                                                        <td>
-                                                                            @if($subcategory->is_active)
-                                                                                <span class="badge bg-success">Active</span>
-                                                                            @else
-                                                                                <span class="badge bg-secondary">Inactive</span>
-                                                                            @endif
-                                                                        </td>
-                                                                        <td>{{ $subcategory->created_at?->format('m/d/Y g:i A') }}</td>
-                                                                        <td class="text-end">
-                                                                            <div class="btn-group btn-group-sm">
-                                                                                <button type="button" class="btn btn-outline-secondary"
-                                                                                    onclick="editSubCategory(this.dataset.subcategory)"
-                                                                                    data-subcategory="{{ json_encode([
-                                                                                        'id' => $subcategory->id,
-                                                                                        'name' => $subcategory->name,
-                                                                                        'code' => $subcategory->code,
-                                                                                        'is_active' => (bool) $subcategory->is_active,
-                                                                                        'main_category_id' => $subcategory->main_category_id,
-                                                                                    ]) }}">
-                                                                                    <i class="bx bx-edit"></i>
-                                                                                </button>
-                                                                                <button type="button" class="btn btn-outline-danger"
-                                                                                    onclick="deleteSubCategory({{ $subcategory->id }}, '{{ addslashes($subcategory->name) }}')">
-                                                                                    <i class="bx bx-trash"></i>
-                                                                                </button>
-                                                                            </div>
-                                                                        </td>
+                                                                        <th>Name</th>
+                                                                        <th>Code</th>
+                                                                        <th>Status</th>
+                                                                        <th>Created</th>
+                                                                        <th class="text-end">Actions</th>
                                                                     </tr>
-                                                                @empty
-                                                                    <tr>
-                                                                        <td colspan="5" class="text-center text-muted">No subcategories yet.</td>
-                                                                    </tr>
-                                                                @endforelse
-                                                            </tbody>
-                                                        </table>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @forelse($mainCategory->subcategories as $subcategory)
+                                                                        <tr>
+                                                                            <td>{{ $subcategory->name }}</td>
+                                                                            <td><span class="badge bg-info">{{ $subcategory->code }}</span></td>
+                                                                            <td>
+                                                                                @if($subcategory->is_active)
+                                                                                    <span class="badge bg-success">Active</span>
+                                                                                @else
+                                                                                    <span class="badge bg-secondary">Inactive</span>
+                                                                                @endif
+                                                                            </td>
+                                                                            <td>{{ $subcategory->created_at?->format('m/d/Y g:i A') }}</td>
+                                                                            <td class="text-end">
+                                                                                <div class="btn-group btn-group-sm">
+                                                                                    <button type="button" class="btn btn-outline-secondary"
+                                                                                        onclick="editSubCategory(this.dataset.subcategory)"
+                                                                                        data-subcategory="{{ json_encode([
+                                                                                            'id' => $subcategory->id,
+                                                                                            'name' => $subcategory->name,
+                                                                                            'code' => $subcategory->code,
+                                                                                            'is_active' => (bool) $subcategory->is_active,
+                                                                                            'main_category_id' => $subcategory->main_category_id,
+                                                                                        ]) }}">
+                                                                                        <i class="bx bx-edit"></i>
+                                                                                    </button>
+                                                                                    <button type="button" class="btn btn-outline-danger"
+                                                                                        onclick="deleteSubCategory({{ $subcategory->id }}, '{{ addslashes($subcategory->name) }}')">
+                                                                                        <i class="bx bx-trash"></i>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    @empty
+                                                                        <tr>
+                                                                            <td colspan="5" class="text-center text-muted">No subcategories yet.</td>
+                                                                        </tr>
+                                                                    @endforelse
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted">No main categories found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">No main categories found.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- / Content -->
 </div>
 @endsection
 
