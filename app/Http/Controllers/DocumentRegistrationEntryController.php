@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\DataTables\RegistrationsDataTable;
+use App\DataTables\UserRegistrationsDataTable;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\Customer;
@@ -24,41 +25,12 @@ use Illuminate\Support\Facades\DB; // added DB facade
 
 class DocumentRegistrationEntryController extends Controller
 {
-   public function index(Request $request)
-   {
-       $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status', 'category']);
+    public function index(UserRegistrationsDataTable $dataTable)
+    {
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
 
-       $query->where('submitted_by', Auth::id());
-
-       if ($request->has('status') && $request->status !== '' && $request->status !== null) {
-           $query->whereHas('status', function ($q) use ($request) {
-               $q->where('name', $request->status);
-           });
-       }
-
-       if ($request->has('category_id') && $request->category_id !== '' && $request->category_id !== null) {
-           $query->where('category_id', $request->category_id);
-       }
-
-       if ($request->has('search') && $request->search !== '') {
-           $search = $request->search;
-           $query->where(function($q) use ($search) {
-               $q->where('document_no', 'like', "%{$search}%")
-                   ->orWhere('document_title', 'like', "%{$search}%")
-                   ->orWhere('device_name', 'like', "%{$search}%")
-                   ->orWhere('originator_name', 'like', "%{$search}%")
-                   ->orWhereHas('category', function($categoryQuery) use ($search) {
-                       $categoryQuery->where('name', 'like', "%{$search}%")
-                           ->orWhere('code', 'like', "%{$search}%");
-                   });
-           });
-       }
-
-       $entries = $query->orderByDesc('id')->get();
-       $categories = Category::where('is_active', true)->orderBy('name')->get();
-
-       return view('document-registry.index', compact('entries', 'categories'));
-   }
+        return $dataTable->render('document-registry.index', compact('categories'));
+    }
 
     public function create()
     {
