@@ -11,6 +11,12 @@
                         <div class="d-flex align-items-center">
                             <h3 class="card-title mb-0"><i class='bx bx-folder-open'></i>Tracking of Registered Documents</h3>
                         </div>
+                        <div class="d-flex align-items-center">
+                            {{-- Visible export button that uses the same export route as the DataTable button --}}
+                            <button id="exportVisibleBtn" type="button" class="btn btn-success btn-sm me-2">
+                                <i class="bx bx-download"></i> Export Excel
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <!-- Advanced Filters -->
@@ -199,6 +205,40 @@
     const pendingCount = {{ $pendingCount }};
     const approvedCount = {{ $approvedCount }};
     const rejectedCount = {{ $rejectedCount }};
+
+    // Export route used by the visible export button
+    const visibleExportUrl = "{{ route('document-excel.export') }}";
+
+    function getFormQueryString() {
+        const form = document.getElementById('filterForm');
+        if (!form) return '';
+        const fd = new FormData(form);
+        // Ensure checkbox unchecked state doesn't get omitted when unchecked:
+        // FormData only includes checked checkboxes; but our advancedToggle is a checkbox with value '1'.
+        // We'll explicitly add advanced flag value based on the checkbox state.
+        const advancedEl = form.querySelector('#advancedToggle');
+        if (advancedEl) {
+            fd.set('advanced', advancedEl.checked ? '1' : '');
+        }
+        const params = new URLSearchParams();
+        for (const [k, v] of fd.entries()) {
+            // skip empty values so URLs remain compact
+            if (v === null || String(v).trim() === '') continue;
+            params.append(k, v);
+        }
+        return params.toString();
+    }
+
+    $('#exportVisibleBtn').on('click', function (e) {
+        e.preventDefault();
+        let url = visibleExportUrl;
+        const qs = getFormQueryString();
+        if (qs) {
+            url += (url.indexOf('?') === -1 ? '?' : '&') + qs;
+        }
+        // navigate to export URL (triggers Excel download)
+        window.location.href = url;
+    });
 
     function getRegistryTable() {
         if (window.LaravelDataTables && window.LaravelDataTables['documentRegistry']) {

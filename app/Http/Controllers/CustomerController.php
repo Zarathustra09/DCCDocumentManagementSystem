@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTables\CustomersDataTable;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,12 +11,11 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(CustomersDataTable $dataTable)
     {
         $this->authorize('view customer');
         try {
-            $customers = Customer::orderBy('name')->get();
-            return view('customer.index', compact('customers'));
+            return $dataTable->render('customer.index');
         } catch (\Exception $e) {
             return back()->withErrors('Failed to load customers.');
         }
