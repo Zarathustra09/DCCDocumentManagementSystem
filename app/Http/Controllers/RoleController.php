@@ -5,19 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use App\DataTables\RolesDataTable;
 
 class RoleController extends Controller
 {
     /**
      * Display a listing of roles with their permissions.
      */
-    public function index()
+    public function index(RolesDataTable $dataTable)
     {
+        // collection for the quick-stats cards
         $roles = Role::with(['permissions', 'users'])->get();
         $totalPermissions = Permission::count();
         $rolesWithoutPermissions = Role::doesntHave('permissions')->count();
 
-        return view('role.index', compact('roles', 'totalPermissions', 'rolesWithoutPermissions'));
+        return $dataTable->render('role.index', compact('roles', 'totalPermissions', 'rolesWithoutPermissions'));
     }
 
     /**

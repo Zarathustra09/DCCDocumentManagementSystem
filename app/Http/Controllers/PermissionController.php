@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTables\PermissionsDataTable;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -9,17 +10,18 @@ use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
 {
-    public function index()
+    public function index(PermissionsDataTable $dataTable)
     {
-        $users = User::with('roles')->get();
         $roles = Role::all();
 
-        // Fix: Use query builder instead of model directly
+        // count users without roles
         $usersWithoutRoles = User::with('roles')->get()->filter(
-            fn ($user) => $user->roles->where('name', 'Manager')->toArray()
+            fn ($user) => $user->roles->isEmpty()
         )->count();
 
-        return view('user-roles.index', compact('users', 'roles', 'usersWithoutRoles'));
+        $usersCount = User::count();
+
+        return $dataTable->render('user-roles.index', compact('roles', 'usersWithoutRoles', 'usersCount'));
     }
 
     public function show(User $user)

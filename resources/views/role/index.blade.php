@@ -80,92 +80,8 @@
 
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="rolesTable">
-                        <thead>
-                            <tr>
-                                <th>Role Name</th>
-                                <th>Users Count</th>
-                                <th>Permissions Count</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($roles as $role)
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3">
-                                            @if($role->name === 'SuperAdmin')
-                                                <i class="bx bx-shield-alt text-danger" style="font-size: 1.5rem;"></i>
-                                            @elseif(str_contains($role->name, 'Admin'))
-                                                <i class="bx bx-user-check text-warning" style="font-size: 1.5rem;"></i>
-                                            @elseif(str_contains($role->name, 'Head'))
-                                                <i class="bx bx-crown text-info" style="font-size: 1.5rem;"></i>
-                                            @elseif(str_contains($role->name, 'Read Only'))
-                                                <i class="bx bx-show text-secondary" style="font-size: 1.5rem;"></i>
-                                            @else
-                                                <i class="bx bx-user text-primary" style="font-size: 1.5rem;"></i>
-                                            @endif
-                                        </div>
-                                        <div>
-                                            <strong>{{ $role->name }}</strong>
-                                            <br>
-                                            @if($role->name === 'SuperAdmin')
-                                                <small class="text-muted">Super Admin</small>
-                                            @elseif(str_contains($role->name, 'Admin'))
-                                                <small class="text-muted">Administrator</small>
-                                            @elseif(str_contains($role->name, 'Head'))
-                                                <small class="text-muted">Department Head</small>
-                                            @elseif(str_contains($role->name, 'Read Only'))
-                                                <small class="text-muted">Read Only</small>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-primary me-2">{{ $role->users->count() }}</span>
-                                        <small class="text-muted">users</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-success me-2">{{ $role->permissions->count() }}</span>
-                                        <small class="text-muted">permissions</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    @if($role->permissions->count() > 0)
-                                        <span class="badge bg-success">
-                                            <i class='bx bx-check'></i> Active
-                                        </span>
-                                    @else
-                                        <span class="badge bg-warning text-dark">
-                                            <i class='bx bx-time'></i> No Permissions
-                                        </span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                            <i class="bx bx-cog"></i> Manage
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="{{ route('roles.show', $role) }}">
-                                                <i class="bx bx-edit-alt me-2"></i> Edit Permissions
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#" onclick="viewRoleUsers({{ $role->id }}, '{{ addslashes($role->name) }}')">
-                                                <i class="bx bx-user me-2"></i> View Users ({{ $role->users->count() }})
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    {{-- Yajra-rendered table --}}
+                    {!! $dataTable->table(['class' => 'table table-striped table-hover'], true) !!}
                 </div>
             </div>
         </div>
@@ -194,23 +110,10 @@
 @endsection
 
 @push('scripts')
-<script>
-$(document).ready(function() {
-    $('#rolesTable').DataTable({
-        responsive: true,
-        order: [[1, 'desc']],
-        pageLength: 10,
-        columnDefs: [
-            { orderable: false, targets: [0, 4] }
-        ],
-        language: {
-            search: "Search roles:",
-            lengthMenu: "Show _MENU_ roles per page",
-            info: "Showing _START_ to _END_ of _TOTAL_ roles"
-        }
-    });
-});
+    {{-- Yajra scripts --}}
+    {!! $dataTable->scripts() !!}
 
+<script>
 function viewRoleUsers(roleId, roleName) {
     Swal.fire({
         title: `Users with Role: ${roleName}`,

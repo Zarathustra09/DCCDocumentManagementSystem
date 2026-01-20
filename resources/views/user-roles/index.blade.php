@@ -58,124 +58,13 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title"><i class='bx bx-user-circle'></i> User Roles & Permissions</h3>
-                <span class="badge bg-success">{{ $users->count() }} Total Users</span>
+                <span class="badge bg-success">{{ $usersCount }} Total Users</span>
             </div>
 
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="usersTable">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Email</th>
-                                <th>Roles</th>
-                                <th>Permissions Count</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($users as $user)
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar avatar-sm me-3">
-                                            <div class="rounded-circle overflow-hidden" style="width: 40px; height: 40px;">
-                                                <img
-                                                    src="{{ $user->profile_image ? asset('storage/' . $user->profile_image) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random' }}"
-                                                    alt="{{ $user->name }}"
-                                                    class="img-fluid"
-                                                    style="width: 100%; height: 100%; object-fit: cover;"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <strong>{{ $user->name }}</strong>
-                                            <br><small class="text-muted">ID: {{ $user->id }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="text-primary">{{ $user->email }}</span>
-                                    @if($user->email_verified_at)
-                                        <i class="bx bx-check-circle text-success ms-1" title="Verified"></i>
-                                    @else
-                                        <i class="bx bx-x-circle text-danger ms-1" title="Unverified"></i>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($user->roles->count() > 0)
-                                        @foreach($user->roles as $role)
-                                            @php
-                                                $badgeClass = match($role->name) {
-                                                    'SuperAdmin' => 'bg-danger',
-                                                    'DCCAdmin' => 'bg-warning',
-                                                    'VP Sales and Operations' => 'bg-info',
-                                                    'Comptroller' => 'bg-success',
-                                                    default => 'bg-primary'
-                                                };
-                                            @endphp
-                                            <span class="badge {{ $badgeClass }} me-1 mb-1">{{ $role->name }}</span>
-                                        @endforeach
-                                    @else
-                                        <span class="badge bg-secondary">No Role Assigned</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-light text-dark me-2">{{ $user->getAllPermissions()->count() }}</span>
-                                        <small class="text-muted">permissions</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    @if($user->email_verified_at)
-                                        <span class="badge bg-success">
-                                            <i class='bx bx-check'></i> Active
-                                        </span>
-                                    @else
-                                        <span class="badge bg-warning text-dark">
-                                            <i class='bx bx-time'></i> Pending
-                                        </span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @php
-                                        $invalidDates = [
-                                            '0000-00-00',
-                                            '0000-00-00 00:00:00',
-                                            '2025-02-11 00:00:00',
-                                        ];
-                                        $createdOnRaw = $user->getRawOriginal('created_on');
-                                        $validCreatedOn = $user->created_on && !in_array($createdOnRaw, $invalidDates, true);
-                                    @endphp
-                                    <small>
-                                        <i class='bx bx-calendar'></i> {{ $validCreatedOn ? optional($user->created_on)->format('M d, Y') : 'N/A' }}
-                                    </small>
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                            <i class="bx bx-cog"></i> Manage
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="{{ route('admin.users.show', $user->id) }}">
-                                                <i class="bx bx-show me-2"></i> View Details
-                                            </a>
-                                            <a class="dropdown-item" href="#" onclick="editUserRoles({{ $user->id }}, '{{ addslashes($user->name) }}', {{ $user->roles->pluck('id') }})">
-                                                <i class="bx bx-edit-alt me-2"></i> Edit Roles
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#" onclick="viewUserActivity({{ $user->id }})">
-                                                <i class="bx bx-time me-2"></i> Activity Log
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    {{-- Yajra-rendered table --}}
+                    {!! $dataTable->table(['class' => 'table table-striped table-hover'], true) !!}
                 </div>
             </div>
         </div>
@@ -204,22 +93,9 @@
 @endsection
 
 @push('scripts')
+    {!! $dataTable->scripts() !!}
+
 <script>
-$(document).ready(function() {
-    $('#usersTable').DataTable({
-        responsive: true,
-        order: [[5, 'desc']],
-        pageLength: 10,
-        columnDefs: [
-            { orderable: false, targets: [0, 6] }
-        ],
-        language: {
-            search: "Search users:",
-            lengthMenu: "Show _MENU_ users per page",
-            info: "Showing _START_ to _END_ of _TOTAL_ users"
-        }
-    });
-});
 
 function editUserRoles(userId, userName, currentRoles) {
     const roles = @json($roles);
