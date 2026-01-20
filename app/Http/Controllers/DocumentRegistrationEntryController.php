@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTables\RegistrationsDataTable;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\Customer;
@@ -406,92 +407,26 @@ class DocumentRegistrationEntryController extends Controller
         ]);
     }
 
-    public function list(Request $request)
+    public function list(RegistrationsDataTable $dataTable)
     {
-        $query = DocumentRegistrationEntry::with(['submittedBy', 'approvedBy', 'status', 'category']);
-
-        if (Auth::user()->can('view all document registrations')) {
-            // User can view all entries
-        } else {
-            // Restrict to user's own entries
-            $query->where('submitted_by', Auth::id());
-        }
-
-        // Status filter using relationship
-        if ($request->filled('status')) {
-            $query->whereHas('status', function ($q) use ($request) {
-                $q->where('name', $request->status);
-            });
-        }
-
-        // Category filter
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        // Search filter
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('document_title', 'like', "%{$search}%")
-                    ->orWhere('document_no', 'like', "%{$search}%")
-                    ->orWhere('originator_name', 'like', "%{$search}%")
-                    ->orWhere('customer', 'like', "%{$search}%")
-                    ->orWhere('device_name', 'like', "%{$search}%")
-                    ->orWhereHas('category', function($categoryQuery) use ($search) {
-                        $categoryQuery->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        // Submitted by filter
-        if ($request->filled('submitted_by')) {
-            $query->where('submitted_by', $request->submitted_by);
-        }
-
-        // Date range filters
-        if ($request->filled('date_from')) {
-            $query->whereDate('submitted_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('submitted_at', '<=', $request->date_to);
-        }
-
-      $entries = $query->orderByDesc('id')->get();
-
-        // Calculate counts using relationships
-        $pendingCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
-            $q->where('name', 'Pending');
-        })->count();
-
-        $approvedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
-            $q->where('name', 'Implemented');
-        })->count();
-
-        $rejectedCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
-            $q->where('name', 'Cancelled');
-        })->count();
-
-        // Get filter options
         $submitters = User::whereIn('id', DocumentRegistrationEntry::distinct()->pluck('submitted_by'))
             ->get()
             ->sortBy('name')
             ->values();
 
-        // Get status options from the relationship
         $statuses = DocumentRegistrationEntryStatus::active()
             ->orderBy('name')
             ->get();
 
-        // Get categories for filtering
         $categories = Category::where('is_active', true)
             ->orderBy('name')
             ->get();
 
-        return view('document-registry.list', compact(
-            'entries',
+        $pendingCount = DocumentRegistrationEntry::whereHas('status', fn($q) => $q->where('name', 'Pending'))->count();
+        $approvedCount = DocumentRegistrationEntry::whereHas('status', fn($q) => $q->where('name', 'Implemented'))->count();
+        $rejectedCount = DocumentRegistrationEntry::whereHas('status', fn($q) => $q->where('name', 'Cancelled'))->count();
+
+        return $dataTable->render('document-registry.list', compact(
             'submitters',
             'statuses',
             'categories',
