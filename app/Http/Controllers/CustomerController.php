@@ -28,7 +28,7 @@ class CustomerController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'code' => 'required|string|max:3|unique:customers,code',
+                 'code' => 'required|string|max:3',
                 'is_active' => 'boolean'
             ]);
 
@@ -54,7 +54,7 @@ class CustomerController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'code' => 'required|string|max:3|unique:customers,code,' . $customer->id,
+                'code' => 'required|string|max:3',
                 'is_active' => 'boolean'
             ]);
 
