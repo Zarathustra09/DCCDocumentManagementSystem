@@ -12,6 +12,7 @@ use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\AnalyticsController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -170,4 +171,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/document-excel/export', [ExcelExportController::class, 'export'])->name('document-excel.export');
     Route::post('documents/{document}/quick-update', [DocumentController::class, 'quickUpdate'])->name('documents.quick-update');
     Route::post('folders/{folder}/quick-update', [FolderController::class, 'quickUpdate'])->name('folders.quick-update');
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 });
