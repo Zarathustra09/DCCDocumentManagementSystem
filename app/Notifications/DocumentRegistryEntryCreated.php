@@ -42,7 +42,10 @@ class DocumentRegistryEntryCreated extends Notification
             ->line('Category: ' . ($this->entry->category ? $this->entry->category->name : 'N/A'))
             ->line('Document No: ' . $this->entry->document_no)
             ->line('Submitted by: ' . $this->entry->submittedBy->name)
-            ->action('View Entry', url(route('document-registry.show', $this->entry->document_no)))
+            ->action(
+                'View Entry',
+                url(route('document-registry.show', ['documentRegistrationEntry' => $this->entry->id]))
+            )
             ->line('Thank you for using our document management system!');
     }
 
