@@ -19,8 +19,10 @@ class CustomersDataTable extends DataTable
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
-        return (new EloquentDataTable($query))
-            ->addColumn('name', fn(Customer $c) => e($c->name))
+        // build into a variable so we can attach a custom server-side filter (same pattern as RegistrationsDataTable)
+        $dataTable = (new EloquentDataTable($query))
+            // use editColumn for DB-backed 'name' so server-side searching maps to DB column
+            ->editColumn('name', fn(Customer $c) => e($c->name))
             ->addColumn('code', fn(Customer $c) => '<span class="badge bg-info">' . e($c->code) . '</span>')
             ->addColumn('status', function (Customer $c) {
                 return $c->is_active
@@ -44,6 +46,21 @@ class CustomersDataTable extends DataTable
             })
             ->rawColumns(['code', 'status', 'action'])
             ->setRowId('id');
+
+        // Attach server-side global search handling (reads DataTables' search.value)
+        $dataTable->filter(function (QueryBuilder $q) {
+            $searchValue = $this->request()->input('search.value', '');
+            $sv = trim((string) $searchValue);
+
+            if ($sv !== '') {
+                $q->where(function ($qq) use ($sv) {
+                    $qq->where('customers.name', 'like', "%{$sv}%")
+                       ->orWhere('customers.code', 'like', "%{$sv}%");
+                });
+            }
+        }, false); // false prevents default global search from being applied in addition to this filter
+
+        return $dataTable;
     }
 
     /**
@@ -53,7 +70,8 @@ class CustomersDataTable extends DataTable
      */
     public function query(Customer $model): QueryBuilder
     {
-        return $model->newQuery()->select(['id', 'name', 'code', 'is_active', 'created_at']);
+        // ensure selecting customers.* so where clauses reference the correct table columns
+        return $model->newQuery()->select('customers.*');
     }
 
     /**

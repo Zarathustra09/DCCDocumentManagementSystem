@@ -4,6 +4,7 @@ namespace App\DataTables;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
@@ -19,7 +20,8 @@ class PermissionsDataTable extends DataTable
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
-        return (new EloquentDataTable($query))
+        // Build into a variable so we can attach a custom filter (same pattern as RegistrationsDataTable)
+        $dataTable = (new EloquentDataTable($query))
             ->addColumn('name', function (User $user) {
                 // Changed: use internal image host + ltrim, fallback to placeholder
                 $avatarUrl = $user->profile_image
@@ -34,7 +36,7 @@ class PermissionsDataTable extends DataTable
                             </div>
                         </div>
                         <div>
-                            <strong>' . e($user->name) . '</strong><br><small class="text-muted">ID: ' . $user->id . '</small>
+                            <strong>' . e($user->name) . '</strong><br><small class="text-muted">Employee #: ' . $user->employee_no . '</small>
                         </div>
                     </div>
                 ';
@@ -107,6 +109,33 @@ class PermissionsDataTable extends DataTable
             })
             ->rawColumns(['name', 'email', 'roles', 'permissions_count', 'status', 'created', 'action'])
             ->setRowId('id');
+
+        // Attach server-side global search handling (reads DataTables' search.value)
+        $dataTable->filter(function (QueryBuilder $q) {
+            $request = $this->request();
+
+            $searchPayload = $request->input('search');
+            $globalSearch = is_array($searchPayload)
+                ? trim($searchPayload['value'] ?? '')
+                : trim((string) $searchPayload);
+
+            if ($globalSearch !== '') {
+                $sv = $globalSearch;
+                $q->where(function ($qq) use ($sv) {
+                    // search using actual DB columns (firstname/lastname) and other fields
+                    $qq->where('users.firstname', 'like', "%{$sv}%")
+                       ->orWhere('users.lastname', 'like', "%{$sv}%")
+                       ->orWhere('users.email', 'like', "%{$sv}%")
+                       ->orWhere('users.username', 'like', "%{$sv}%")
+                       ->orWhere('users.employee_no', 'like', "%{$sv}%")
+                       ->orWhereHas('roles', function ($rq) use ($sv) {
+                           $rq->where('name', 'like', "%{$sv}%");
+                       });
+                });
+            }
+        }, false); // false prevents default global search from being applied in addition to this filter
+
+        return $dataTable;
     }
 
     /**
@@ -116,7 +145,10 @@ class PermissionsDataTable extends DataTable
      */
     public function query(User $model): QueryBuilder
     {
-        return $model->newQuery()->with('roles');
+        // ensure selecting users.* and add a computed name alias so DataTables can sort/search "name" column
+        return $model->newQuery()
+            ->with('roles')
+            ->select('users.*', DB::raw("CONCAT(COALESCE(users.firstname, ''), ' ', COALESCE(users.lastname, '')) as name"));
     }
 
     /**
