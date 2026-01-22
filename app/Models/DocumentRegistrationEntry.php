@@ -42,7 +42,8 @@ class DocumentRegistrationEntry extends Model
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        // This now points to SubCategory model via the subcategories table
+        return $this->belongsTo(SubCategory::class, 'category_id');
     }
 
     public function customer()

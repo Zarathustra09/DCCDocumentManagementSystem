@@ -1,8 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-    @php $showHelpTour = true; @endphp
-    <div class="container-fluid">
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+        @php $showHelpTour = true; @endphp
         <!-- Header Section -->
         <div class="row mb-4">
             <div class="col-12">
@@ -443,6 +445,7 @@
             </div>
         @endif
     </div>
+    <!-- / Content -->
 
     <!-- View Cancellation Reason Modal -->
     <div class="modal fade" id="viewCancelledModal" tabindex="-1">
@@ -526,6 +529,7 @@
             </div>
         </div>
     </div>
+</div>
 @endsection
 
 @push('styles')

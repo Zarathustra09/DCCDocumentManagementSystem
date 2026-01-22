@@ -2,156 +2,59 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-folder-open'></i> My Registrations</h3>
-                    @can('submit document for approval')
-                        <a href="{{ route('document-registry.create') }}" class="btn btn-primary" id="create-registration-btn">
-                            <i class='bx bx-plus'></i> Register New Document
-                        </a>
-                    @endcan
-                </div>
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title"><i class='bx bx-folder-open'></i> My Registrations</h3>
+                        @can('submit document for approval')
+                            <a href="{{ route('document-registry.create') }}" class="btn btn-primary" id="create-registration-btn">
+                                <i class='bx bx-plus'></i> Register New Document
+                            </a>
+                        @endcan
+                    </div>
 
-                <div class="card-body">
-                    <!-- Filter Form -->
-                    <form method="GET" action="{{ route('document-registry.index') }}" class="mb-4" id="registry-filter-form">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <select name="status" class="form-select" id="filter-status">
-                                    <option value="">All Statuses</option>
-                                    <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="Implemented" {{ request('status') == 'Implemented' ? 'selected' : '' }}>Implemented</option>
-                                    <option value="Cancelled" {{ request('status') == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
-                                </select>
+                    <div class="card-body">
+                        <!-- Filter Form -->
+                        <form method="GET" action="{{ route('document-registry.index') }}" class="mb-4" id="registry-filter-form">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <select name="status" class="form-select" id="filter-status">
+                                        <option value="">All Statuses</option>
+                                        <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="Implemented" {{ request('status') == 'Implemented' ? 'selected' : '' }}>Implemented</option>
+                                        <option value="Cancelled" {{ request('status') == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="category_id" class="form-select" id="filter-category">
+                                        <option value="">All Categories</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary" id="filter-btn">Filter</button>
+                                </div>
                             </div>
-                            <div class="col-md-3">
-                                <select name="category_id" class="form-select" id="filter-category">
-                                    <option value="">All Categories</option>
-                                    @foreach($categories as $category)
-                                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary" id="filter-btn">Filter</button>
-                            </div>
+                        </form>
+
+                        <!-- Entries Table -->
+                        <div class="table-responsive">
+                            {!! $dataTable->table(['class' => 'table table-striped table-hover'], true) !!}
                         </div>
-                    </form>
-
-                    <!-- Entries Table -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="documentRegistry">
-                            <thead>
-                                <tr>
-                                    <th>Control No.</th>
-                                    <th>Document Title</th>
-                                    <th>Category</th>
-                                    <th>Device Name / Part Number</th>
-                                    <th>Document No.</th>
-                                    <th>Rev.</th>
-                                    <th>Originator</th>
-                                    <th>Customer</th>
-                                    <th>Submitted At</th>
-                                    <th>Implemented By</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($entries as $entry)
-                                    <tr>
-                                        <td>
-                                            <strong>{{$entry->control_no ?? '-'}}</strong>
-                                        </td>
-                                        <td>
-                                            <strong>{{ $entry->document_title ?? '-' }}</strong>
-                                        </td>
-                                        <td>
-                                            @if($entry->category)
-{{--                                                <span class="badge bg-info">{{ $entry->category->code }}</span>--}}
-{{--                                                <br>--}}
-                                                <small>{{ $entry->category->name }}</small>
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td>
-                                            {{ $entry->device_name ?? '-'}}
-                                        </td>
-                                        <td>{{ $entry->document_no ?? '-' }}</td>
-                                        <td>{{ $entry->revision_no ?? '-' }}</td>
-                                        <td>{{ $entry->originator_name ?? '-' }}</td>
-                                        <td>{{ $entry->customer->name ?? '-' }}</td>
-                                        <td>
-                                            <small>
-                                                <i class='bx bx-calendar'></i> {{ $entry->submitted_at?->format('m/d/Y') ?? '-' }}
-                                                <br>
-                                                <small class="text-muted">{{ $entry->submitted_at->format('g:i A') }}</small>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <small>
-                                                <i class='bx bx-user'></i> {{ $entry->approvedBy?->name ?? '-' }}<br>
-                                                <i class='bx bx-calendar'></i> {{ $entry->implemented_at?->format('m/d/Y') ?? '-' }}
-                                                <small class="text-muted">{{ $entry->implemented_at?->format('g:i A') }}</small>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            @if($entry->status->name === 'Pending')
-                                                <span class="badge bg-warning text-dark">
-                                                    <i class='bx bx-time'></i> {{ $entry->status->name }}
-                                                </span>
-                                            @elseif($entry->status->name === 'Implemented')
-                                                <span class="badge bg-success text-white">
-                                                    <i class='bx bx-check'></i> {{ $entry->status->name }}
-                                                </span>
-                                            @else
-                                                <span class="badge bg-danger text-white">
-                                                    <i class='bx bx-x'></i> {{ $entry->status->name }}
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="dropdown">
-                                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                                    <i class="bx bx-cog"></i> Manage
-                                                </button>
-                                                <div class="dropdown-menu">
-                                                    <a class="dropdown-item" href="{{ route('document-registry.show', $entry) }}">
-                                                        <i class="bx bx-show me-2"></i> View Details
-                                                    </a>
-                                                    @if(
-                                                            $entry->submitted_by === auth()->id() ||
-                                                            auth()->user()->can('edit document registration details')
-                                                        )
-                                                        <a class="dropdown-item" href="{{ route('document-registry.edit', $entry) }}">
-                                                            <i class="bx bx-edit-alt me-2"></i> Edit
-                                                        </a>
-                                                    @endif
-
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="12" class="text-center py-4">
-                                            <i class='bx bx-info-circle'></i> No document registrations found.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- / Content -->
 </div>
 
 <style>
@@ -233,21 +136,16 @@ window.addEventListener('start-driverjs-tour', function() {
 @endpush
 
 @push('scripts')
+{!! $dataTable->scripts() !!}
 <script>
-    $(document).ready(function() {
-        $('#documentRegistry').DataTable({
-            responsive: true,
-            order: [], // respect server-provided DOM order (controller orders by id desc)
-            pageLength: 10,
-            columnDefs: [
-                { orderable: false, targets: [0, 11] }
-            ],
-            language: {
-                search: "Search entries:",
-                lengthMenu: "Show _MENU_ entries per page",
-                info: "Showing _START_ to _END_ of _TOTAL_ entries"
-            }
-        });
-    });
+document.getElementById('registry-filter-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const tables = window.LaravelDataTables || {};
+    if (tables.documentRegistry && tables.documentRegistry.ajax) {
+        tables.documentRegistry.ajax.reload();
+    } else {
+        this.submit();
+    }
+});
 </script>
 @endpush

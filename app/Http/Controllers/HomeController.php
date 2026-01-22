@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTables\HomeDataTable;
 use App\Models\DocumentRegistrationEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,10 +24,10 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index()
+    public function index(HomeDataTable $dataTable)
     {
-        $pendingRegistrations = collect();
         $canApprove = false;
+        $pendingCount = 0;
 
         // Check if user has approval permissions
         if (Auth::user()->can('approve document registration') ||
@@ -35,15 +36,15 @@ class HomeController extends Controller
 
             $canApprove = Auth::user()->can('approve document registration');
 
-            // Get pending document registrations using relationship
-            $pendingRegistrations = DocumentRegistrationEntry::with(['submittedBy', 'status'])
-                ->whereHas('status', function ($q) {
-                    $q->where('name', 'Pending');
-                })
-                ->latest('submitted_at')
-                ->get();
+            // Count pending document registrations
+            $pendingCount = DocumentRegistrationEntry::whereHas('status', function ($q) {
+                $q->where('name', 'Pending');
+            })->count();
+
+            // Use Yajra DataTable render when allowed
+            return $dataTable->render('home', compact('canApprove', 'pendingCount'));
         }
 
-        return view('home', compact('pendingRegistrations', 'canApprove'));
+        return view('home', compact('canApprove', 'pendingCount'));
     }
 }

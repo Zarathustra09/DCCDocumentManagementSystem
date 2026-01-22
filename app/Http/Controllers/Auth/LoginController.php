@@ -49,7 +49,9 @@ class LoginController extends Controller
         $user = \App\Models\User::where('username', $request->input('username'))->first();
 
         if ($user && password_verify($request->input('password'), $user->password)) {
-            auth()->login($user, $request->filled('remember'));
+            // changed: read remember as boolean and pass to login to set persistent cookie
+            $remember = $request->boolean('remember');
+            auth()->login($user, $remember);
             return true;
         }
        $logContext = [

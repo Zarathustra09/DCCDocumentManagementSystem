@@ -45,7 +45,10 @@ class DocumentRegistryEntryStatusUpdated extends Notification
             ->line('Document No: ' . $this->entry->document_no)
             ->line('Submitted by: ' . $this->entry->submittedBy->name)
             ->line('New Status: ' . $this->status->name)
-            ->action('View Entry', url(route('document-registry.show', $this->entry->document_no)))
+            ->action(
+                'View Entry',
+                url(route('document-registry.show', ['documentRegistrationEntry' => $this->entry->id]))
+            )
             ->line('Thank you for using our document management system!');
     }
 

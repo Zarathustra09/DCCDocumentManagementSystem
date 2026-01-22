@@ -12,6 +12,8 @@ use App\Notifications\DocumentRegistryFileStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB; // added DB facade
+use Illuminate\Support\Facades\Log; // added Log facade
 
 class DocumentRegistrationEntryFileController extends Controller
 {
@@ -22,33 +24,43 @@ class DocumentRegistrationEntryFileController extends Controller
             abort(403);
         }
 
+        // Store the entry ID before operations
+        $entryId = $file->entry_id;
+
         $implementedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
         $entryImplementedStatus = \App\Models\DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
 
-        $file->update([
-            'status_id' => $implementedStatus->id,
-            'implemented_by' => auth()->id(),
-            'implemented_at' => now(),
-            'rejection_reason' => null,
-        ]);
+        DB::beginTransaction();
+        try {
+            $file->update([
+                'status_id' => $implementedStatus->id,
+                'implemented_by' => auth()->id(),
+                'implemented_at' => now(),
+                'rejection_reason' => null,
+            ]);
 
-        $file->registrationEntry->update([
-            'status_id' => $entryImplementedStatus->id,
-            'implemented_by' => auth()->id(),
-            'implemented_at' => now(),
-        ]);
+            $file->registrationEntry->update([
+                'status_id' => $entryImplementedStatus->id,
+                'implemented_by' => auth()->id(),
+                'implemented_at' => now(),
+            ]);
 
-        $file->refresh();
+            DB::commit();
 
-        $user = $file->registrationEntry->submittedBy;
-        if ($user) {
-            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
-            $user->notify(new DocumentRegistryEntryStatusUpdated($file->registrationEntry, $file->registrationEntry->status));
+            $user = $file->registrationEntry->submittedBy;
+            if ($user) {
+                $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
+                $user->notify(new DocumentRegistryEntryStatusUpdated($file->registrationEntry, $file->registrationEntry->status));
+            }
 
+            // Use stored entry ID for redirect
+            return redirect()->route('document-registry.show', ['documentRegistrationEntry' => $entryId])
+                ->with('success', 'File approved successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('File approval failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to approve file. Please try again.');
         }
-
-
-        return back()->with('success', 'File approved successfully.');
     }
 
     public function reject(Request $request, $id)
@@ -57,9 +69,13 @@ class DocumentRegistrationEntryFileController extends Controller
         if (!auth()->user()->can('reject document registration') || $file->status->name !== 'Pending') {
             abort(403);
         }
+
         $request->validate([
             'rejection_reason' => 'required|string'
         ]);
+
+        // Store the entry ID before operations
+        $entryId = $file->entry_id;
 
         // Use 'Returned' status for files instead of 'Cancelled'
         $returnedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Returned')->first();
@@ -69,21 +85,30 @@ class DocumentRegistrationEntryFileController extends Controller
             return back()->withErrors(['error' => 'File status "Returned" not found. Please contact administrator.']);
         }
 
-        $file->update([
-            'status_id' => $returnedStatus->id,
-            'implemented_by' => auth()->id(),
-            'implemented_at' => now(),
-            'rejection_reason' => $request->rejection_reason,
-        ]);
+        DB::beginTransaction();
+        try {
+            $file->update([
+                'status_id' => $returnedStatus->id,
+                'implemented_by' => auth()->id(),
+                'implemented_at' => now(),
+                'rejection_reason' => $request->rejection_reason,
+            ]);
 
-        $file->refresh();
+            DB::commit();
 
-        $user = $file->registrationEntry->submittedBy;
-        if ($user) {
-            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
+            $user = $file->registrationEntry->submittedBy;
+            if ($user) {
+                $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
+            }
+
+            // Use stored entry ID for redirect
+            return redirect()->route('document-registry.show', ['documentRegistrationEntry' => $entryId])
+                ->with('success', 'File returned for revision.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('File rejection failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to return file. Please try again.');
         }
-
-        return back()->with('success', 'File returned for revision.');
     }
 
     public function uploadFile(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
@@ -99,21 +124,30 @@ class DocumentRegistrationEntryFileController extends Controller
         $file = $request->file('document_file');
         $pendingStatus = DocumentRegistrationEntryFileStatus::where('name', 'Pending')->first();
 
-        DocumentRegistrationEntryFile::create([
-            'entry_id' => $documentRegistrationEntry->id,
-            'file_path' => $file->store('document_registrations', 'local'),
-            'original_filename' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'file_size' => $file->getSize(),
-            'status_id' => $pendingStatus->id,
-        ]);
+        DB::beginTransaction();
+        try {
+            DocumentRegistrationEntryFile::create([
+                'entry_id' => $documentRegistrationEntry->id,
+                'file_path' => $file->store('document_registrations', 'local'),
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'status_id' => $pendingStatus->id,
+            ]);
 
-        $file = DocumentRegistrationEntryFile::where('entry_id', $documentRegistrationEntry->id)
-            ->latest('id')->first();
+            $file = DocumentRegistrationEntryFile::where('entry_id', $documentRegistrationEntry->id)
+                ->latest('id')->first();
 
-        DocumentRegistryFileCreated::sendToAdmins($file);
+            DB::commit();
 
-        return back()->with('success', 'File uploaded successfully.');
+            DocumentRegistryFileCreated::sendToAdmins($file);
+
+            return back()->with('success', 'File uploaded successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('File upload failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to upload file. Please try again.');
+        }
     }
 
     public function preview(Request $request, $id)

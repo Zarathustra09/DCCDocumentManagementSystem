@@ -1,7 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container-fluid">
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -245,208 +247,211 @@
                 </div>
             </div>
         </div>
-    </div>
-    <!-- DCN Update Modal -->
-    <div class="modal fade" id="dcnModal" tabindex="-1" aria-labelledby="dcnModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="dcnModalLabel">
-                        <i class='bx bx-barcode'></i> Update DCN Number
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="dcnForm">
-                        <input type="hidden" id="entryId" name="entry_id">
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="modalCustomer" class="form-label">Customer</label>
-                                    <select class="form-select" id="modalCustomer" name="customer_id">
-                                        <option value="">Select Customer</option>
-                                        @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" data-code="{{ $customer->code }}">
-                                                {{ $customer->name }} ({{ $customer->code }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <div class="form-text">
-                                        <span id="customerStatus" class="text-muted">Customer is set from document registry entry</span>
+        <!-- DCN Update Modal -->
+        <div class="modal fade" id="dcnModal" tabindex="-1" aria-labelledby="dcnModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dcnModalLabel">
+                            <i class='bx bx-barcode'></i> Update DCN Number
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="dcnForm">
+                            <input type="hidden" id="entryId" name="entry_id">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="modalCustomer" class="form-label">Customer</label>
+                                        <select class="form-select" id="modalCustomer" name="customer_id">
+                                            <option value="">Select Customer</option>
+                                            @foreach($customers as $customer)
+                                                <option value="{{ $customer->id }}" data-code="{{ $customer->code }}">
+                                                    {{ $customer->name }} ({{ $customer->code }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="form-text">
+                                            <span id="customerStatus" class="text-muted">Customer is set from document registry entry</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="modalCategory" class="form-label">Category</label>
+                                        <select class="form-select" id="modalCategory" name="category_id">
+                                            <option value="">Select Category</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}" data-code="{{ $category->code }}">
+                                                    {{ $category->name }} ({{ $category->code }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="form-text">
+                                            <span id="categoryStatus" class="text-muted">Category is set from document registry entry</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+
+                            <!-- Save Category/Customer Button (hidden by default) -->
+                            <div class="row" id="saveCategoryCustomerRow" style="display: none;">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-info btn-sm mb-3" id="saveCategoryCustomerBtn">
+                                        <i class='bx bx-save'></i> Save Category & Customer Changes
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Additional Read-Only Details -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Originator</label>
+                                    <input type="text" class="form-control" id="modalOriginator" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Registration Date</label>
+                                    <input type="text" class="form-control" id="modalRegistrationDate" readonly>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Effective Date</label>
+                                    <input type="text" class="form-control" id="modalEffectiveDate" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Document No.</label>
+                                    <input type="text" class="form-control" id="modalDocumentNo" readonly>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Revision No.</label>
+                                    <input type="text" class="form-control" id="modalRevisionNo" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Device Name</label>
+                                    <input type="text" class="form-control" id="modalDeviceName" readonly>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input type="text" class="form-control" id="modalTitle" readonly>
+                            </div>
+                            <!-- End Additional Details -->
+
+                            <!-- DCN Mode Selection -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="manualDcnMode">
+                                    <label class="form-check-label" for="manualDcnMode">
+                                        <i class='bx bx-edit'></i> Manual DCN Override (bypass customer/category requirements)
+                                    </label>
+                                </div>
+                                <small class="text-muted">Enable this to manually enter a complete DCN number without restrictions</small>
+                            </div>
+
+                            <!-- Auto-generated DCN Section -->
+                            <div id="autoGeneratedSection">
                                 <div class="mb-3">
-                                    <label for="modalCategory" class="form-label">Category</label>
-                                    <select class="form-select" id="modalCategory" name="category_id">
-                                        <option value="">Select Category</option>
-                                        @foreach($categories as $category)
-                                            <option value="{{ $category->id }}" data-code="{{ $category->code }}">
-                                                {{ $category->name }} ({{ $category->code }})
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <label for="dcnSuffix" class="form-label">DCN Suffix (3-digit number) <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="dcnSuffix" name="dcn_suffix"
+                                           maxlength="3" placeholder="e.g., 001">
                                     <div class="form-text">
-                                        <span id="categoryStatus" class="text-muted">Category is set from document registry entry</span>
+                                        <span id="suffixStatus" class="text-muted">Enter a unique 3-digit number (001-999)</span>
+                                    </div>
+                                    <!-- Live auto-completion line (purely frontend) -->
+                                    <div class="small mt-1 text-muted" id="suffixAutoCompletion" style="display:none;">
+                                        <i class="bx bx-barcode"></i>
+                                        <span>Auto-complete preview: </span>
+                                        <span class="fw-bold text-primary" id="suffixAutoCompletionValue"></span>
+                                    </div>
+                                    <div class="invalid-feedback" id="suffixError">
+                                        Please enter a valid 3-digit number.
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Save Category/Customer Button (hidden by default) -->
-                        <div class="row" id="saveCategoryCustomerRow" style="display: none;">
-                            <div class="col-12">
-                                <button type="button" class="btn btn-info btn-sm mb-3" id="saveCategoryCustomerBtn">
-                                    <i class='bx bx-save'></i> Save Category & Customer Changes
-                                </button>
+                            <!-- Manual DCN Override Section -->
+                            <div id="manualDcnSection" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="manualDcnInput" class="form-label">Manual DCN Number <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="manualDcnInput" name="manual_dcn"
+                                           placeholder="e.g., CNA25-ALL-001 or any custom format">
+                                    <div class="form-text">
+                                        <span id="manualDcnStatus" class="text-muted">Enter any DCN format you need</span>
+                                    </div>
+                                    <div class="invalid-feedback" id="manualDcnError">
+                                        Please enter a DCN number.
+                                    </div>
+                                </div>
+                                <div class="alert alert-warning alert-sm">
+                                    <i class='bx bx-info-circle'></i>
+                                    <strong>Note:</strong> Manual DCN override allows you to bypass customer and category requirements.
+                                    Ensure the DCN number follows your organization's naming convention.
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Additional Read-Only Details -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Originator</label>
-                                <input type="text" class="form-control" id="modalOriginator" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Registration Date</label>
-                                <input type="text" class="form-control" id="modalRegistrationDate" readonly>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Effective Date</label>
-                                <input type="text" class="form-control" id="modalEffectiveDate" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Document No.</label>
-                                <input type="text" class="form-control" id="modalDocumentNo" readonly>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Revision No.</label>
-                                <input type="text" class="form-control" id="modalRevisionNo" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Device Name</label>
-                                <input type="text" class="form-control" id="modalDeviceName" readonly>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input type="text" class="form-control" id="modalTitle" readonly>
-                        </div>
-                        <!-- End Additional Details -->
-
-                        <!-- DCN Mode Selection -->
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="manualDcnMode">
-                                <label class="form-check-label" for="manualDcnMode">
-                                    <i class='bx bx-edit'></i> Manual DCN Override (bypass customer/category requirements)
-                                </label>
-                            </div>
-                            <small class="text-muted">Enable this to manually enter a complete DCN number without restrictions</small>
-                        </div>
-
-                        <!-- Auto-generated DCN Section -->
-                        <div id="autoGeneratedSection">
                             <div class="mb-3">
-                                <label for="dcnSuffix" class="form-label">DCN Suffix (3-digit number) <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="dcnSuffix" name="dcn_suffix"
-                                       maxlength="3" placeholder="e.g., 001">
-                                <div class="form-text">
-                                    <span id="suffixStatus" class="text-muted">Enter a unique 3-digit number (001-999)</span>
-                                </div>
-                                <!-- Live auto-completion line (purely frontend) -->
-                                <div class="small mt-1 text-muted" id="suffixAutoCompletion" style="display:none;">
-                                    <i class="bx bx-barcode"></i>
-                                    <span>Auto-complete preview: </span>
-                                    <span class="fw-bold text-primary" id="suffixAutoCompletionValue"></span>
-                                </div>
-                                <div class="invalid-feedback" id="suffixError">
-                                    Please enter a valid 3-digit number.
+                                <label class="form-label">DCN Preview</label>
+                                <div class="p-3 bg-light rounded border">
+                                    <div id="dcnPreview" class="fw-bold text-primary fs-4 text-center">
+                                        <i class='bx bx-barcode'></i> Select category, customer, and suffix to preview DCN
+                                    </div>
+                                    <div id="dcnStatus" class="mt-2 text-center"></div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Manual DCN Override Section -->
-                        <div id="manualDcnSection" style="display: none;">
-                            <div class="mb-3">
-                                <label for="manualDcnInput" class="form-label">Manual DCN Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="manualDcnInput" name="manual_dcn"
-                                       placeholder="e.g., CNA25-ALL-001 or any custom format">
-                                <div class="form-text">
-                                    <span id="manualDcnStatus" class="text-muted">Enter any DCN format you need</span>
+                            <!-- Format Breakdown -->
+                            <div class="bg-white border border-info p-3 rounded" id="formatBreakdown">
+                                <h6 class="mb-2 text-info"><i class='bx bx-info-circle'></i> DCN Format Structure:</h6>
+                                <div class="row text-sm">
+                                    <div class="col-3 text-center">
+                                        <div class="fw-bold text-primary">Category Code</div>
+                                        <small class="text-muted">e.g., CNA</small>
+                                    </div>
+                                    <div class="col-2 text-center">
+                                        <div class="fw-bold text-primary">Year</div>
+                                        <small class="text-muted">e.g., 25</small>
+                                    </div>
+                                    <div class="col-1 text-center">
+                                        <div class="fw-bold text-info">-</div>
+                                    </div>
+                                    <div class="col-3 text-center">
+                                        <div class="fw-bold text-primary">Customer Code</div>
+                                        <small class="text-muted">e.g., ALL</small>
+                                    </div>
+                                    <div class="col-1 text-center">
+                                        <div class="fw-bold text-info">-</div>
+                                    </div>
+                                    <div class="col-2 text-center">
+                                        <div class="fw-bold text-primary">Suffix</div>
+                                        <small class="text-muted">e.g., 001</small>
+                                    </div>
                                 </div>
-                                <div class="invalid-feedback" id="manualDcnError">
-                                    Please enter a DCN number.
-                                </div>
-                            </div>
-                            <div class="alert alert-warning alert-sm">
-                                <i class='bx bx-info-circle'></i>
-                                <strong>Note:</strong> Manual DCN override allows you to bypass customer and category requirements.
-                                Ensure the DCN number follows your organization's naming convention.
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">DCN Preview</label>
-                            <div class="p-3 bg-light rounded border">
-                                <div id="dcnPreview" class="fw-bold text-primary fs-4 text-center">
-                                    <i class='bx bx-barcode'></i> Select category, customer, and suffix to preview DCN
-                                </div>
-                                <div id="dcnStatus" class="mt-2 text-center"></div>
-                            </div>
-                        </div>
-
-                        <!-- Format Breakdown -->
-                        <div class="bg-white border border-info p-3 rounded" id="formatBreakdown">
-                            <h6 class="mb-2 text-info"><i class='bx bx-info-circle'></i> DCN Format Structure:</h6>
-                            <div class="row text-sm">
-                                <div class="col-3 text-center">
-                                    <div class="fw-bold text-primary">Category Code</div>
-                                    <small class="text-muted">e.g., CNA</small>
-                                </div>
-                                <div class="col-2 text-center">
-                                    <div class="fw-bold text-primary">Year</div>
-                                    <small class="text-muted">e.g., 25</small>
-                                </div>
-                                <div class="col-1 text-center">
-                                    <div class="fw-bold text-info">-</div>
-                                </div>
-                                <div class="col-3 text-center">
-                                    <div class="fw-bold text-primary">Customer Code</div>
-                                    <small class="text-muted">e.g., ALL</small>
-                                </div>
-                                <div class="col-1 text-center">
-                                    <div class="fw-bold text-info">-</div>
-                                </div>
-                                <div class="col-2 text-center">
-                                    <div class="fw-bold text-primary">Suffix</div>
-                                    <small class="text-muted">e.g., 001</small>
+                                <div class="text-center mt-2">
+                                    <strong class="text-info">Result: CNA25-ALL-001</strong>
                                 </div>
                             </div>
-                            <div class="text-center mt-2">
-                                <strong class="text-info">Result: CNA25-ALL-001</strong>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class='bx bx-x'></i> Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" id="saveDcnBtn">
-                        <i class='bx bx-check'></i> Update DCN
-                    </button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class='bx bx-x'></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="saveDcnBtn">
+                            <i class='bx bx-check'></i> Update DCN
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- / Content -->
+</div>
 @endsection
 
 @push('styles')
@@ -512,831 +517,7 @@
 @endpush
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-
-    <script>
-        $(document).ready(function() {
-            // Expose DCN counts for toolbar badges (evaluated server-side)
-            const withDcnCount = {{ $entries->whereNotNull('dcn_no')->count() }};
-            const withoutDcnCount = {{ $entries->whereNull('dcn_no')->count() }};
-
-            // Advanced filters: sync UI and disable inputs/buttons when advanced is off
-            const advancedChecked = $('#advancedToggle').is(':checked');
-            if (!advancedChecked) {
-                // disable selects/inputs/buttons inside advancedFilters to avoid submission
-                $('#advancedFilters').find('select, input, button').prop('disabled', true);
-            }
-            // authoritative checkbox change handler toggles visibility & enabled state
-            $('#advancedToggle').on('change', function() {
-                const show = $(this).is(':checked');
-                if (show) {
-                    $('#advancedFilters').slideDown();
-                } else {
-                    $('#advancedFilters').slideUp();
-                }
-                $('#advancedFilters').find('select, input, button').prop('disabled', !show);
-
-                // sync visible DT toggle button (if present)
-                const $dtBtn = $('#dtAdvancedToggle').find('button');
-                if ($dtBtn.length) {
-                    if (show) {
-                        $dtBtn.removeClass('btn-inactive').addClass('btn-active');
-                        $dtBtn.attr('aria-pressed', 'true');
-                    } else {
-                        $dtBtn.removeClass('btn-active').addClass('btn-inactive');
-                        $dtBtn.attr('aria-pressed', 'false');
-                    }
-                }
-            });
-
-             // Initialize DataTables
-             $('#dcnTable').DataTable({
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        text: '<i class="bx bx-download"></i> Export to Excel',
-                        className: 'btn btn-success btn-sm dt-export-btn',
-                        action: function(e, dt, node, config) {
-                            const query = window.location.search;
-                            window.location.href = 'dcn/export' + query;
-                        }
-                    }
-                ],
-                responsive: true,
-                // Sort by first column (DCN No.) descending to match backend orderBy('id', 'desc')
-                order: [[0, 'desc']],
-                pageLength: 10,
-                columnDefs: [
-                    // Action column (last column) should not be orderable
-                    { orderable: false, targets: [10] }
-                ],
-                language: {
-                    search: "Search entries:",
-                    lengthMenu: "Show _MENU_ entries per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries"
-                }
-                ,
-                initComplete: function() {
-                    // inject a compact, pill-style button to the right of the DataTables search input
-                    const isChecked = $('#advancedToggle').is(':checked');
-                    const btnClass = isChecked ? 'btn-active' : 'btn-inactive';
-                    const toggleHtml = `
-                        <div id="dtAdvancedToggle" style="display:inline-block; margin-left:12px; vertical-align:middle;">
-                            <button type="button" id="dtAdvancedVisibleToggle" class="btn btn-sm ${btnClass}" aria-pressed="${isChecked ? 'true' : 'false'}" title="Toggle advanced filters">
-                                <i class="bx bx-filter"></i>
-                                <span class="d-none d-sm-inline">Advanced</span>
-                            </button>
-                        </div>
-                    `;
-
-                    // append next to the search input (on the right)
-                    $(this.api().table().container()).find('.dataTables_filter').append(toggleHtml);
-
-                    // when visible toggle clicked, toggle authoritative checkbox and trigger its change
-                    $('#dtAdvancedVisibleToggle').on('click', function() {
-                        const currently = $('#advancedToggle').is(':checked');
-                        $('#advancedToggle').prop('checked', !currently).trigger('change');
-                        // visual toggle handled by authoritative checkbox change handler (keeps in sync)
-                    });
-
-                    // append DCN counts (with same markup structure) next to Export button
-                    const badgeHtml = `
-                        <div id="dcnToolbarCounts" aria-hidden="true">
-                            <span class="badge bg-success">${withDcnCount} With DCN</span>
-                            <span class="badge bg-warning text-dark">${withoutDcnCount} Without DCN</span>
-                        </div>
-                    `;
-                    const $container = $(this.api().table().container());
-                    const $exportBtn = $container.find('.dt-export-btn').first();
-                    if ($exportBtn.length) {
-                        $exportBtn.after(badgeHtml);
-                    } else {
-                        // fallback: append to dt-buttons group
-                        $container.find('.dt-buttons').append(badgeHtml);
-                    }
-                 }
-             });
-
-             // Initialize Bootstrap Modal
-             let dcnModal = new bootstrap.Modal(document.getElementById('dcnModal'));
-             let currentEntryId = null;
-
-             // Manual DCN mode toggle
-            document.getElementById('manualDcnMode').addEventListener('change', function(e) {
-                const isManual = e.target.checked;
-
-                if (isManual) {
-                    // Show manual section, hide auto-generated section
-                    document.getElementById('autoGeneratedSection').style.display = 'none';
-                    document.getElementById('manualDcnSection').style.display = 'block';
-                    document.getElementById('formatBreakdown').style.display = 'none';
-
-                    // Clear and disable auto-generated fields
-                    document.getElementById('dcnSuffix').value = '';
-                    document.getElementById('dcnSuffix').disabled = true;
-
-                    // Enable manual input
-                    document.getElementById('manualDcnInput').disabled = false;
-                    document.getElementById('manualDcnInput').focus();
-
-                    // Update preview
-                    updateManualDcnPreview();
-                } else {
-                    // Show auto-generated section, hide manual section
-                    document.getElementById('autoGeneratedSection').style.display = 'block';
-                    document.getElementById('manualDcnSection').style.display = 'none';
-                    document.getElementById('formatBreakdown').style.display = 'block';
-
-                    // Clear and disable manual field
-                    document.getElementById('manualDcnInput').value = '';
-                    document.getElementById('manualDcnInput').disabled = true;
-
-                    // Enable auto-generated fields
-                    document.getElementById('dcnSuffix').disabled = false;
-
-                    // Update preview
-                    updateDcnPreview();
-                }
-            });
-
-            // Manual DCN input preview
-            document.getElementById('manualDcnInput').addEventListener('input', function(e) {
-                updateManualDcnPreview();
-            });
-
-            function updateManualDcnPreview() {
-                const manualDcn = document.getElementById('manualDcnInput').value.trim();
-
-                if (manualDcn) {
-                    document.getElementById('dcnPreview').innerHTML = `<i class='bx bx-barcode'></i> ${manualDcn}`;
-                    document.getElementById('dcnStatus').innerHTML = '<div class="alert alert-info alert-sm mb-0"><i class="bx bx-info-circle"></i> Manual DCN mode - no format validation</div>';
-                    document.getElementById('saveDcnBtn').disabled = false;
-
-                    // Add valid state
-                    document.getElementById('manualDcnInput').classList.remove('is-invalid');
-                    document.getElementById('manualDcnInput').classList.add('is-valid');
-                    document.getElementById('manualDcnStatus').innerHTML = '<i class="bx bx-check-circle text-success"></i> DCN ready to save';
-                } else {
-                    document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-barcode"></i> Enter DCN number...';
-                    document.getElementById('dcnStatus').innerHTML = '';
-                    document.getElementById('saveDcnBtn').disabled = true;
-
-                    // Reset validation state
-                    document.getElementById('manualDcnInput').classList.remove('is-invalid', 'is-valid');
-                    document.getElementById('manualDcnStatus').innerHTML = '<span class="text-muted">Enter any DCN format you need</span>';
-                }
-            }
-
-            // Preview DCN number as user types - now with manual suffix input
-            function updateDcnPreview() {
-                const categorySelect = document.getElementById('modalCategory');
-                const customerSelect = document.getElementById('modalCustomer');
-                const suffixInput = document.getElementById('dcnSuffix');
-
-                const categoryCode = categorySelect.options[categorySelect.selectedIndex]?.dataset.code;
-                const customerCode = customerSelect.options[customerSelect.selectedIndex]?.dataset.code;
-                const suffix = suffixInput.value;
-
-                // Validate suffix is exactly 3 digits
-                const isValidSuffix = /^\d{3}$/.test(suffix);
-
-                if (categoryCode && customerCode && suffix) {
-                    if (isValidSuffix) {
-                        const currentYear = new Date().getFullYear().toString().slice(-2);
-                        const dcnPreview = `${categoryCode}${currentYear}-${customerCode}-${suffix}`;
-
-                        document.getElementById('dcnPreview').innerHTML = `<i class='bx bx-barcode'></i> ${dcnPreview}`;
-                        document.getElementById('dcnStatus').innerHTML = '<div class="alert alert-success alert-sm mb-0"><i class="bx bx-check-circle"></i> DCN ready to assign</div>';
-                        document.getElementById('saveDcnBtn').disabled = false;
-
-                        // Remove invalid state
-                        suffixInput.classList.remove('is-invalid');
-                        suffixInput.classList.add('is-valid');
-                        document.getElementById('suffixStatus').innerHTML = '<i class="bx bx-check-circle text-success"></i> Valid 3-digit suffix';
-                    } else {
-                        document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-error-circle"></i> Invalid suffix format';
-                        document.getElementById('dcnStatus').innerHTML = '<div class="alert alert-warning alert-sm mb-0"><i class="bx bx-exclamation-triangle"></i> Suffix must be exactly 3 digits (e.g., 001, 025, 999)</div>';
-                        document.getElementById('saveDcnBtn').disabled = true;
-
-                        // Show invalid state
-                        suffixInput.classList.add('is-invalid');
-                        suffixInput.classList.remove('is-valid');
-                        document.getElementById('suffixStatus').innerHTML = '<i class="bx bx-error-circle text-danger"></i> Suffix must be exactly 3 digits';
-                    }
-                } else {
-                    document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-barcode"></i> Waiting for complete data...';
-                    document.getElementById('dcnStatus').innerHTML = '';
-                    document.getElementById('saveDcnBtn').disabled = true;
-
-                    // Reset validation state
-                    suffixInput.classList.remove('is-invalid', 'is-valid');
-                }
-            }
-
-            // Add event listeners for category/customer changes
-            document.getElementById('modalCategory').addEventListener('change', function() {
-                const saveCategoryCustomerRow = document.getElementById('saveCategoryCustomerRow');
-                if (saveCategoryCustomerRow && saveCategoryCustomerRow.style.display !== 'none') {
-                    updateDcnPreview();
-                }
-            });
-
-            document.getElementById('modalCustomer').addEventListener('change', function() {
-                const saveCategoryCustomerRow = document.getElementById('saveCategoryCustomerRow');
-                if (saveCategoryCustomerRow && saveCategoryCustomerRow.style.display !== 'none') {
-                    updateDcnPreview();
-                }
-            });
-
-            // Save category/customer changes using existing update route
-            const saveCategoryCustomerBtn = document.getElementById('saveCategoryCustomerBtn');
-            if (saveCategoryCustomerBtn) {
-                saveCategoryCustomerBtn.addEventListener('click', function() {
-                    const entryId = currentEntryId;
-                    const categoryId = document.getElementById('modalCategory').value;
-                    const customerId = document.getElementById('modalCustomer').value;
-
-                    if (!categoryId || !customerId) {
-                        // Show inline warning instead of SweetAlert
-                        $('#categoryCustomerSuccessRow').hide();
-                        $('#categoryCustomerErrorRow').remove();
-                        const warningHtml = `
-                            <div class="row" id="categoryCustomerWarningRow">
-                                <div class="col-12">
-                                    <div class="alert alert-warning mb-3" role="alert">
-                                        <i class='bx bx-error-circle'></i>
-                                        <strong>Incomplete!</strong> Please select both category and customer before saving.
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        $('#saveCategoryCustomerRow').after(warningHtml);
-
-                        // Auto-remove warning after 3 seconds
-                        setTimeout(() => {
-                            $('#categoryCustomerWarningRow').fadeOut(300, function() {
-                                $(this).remove();
-                            });
-                        }, 3000);
-                        return;
-                    }
-
-                    // Remove any existing warnings or errors
-                    $('#categoryCustomerWarningRow').remove();
-                    $('#categoryCustomerErrorRow').remove();
-
-                    // Show loading state on button
-                    const saveBtn = document.getElementById('saveCategoryCustomerBtn');
-                    const originalBtnHtml = saveBtn.innerHTML;
-                    saveBtn.disabled = true;
-                    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-
-                    // Use the existing update route
-                    $.ajax({
-                        url: `/document-registry/${entryId}`,
-                        method: 'PUT',
-                        data: {
-                            category_id: categoryId,
-                            customer_id: customerId,
-                            _token: $('meta[name="csrf-token"]').attr('content')
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                // Hide the save button row
-                                $('#saveCategoryCustomerRow').hide();
-
-                                // Show success message inline
-                                $('#categoryCustomerSuccessRow').show();
-
-                                // Update the UI to reflect saved state
-                                if (response.entry.category) {
-                                    $('#modalCategory').val(response.entry.category_id).prop('disabled', true);
-                                    $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' +
-                                        response.entry.category.name + ' (' + response.entry.category.code + ')');
-                                }
-
-                                if (response.entry.customer) {
-                                    $('#modalCustomer').val(response.entry.customer_id).prop('disabled', true);
-                                    $('#customerStatus').html('<i class="bx bx-check-circle text-success"></i> ' +
-                                        response.entry.customer.name + ' (' + response.entry.customer.code + ')');
-                                }
-
-                                // Clear any DCN status warnings
-                                $('#dcnStatus').html('');
-
-                                // Update suffix status to indicate readiness
-                                $('#suffixStatus').html('<i class="bx bx-info-circle text-info"></i> Enter a unique 3-digit number (001-999)');
-
-                                // Enable DCN suffix field and update preview
-                                document.getElementById('dcnSuffix').disabled = false;
-
-                                // Generate next available suffix for the new category/customer combination
-                                $.ajax({
-                                    url: `/dcn/${entryId}/data`,
-                                    method: 'GET',
-                                    success: function(dataResponse) {
-                                        if (dataResponse.success && dataResponse.entry) {
-                                            // Populate suggested suffix if available
-                                            if (dataResponse.entry.suggested_suffix) {
-                                                $('#dcnSuffix').val(dataResponse.entry.suggested_suffix);
-                                                $('#suffixStatus').html('<i class="bx bx-lightbulb text-warning"></i> Suggested next available suffix: ' + dataResponse.entry.suggested_suffix);
-                                            }
-
-                                            // Update DCN preview
-                                            updateDcnPreview();
-
-                                            // Focus on suffix field
-                                            document.getElementById('dcnSuffix').focus();
-                                        }
-                                    },
-                                    error: function() {
-                                        // Still update preview even if we can't get suggested suffix
-                                        updateDcnPreview();
-                                        document.getElementById('dcnSuffix').focus();
-                                    }
-                                });
-
-                                // Enable save DCN button
-                                document.getElementById('saveDcnBtn').disabled = false;
-
-                                // Auto-hide success message after 5 seconds
-                                setTimeout(function() {
-                                    $('#categoryCustomerSuccessRow').fadeOut(300);
-                                }, 5000);
-                            }
-                        },
-                        error: function(xhr) {
-                            // Restore button state
-                            saveBtn.disabled = false;
-                            saveBtn.innerHTML = originalBtnHtml;
-
-                            const response = xhr.responseJSON;
-                            let errorMessage = 'An error occurred while saving changes.';
-                            if (response && response.message) {
-                                errorMessage = response.message;
-                            } else if (response && response.errors) {
-                                errorMessage = Object.values(response.errors).flat().join('<br>');
-                            }
-
-                            // Show error inline instead of SweetAlert
-                            $('#categoryCustomerSuccessRow').hide();
-                            $('#categoryCustomerErrorRow').remove();
-                            const errorHtml = `
-                                <div class="row" id="categoryCustomerErrorRow">
-                                    <div class="col-12">
-                                        <div class="alert alert-danger mb-3" role="alert">
-                                            <i class='bx bx-error-circle'></i>
-                                            <strong>Error!</strong> ${errorMessage}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            $('#saveCategoryCustomerRow').after(errorHtml);
-
-                            // Auto-remove error after 5 seconds
-                            setTimeout(() => {
-                                $('#categoryCustomerErrorRow').fadeOut(300, function() {
-                                    $(this).remove();
-                                });
-                            }, 5000);
-                        }
-                    });
-                });
-            }
-
-            // Add event listener for suffix input
-            document.getElementById('dcnSuffix').addEventListener('input', function(e) {
-                const suffix = e.target.value.trim();
-
-                // Update auto-completion preview
-                const autoCompletionDiv = document.getElementById('suffixAutoCompletion');
-                const suffixValueDiv = document.getElementById('suffixAutoCompletionValue');
-
-                if (suffix.length === 3) {
-                    // Show auto-completion line
-                    autoCompletionDiv.style.display = 'block';
-
-                    // Get current category and customer codes
-                    const categoryCode = document.getElementById('modalCategory').selectedOptions[0]?.dataset.code || '';
-                    const customerCode = document.getElementById('modalCustomer').selectedOptions[0]?.dataset.code || '';
-
-                    // Generate and show the auto-complete DCN value
-                    const currentYear = new Date().getFullYear().toString().slice(-2);
-                    const autoCompleteDcn = `${categoryCode}${currentYear}-${customerCode}-${suffix}`;
-                    suffixValueDiv.innerText = autoCompleteDcn;
-
-                    // Update the main preview as well
-                    document.getElementById('dcnPreview').innerHTML = `<i class='bx bx-barcode'></i> ${autoCompleteDcn}`;
-                    document.getElementById('dcnStatus').innerHTML = '<div class="alert alert-success alert-sm mb-0"><i class="bx bx-check-circle"></i> DCN ready to assign</div>';
-                    document.getElementById('saveDcnBtn').disabled = false;
-                } else {
-                    // Hide auto-completion line
-                    autoCompletionDiv.style.display = 'none';
-
-                    // Reset the main preview
-                    document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-barcode"></i> Select category, customer, and suffix to preview DCN';
-                    document.getElementById('dcnStatus').innerHTML = '';
-                    document.getElementById('saveDcnBtn').disabled = true;
-                }
-            });
-
-            // Extract loadEntryData as a reusable function
-            function loadEntryData(entryId) {
-                $.ajax({
-                    url: `/dcn/${entryId}/data`,
-                    method: 'GET',
-                    success: function(response) {
-                        if (response.success && response.entry) {
-                            const entry = response.entry;
-
-                            // Populate read-only fields
-                            $('#modalOriginator').val(entry.originator_name || '-');
-
-                            // Format and populate dates
-                            if (entry.submitted_at) {
-                                const submittedDate = new Date(entry.submitted_at);
-                                const formattedSubmitted = submittedDate.toLocaleDateString('en-US', {
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    year: 'numeric'
-                                }) + ' ' + submittedDate.toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                });
-                                $('#modalRegistrationDate').val(formattedSubmitted);
-                            } else {
-                                $('#modalRegistrationDate').val('-');
-                            }
-
-                            if (entry.implemented_at) {
-                                const implementedDate = new Date(entry.implemented_at);
-                                const formattedImplemented = implementedDate.toLocaleDateString('en-US', {
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    year: 'numeric'
-                                }) + ' ' + implementedDate.toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                });
-                                $('#modalEffectiveDate').val(formattedImplemented);
-                            } else {
-                                $('#modalEffectiveDate').val('-');
-                            }
-
-                            $('#modalDocumentNo').val(entry.document_no || '-');
-                            $('#modalRevisionNo').val(entry.revision_no || '-');
-                            $('#modalDeviceName').val(entry.device_name || '-');
-                            $('#modalTitle').val(entry.document_title || '-');
-
-                            // Check if both customer and category exist
-                            if (entry.customer_id && entry.category_id && entry.customer && entry.category) {
-                                // Populate customer (read-only)
-                                $('#modalCustomer').val(entry.customer_id).prop('disabled', true);
-                                $('#customerStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.customer.name + ' (' + entry.customer.code + ')');
-
-                                // Populate category (read-only)
-                                $('#modalCategory').val(entry.category_id).prop('disabled', true);
-                                $('#categoryStatus').html('<i class="bx bx-check-circle text-success"></i> ' + entry.category.name + ' (' + entry.category.code + ')');
-
-                                // Hide save button and success message
-                                $('#saveCategoryCustomerRow').hide();
-                                $('#categoryCustomerSuccessRow').hide();
-
-                                // Populate suggested suffix if available
-                                if (entry.suggested_suffix) {
-                                    $('#dcnSuffix').val(entry.suggested_suffix);
-                                    $('#suffixStatus').html('<i class="bx bx-lightbulb text-warning"></i> Suggested next available suffix: ' + entry.suggested_suffix);
-                                }
-
-                                // If current DCN exists, extract and show its suffix OR populate manual field
-                                if (entry.current_dcn) {
-                                    const suffixMatch = entry.current_dcn.match(/-(\d{3})$/);
-                                    if (suffixMatch) {
-                                        // Standard format - populate suffix field
-                                        $('#dcnSuffix').val(suffixMatch[1]);
-                                    } else {
-                                        // Non-standard format - switch to manual mode and populate
-                                        document.getElementById('manualDcnMode').checked = true;
-                                        document.getElementById('autoGeneratedSection').style.display = 'none';
-                                        document.getElementById('manualDcnSection').style.display = 'block';
-                                        document.getElementById('formatBreakdown').style.display = 'none';
-                                        document.getElementById('dcnSuffix').disabled = true;
-                                        document.getElementById('manualDcnInput').disabled = false;
-                                        document.getElementById('manualDcnInput').value = entry.current_dcn;
-                                    }
-
-                                    const currentDcnHtml = `
-                                        <div class="alert alert-info alert-sm mb-2">
-                                            <i class="bx bx-info-circle"></i>
-                                            <strong>Current DCN:</strong> ${entry.current_dcn}
-                                        </div>
-                                    `;
-                                    document.getElementById('dcnStatus').innerHTML = currentDcnHtml;
-                                }
-
-                                // Enable DCN save button
-                                document.getElementById('saveDcnBtn').disabled = false;
-
-                                // Update preview with loaded data
-                                updateDcnPreview();
-
-                            } else {
-                                // Missing customer or category - enable editing
-                                let missingFields = [];
-
-                                if (!entry.customer_id || !entry.customer) {
-                                    $('#modalCustomer').prop('disabled', false);
-                                    $('#customerStatus').html('<i class="bx bx-exclamation-triangle text-warning"></i> No customer assigned - select one below');
-                                    missingFields.push('Customer');
-                                } else {
-                                    $('#modalCustomer').val(entry.customer_id).prop('disabled', false);
-                                    $('#customerStatus').html('<i class="bx bx-info-circle text-info"></i> ' + entry.customer.name + ' (' + entry.customer.code + ') - can be changed');
-                                }
-
-                                if (!entry.category_id || !entry.category) {
-                                    $('#modalCategory').prop('disabled', false);
-                                    $('#categoryStatus').html('<i class="bx bx-exclamation-triangle text-warning"></i> No category assigned - select one below');
-                                    missingFields.push('Category');
-                                } else {
-                                    $('#modalCategory').val(entry.category_id).prop('disabled', false);
-                                    $('#categoryStatus').html('<i class="bx bx-info-circle text-info"></i> ' + entry.category.name + ' (' + entry.category.code + ') - can be changed');
-                                }
-
-                                // Show save button for category/customer
-                                $('#saveCategoryCustomerRow').show();
-                                $('#categoryCustomerSuccessRow').hide();
-
-                                $('#suffixStatus').html('<i class="bx bx-info-circle text-info"></i> Select category & customer, then save changes before assigning DCN');
-
-                                document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-info-circle"></i> Select and save Category & Customer first';
-                                document.getElementById('dcnStatus').innerHTML = `
-                                    <div class="alert alert-warning alert-sm mb-0">
-                                        <i class="bx bx-exclamation-triangle"></i>
-                                        ${missingFields.join(' and ')} not assigned.
-                                        <strong>Select values above and click "Save Category & Customer Changes"</strong> before assigning DCN.
-                                    </div>
-                                `;
-
-                                // Disable DCN save button until category/customer are saved
-                                document.getElementById('saveDcnBtn').disabled = true;
-                            }
-                        } else {
-                            // Error loading data
-                            document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-error-circle"></i> Error loading entry data';
-                            $('#customerStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                            $('#categoryStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                            $('#suffixStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error loading entry data:', xhr);
-                        document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-error-circle"></i> Error loading entry data';
-                        $('#customerStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                        $('#categoryStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                        $('#suffixStatus').html('<i class="bx bx-error-circle text-danger"></i> Error loading data');
-                    }
-                });
-            }
-
-            // Save DCN - updated to handle both modes
-            document.getElementById('saveDcnBtn').addEventListener('click', function() {
-                const isManualMode = document.getElementById('manualDcnMode').checked;
-
-                let dcnNumber;
-                let formData = new FormData();
-                formData.append('entry_id', currentEntryId);
-
-                if (isManualMode) {
-                    // Manual DCN mode
-                    dcnNumber = document.getElementById('manualDcnInput').value.trim();
-
-                    if (!dcnNumber) {
-                        Swal.fire({
-                            title: 'Missing DCN!',
-                            text: 'Please enter a DCN number.',
-                            icon: 'warning',
-                            confirmButtonText: 'OK'
-                        });
-                        return;
-                    }
-
-                    formData.append('manual_dcn', dcnNumber);
-                    formData.append('is_manual', '1');
-                } else {
-                    // Auto-generated mode
-                    const customerId = document.getElementById('modalCustomer').value;
-                    const categoryId = document.getElementById('modalCategory').value;
-                    const suffix = document.getElementById('dcnSuffix').value;
-
-                    if (!customerId || !categoryId || !suffix) {
-                        Swal.fire({
-                            title: 'Incomplete Data!',
-                            text: 'Customer, category, and suffix are required. Please ensure the document registry entry has complete information.',
-                            icon: 'warning',
-                            confirmButtonText: 'OK'
-                        });
-                        return;
-                    }
-
-                    formData.append('customer_id', customerId);
-                    formData.append('category_id', categoryId);
-                    formData.append('dcn_suffix', suffix);
-                    formData.append('is_manual', '0');
-                }
-
-                const entryId = currentEntryId;
-
-                // Show loading
-                Swal.fire({
-                    title: 'Processing...',
-                    text: 'Saving DCN number',
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    willOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                $.ajax({
-                    url: `/dcn/${entryId}/update-dcn`,
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            dcnModal.hide();
-
-                            Swal.fire({
-                                title: 'Success!',
-                                html: `DCN number saved successfully!<br><strong>${response.dcn_number}</strong>`,
-                                icon: 'success',
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                location.reload(); // Reload to show updated DCN
-                            });
-                        }
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        let errorMessage = 'An error occurred while saving the DCN number.';
-
-                        if (response.errors) {
-                            errorMessage = Object.values(response.errors).flat().join('<br>');
-                        } else if (response.message) {
-                            errorMessage = response.message;
-                        }
-
-                        Swal.fire({
-                            title: 'Error!',
-                            html: errorMessage,
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
-                    }
-                });
-            });
-
-            // Global functions
-            window.openDcnModal = function(entryId) {
-                currentEntryId = entryId;
-                document.getElementById('entryId').value = entryId;
-
-                // Reset form first
-                document.getElementById('dcnForm').reset();
-                document.getElementById('dcnPreview').innerHTML = '<i class="bx bx-barcode"></i> Loading entry data...';
-                document.getElementById('dcnStatus').innerHTML = '';
-                document.getElementById('saveDcnBtn').disabled = true;
-
-                // Hide save category/customer button and all alert messages by default
-                $('#saveCategoryCustomerRow').hide();
-                $('#categoryCustomerSuccessRow').hide();
-                $('#categoryCustomerWarningRow').remove();
-                $('#categoryCustomerErrorRow').remove();
-
-                // Reset to auto-generated mode by default
-                document.getElementById('manualDcnMode').checked = false;
-                document.getElementById('autoGeneratedSection').style.display = 'block';
-                document.getElementById('manualDcnSection').style.display = 'none';
-                document.getElementById('formatBreakdown').style.display = 'block';
-                document.getElementById('dcnSuffix').disabled = false;
-                document.getElementById('manualDcnInput').disabled = true;
-
-                // Reset validation states
-                document.getElementById('dcnSuffix').classList.remove('is-invalid', 'is-valid');
-                document.getElementById('manualDcnInput').classList.remove('is-invalid', 'is-valid');
-
-                // Reset status messages
-                document.getElementById('customerStatus').innerHTML = 'Loading...';
-                document.getElementById('categoryStatus').innerHTML = 'Loading...';
-                document.getElementById('suffixStatus').innerHTML = 'Enter a unique 3-digit number (001-999)';
-                document.getElementById('manualDcnStatus').innerHTML = '<span class="text-muted">Enter any DCN format you need</span>';
-
-                // Load existing entry data
-                loadEntryData(entryId);
-
-                // Show modal
-                dcnModal.show();
-            };
-
-            window.clearDcn = function(entryId) {
-                Swal.fire({
-                    title: 'Clear DCN Number?',
-                    text: 'Are you sure you want to clear the DCN number for this entry?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: '<i class="bx bx-check"></i> Yes, clear it!',
-                    cancelButtonText: '<i class="bx bx-x"></i> Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Show loading
-                        Swal.fire({
-                            title: 'Processing...',
-                            text: 'Clearing DCN number',
-                            allowOutsideClick: false,
-                            showConfirmButton: false,
-                            willOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-
-                        $.ajax({
-                            url: `/dcn/${entryId}/clear-dcn`,
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire({
-                                        title: 'Cleared!',
-                                        text: 'DCN number has been cleared successfully.',
-                                        icon: 'success',
-                                        confirmButtonText: 'OK'
-                                    }).then(() => {
-                                        location.reload();
-                                    });
-                                }
-                            },
-                            error: function(xhr) {
-                                Swal.fire({
-                                    title: 'Error!',
-                                    text: 'An error occurred while clearing the DCN number.',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
-                            }
-                        });
-                    }
-                });
-            };
-
-            window.showDcnFormatInfo = function() {
-                Swal.fire({
-                    title: '<i class="bx bx-info-circle"></i> DCN Format Information',
-                    html: `
-                <div class="text-start">
-                    <h6>DCN Format Structure:</h6>
-                    <div class="bg-light p-3 rounded mb-3">
-                        <strong>Format:</strong> [CategoryCode][Year]-[CustomerCode]-[3DigitSuffix]
-                    </div>
-
-                    <h6>Example:</h6>
-                    <div class="bg-info bg-opacity-10 p-3 rounded mb-3">
-                        <strong>CNA25-ALL-001</strong>
-                        <ul class="mt-2 mb-0 text-start">
-                            <li><strong>CNA</strong> = Category Code</li>
-                            <li><strong>25</strong> = Current Year (2025)</li>
-                            <li><strong>ALL</strong> = Customer Code</li>
-                            <li><strong>001</strong> = User-defined 3-digit suffix</li>
-                        </ul>
-                    </div>
-
-                    <h6>Notes:</h6>
-                    <ul class="text-start">
-                        <li>Year is automatically generated based on current year (2-digit format)</li>
-                        <li>Category and Customer codes are taken from their respective master data</li>
-                        <li>The 3-digit suffix must be unique for each DCN combination</li>
-                        <li>System will check for duplicate DCN numbers before saving</li>
-                    </ul>
-                </div>
-            `,
-                    width: '600px',
-                    confirmButtonText: '<i class="bx bx-check"></i> Got it!',
-                    customClass: {
-                        popup: 'text-start'
-                    }
-                });
-            };
-        });
-    </script>
+    @include('dcn_control.scripts.advanceToggle')
+    @include('dcn_control.scripts.dataTable')
+    @include('dcn_control.scripts.dcnCrud')
 @endpush

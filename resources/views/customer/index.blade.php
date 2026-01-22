@@ -1,68 +1,60 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title"><i class='bx bx-buildings'></i> Customer Management</h3>
-                    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
-                        <i class='bx bx-plus'></i> Add Customer
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="customersTable">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Code</th>
-                                    <th>Status</th>
-                                    <th>Created At</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($customers as $customer)
-                                    <tr>
-                                        <td>{{ $customer->name }}</td>
-                                        <td><span class="badge bg-info">{{ $customer->code }}</span></td>
-                                        <td>
-                                            @if($customer->is_active)
-                                                <span class="badge bg-success">Active</span>
-                                            @else
-                                                <span class="badge bg-secondary">Inactive</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $customer->created_at->format('m/d/Y g:i A') }}</td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                                        onclick="editCustomer({{ $customer->id }}, '{{ $customer->name }}', '{{ $customer->code }}', {{ $customer->is_active ? 'true' : 'false' }})">
-                                                    <i class="bx bx-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        onclick="deleteCustomer({{ $customer->id }}, '{{ $customer->name }}')">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+<div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title"><i class='bx bx-buildings'></i> Customer Management</h3>
+                        <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+                            <i class='bx bx-plus'></i> Add Customer
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            {{-- Yajra rendered table --}}
+                            {!! $dataTable->table(['class' => 'table table-striped table-hover'], true) !!}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <!-- / Content -->
 </div>
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{!! $dataTable->scripts() !!}
+
 <script>
+function getCustomersTableInstance() {
+    if (window.LaravelDataTables && window.LaravelDataTables['customersTable']) {
+        return window.LaravelDataTables['customersTable'];
+    }
+    if ($.fn.DataTable.isDataTable('#customersTable')) {
+        return $('#customersTable').DataTable();
+    }
+    return null;
+}
+
+function reloadCustomersTable() {
+    const dt = getCustomersTableInstance();
+    if (dt && dt.ajax && typeof dt.ajax.reload === 'function') {
+        dt.ajax.reload(null, false);
+    } else if (dt && typeof dt.draw === 'function') {
+        dt.draw();
+    } else {
+        // fallback full reload
+        location.reload();
+    }
+}
+
 function openCreateModal() {
     Swal.fire({
         title: 'Add New Customer',
@@ -115,9 +107,9 @@ function openCreateModal() {
             });
         }
     }).then((result) => {
-        if (result.isConfirmed && result.value.success) {
+        if (result.isConfirmed && result.value && result.value.success) {
             Swal.fire('Success!', result.value.message, 'success').then(() => {
-                location.reload();
+                reloadCustomersTable();
             });
         }
     });
@@ -175,9 +167,9 @@ function editCustomer(id, name, code, isActive) {
             });
         }
     }).then((result) => {
-        if (result.isConfirmed && result.value.success) {
+        if (result.isConfirmed && result.value && result.value.success) {
             Swal.fire('Success!', result.value.message, 'success').then(() => {
-                location.reload();
+                reloadCustomersTable();
             });
         }
     });
@@ -206,7 +198,7 @@ function deleteCustomer(id, name) {
                     throw new Error(data.message || 'Failed to delete customer.');
                 }
                 Swal.fire('Deleted!', data.message, 'success').then(() => {
-                    location.reload();
+                    reloadCustomersTable();
                 });
             }).catch(error => {
                 Swal.fire('Error', error.message, 'error');
@@ -214,15 +206,5 @@ function deleteCustomer(id, name) {
         }
     });
 }
-
-$(document).ready(function() {
-    $('#customersTable').DataTable({
-        responsive: true,
-        order: [[0, 'asc']],
-        columnDefs: [
-            { orderable: false, targets: [4] }
-        ]
-    });
-});
 </script>
 @endpush
