@@ -1,5 +1,3 @@
-
-
 <script>
     $(document).ready(function () {
         let dcnModal = new bootstrap.Modal(document.getElementById('dcnModal'));
@@ -273,6 +271,18 @@
             }
         });
 
+        const setModalMode = (action) => {
+            const titleEl = document.getElementById('dcnModalLabel');
+            const saveBtn = document.getElementById('saveDcnBtn');
+            if (action === 'assign') {
+                titleEl.innerHTML = "<i class='bx bx-barcode'></i> Assign DCN Number";
+                saveBtn.innerHTML = "<i class='bx bx-check'></i> Assign DCN";
+            } else {
+                titleEl.innerHTML = "<i class='bx bx-barcode'></i> Update DCN Number";
+                saveBtn.innerHTML = "<i class='bx bx-check'></i> Update DCN";
+            }
+        };
+
         function loadEntryData(entryId) {
             $.ajax({
                 url: `/dcn/${entryId}/data`,
@@ -280,6 +290,7 @@
                 success: function (response) {
                     if (response.success && response.entry) {
                         const entry = response.entry;
+                        setModalMode(entry.current_dcn ? 'update' : 'assign');
 
                         $('#modalOriginator').val(entry.originator_name || '-');
 
@@ -542,6 +553,7 @@
             document.getElementById('suffixStatus').innerHTML = 'Enter a unique 3-digit number (001-999)';
             document.getElementById('manualDcnStatus').innerHTML = '<span class="text-muted">Enter any DCN format you need</span>';
 
+            setModalMode('assign');
             loadEntryData(entryId);
 
             dcnModal.show();
