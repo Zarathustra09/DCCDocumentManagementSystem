@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\SyncSingleEmployeeToUserJob;
+use App\Jobs\SyncCreateEmployeeUserJob;
 use Carbon\Carbon;
 
 class SyncEmployeesToUsers extends Command
@@ -55,15 +56,27 @@ class SyncEmployeesToUsers extends Command
             return 0;
         }
 
+        $existingEmpNos = array_fill_keys(
+            DB::connection($targetConn)
+                ->table('users')
+                ->pluck('employee_no')
+                ->map(fn ($no) => trim((string) $no))
+                ->filter()
+                ->unique()
+                ->all(),
+            true
+        );
+
         DB::connection($sourceConn)
             ->table('employees')
             ->orderBy('employee_no')
-            ->chunk(200, function ($employees) use ($sourceConn, $targetConn) {
+            ->chunk(200, function ($employees) use ($sourceConn, $targetConn, &$existingEmpNos) {
                 foreach ($employees as $e) {
                     $empNo = trim((string) ($e->employee_no ?? ''));
                     if ($empNo === '' || $empNo === '0') {
                         continue;
                     }
+
                     $payload = (array) $e;
                     $payload['employee_no'] = $empNo;
                     $payload['__plainSecret'] = 'welcome123#';
@@ -72,8 +85,14 @@ class SyncEmployeesToUsers extends Command
                         $payload[$dateField] = $this->normalizeDateTime($payload[$dateField] ?? null);
                     }
 
-                    SyncSingleEmployeeToUserJob::dispatch($sourceConn, $targetConn, $payload)->onQueue('default');
-                    Log::channel('spears24sync')->info("Queued sync job for employee_no={$empNo}");
+                    if (isset($existingEmpNos[$empNo])) {
+                        SyncSingleEmployeeToUserJob::dispatch($sourceConn, $targetConn, $payload)->onQueue('default');
+                        Log::channel('spears24sync')->info("Queued sync job for employee_no={$empNo}");
+                    } else {
+                        $existingEmpNos[$empNo] = true; // prevent duplicate inserts in this run
+                        SyncCreateEmployeeUserJob::dispatch($targetConn, $payload)->onQueue('default');
+                        Log::channel('spears24sync')->info("Queued create job for new employee_no={$empNo}");
+                    }
                 }
             });
 

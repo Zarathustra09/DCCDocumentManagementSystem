@@ -74,7 +74,7 @@ class SyncSingleEmployeeToUserJob implements ShouldQueue
         $conn = DB::connection($this->targetConnection);
         $existing = $conn->selectOne('SELECT id FROM users WHERE employee_no = ?', [$empNo]);
         if (! $existing) {
-            Log::channel('spears24sync')->info("Skipping employee_no={$empNo} (user not found)");
+            Log::channel('spears24sync')->info("Skipping employee_no={$empNo} (user not found; creation handled elsewhere)");
             return;
         }
 

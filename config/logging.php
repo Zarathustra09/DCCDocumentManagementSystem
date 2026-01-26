@@ -128,6 +128,13 @@ return [
         'spears24sync' => [
             'driver' => 'single',
             'path' => storage_path('logs/spears24sync.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
+        'queue_processing' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/queue-processing.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
         ],
     ],
 ];
