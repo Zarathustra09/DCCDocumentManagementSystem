@@ -314,16 +314,26 @@ class DocumentRegistrationEntryController extends Controller
             'customer_id' => 'nullable|exists:customers,id',
             'revision_no' => 'nullable|string|max:50',
             'device_name' => 'nullable|string|max:255',
+            'document_no' => 'nullable|string|max:100',
             'originator_name' => 'required|string|max:255',
             'remarks' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
-            $documentRegistrationEntry->update($request->only([
-                'document_title', 'category_id', 'customer_id', 'revision_no', 'device_name',
+            // Determine whether current user may update the document number
+            $canEditDocNo = Auth::user()->can('edit document registration details');
+
+            $allowedFields = [
+                'document_title', 'category_id', 'customer_id', 'revision_no', 'device_name', 'document_no',
                 'originator_name', 'remarks'
-            ]));
+            ];
+
+            if (! $canEditDocNo) {
+                $allowedFields = array_diff($allowedFields, ['document_no']);
+            }
+
+            $documentRegistrationEntry->update($request->only($allowedFields));
 
             DB::commit();
 
