@@ -106,7 +106,7 @@ class RegistrationsDataTable extends DataTable
                     : '-'
             )
             ->addColumn('device_name', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->device_name ?? '-')
+                e($entry->device_name ?? 'N/A')
             )
             ->addColumn('document_no', fn(DocumentRegistrationEntry $entry) =>
                 e($entry->document_no ?? '-')

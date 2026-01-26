@@ -189,7 +189,7 @@
                                         </td>
                                         <td>{{ $entry->document_no ?? '-' }}</td>
                                         <td>{{ $entry->revision_no ?? '-' }}</td>
-                                        <td>{{ $entry->device_name ?? '-' }}</td>
+                                        <td>{{ $entry->device_name ?? 'N/A' }}</td>
                                         <td>
                                             <strong>{{ $entry->document_title ?? '-' }}</strong>
                                         </td>
