@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <div class="me-3"><i class="bx bx-wrench fs-3 text-primary"></i></div>
                                 <div>
                                     <h6 class="mb-1">Build Sheet Registration Log</h6>
-                                    <small class="text-muted">Entries submitted by external originators.</small>
+                                    <small class="text-muted">Entries submitted by Normal team members.</small>
                                 </div>
                             </div>
                         </div>
