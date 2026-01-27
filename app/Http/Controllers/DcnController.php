@@ -542,9 +542,38 @@ class DcnController extends Controller
 
     public function listLog(Request $request, DcnsDataTable $dataTable)
     {
-        $dataTable->setLogType($request->input('log_type', 'build'));
+        $logType = $request->input('log_type', 'build');
+        $dataTable->setLogType($logType);
 
-        $customers = Customer::where('is_active', true)->orderBy('name')->get();
+        // Get only customers that have registrations in the current log type
+        $customers = Customer::where('is_active', true)
+            ->whereHas('documentRegistrationEntries', function ($q) use ($logType) {
+                // Exclude cancelled entries
+                $q->whereDoesntHave('status', fn($sq) => $sq->where('name', 'Cancelled'));
+
+                // Apply log type filter
+                if ($logType === 'mechatronics') {
+                    $q->whereHas('submittedBy', fn($sq) => $sq->where('organization_id', 1));
+                } else {
+                    $q->whereHas('submittedBy', fn($sq) =>
+                        $sq->where('organization_id', '!=', 1)->orWhereNull('organization_id')
+                    );
+                }
+            })
+            ->withCount(['documentRegistrationEntries' => function ($q) use ($logType) {
+                $q->whereDoesntHave('status', fn($sq) => $sq->where('name', 'Cancelled'));
+
+                if ($logType === 'mechatronics') {
+                    $q->whereHas('submittedBy', fn($sq) => $sq->where('organization_id', 1));
+                } else {
+                    $q->whereHas('submittedBy', fn($sq) =>
+                        $sq->where('organization_id', '!=', 1)->orWhereNull('organization_id')
+                    );
+                }
+            }])
+            ->orderBy('name')
+            ->get();
+
         $categories = SubCategory::where('is_active', true)->orderBy('name')->get();
 
         return $dataTable->render('dcn_control.list', compact('customers', 'categories'));

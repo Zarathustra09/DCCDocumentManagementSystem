@@ -31,6 +31,11 @@ class DcnsDataTable extends DataTable
             ->filter(function (QueryBuilder $query) {
                 $request = $this->request();
 
+                // Apply customer filter from tab selection
+                if ($request->filled('customer_id')) {
+                    $query->where('customer_id', $request->input('customer_id'));
+                }
+
                 // Global search
                 $searchPayload = $request->input('search');
                 $globalSearch = is_array($searchPayload)
@@ -114,20 +119,33 @@ class DcnsDataTable extends DataTable
                 return e($entry->customer->name ?? '-');
             })
             ->addColumn('action', function (DocumentRegistrationEntry $entry) {
-                $viewUrl = route('dcn.show', $entry);
-
-                return '
+                $dropdown = '
                     <div class="dropdown">
                         <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="bx bx-cog"></i> Manage
                         </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="' . $viewUrl . '">
-                                <i class="bx bx-show me-2"></i> View Details
-                            </a>
+                        <div class="dropdown-menu">';
+
+                if (!$entry->dcn_no) {
+                    $dropdown .= '
+                            <button type="button" class="dropdown-item" onclick="openDcnModal(' . $entry->id . ')">
+                                <i class="bx bx-plus me-2"></i> Assign DCN
+                            </button>';
+                } else {
+                    $dropdown .= '
+                            <button type="button" class="dropdown-item" onclick="openDcnModal(' . $entry->id . ')">
+                                <i class="bx bx-edit-alt me-2"></i> Update DCN
+                            </button>
+                            <button type="button" class="dropdown-item text-danger" onclick="clearDcn(' . $entry->id . ')">
+                                <i class="bx bx-x me-2"></i> Clear DCN
+                            </button>';
+                }
+
+                $dropdown .= '
                         </div>
-                    </div>
-                ';
+                    </div>';
+
+                return $dropdown;
             })
             ->rawColumns(['dcn_no_badge', 'status_badge', 'registration_date', 'effective_date', 'document_title', 'action'])
             ->setRowId('id');
@@ -161,6 +179,7 @@ class DcnsDataTable extends DataTable
         $ajaxData = <<<'JS'
 function (d) {
     d.log_type = window.selectedLogType || 'build';
+    d.customer_id = window.selectedCustomerId || '';
 }
 JS;
 
@@ -173,9 +192,6 @@ JS;
             ->ajax(['data' => $ajaxData])
             ->orderBy(3, 'desc')
             ->selectStyleSingle()
-            ->dom('Blfrtip')
-            ->lengthMenu([[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']])
-            ->pageLength(10)
             ->buttons([
                 Button::make('excel')
                     ->text('<i class="bx bx-download"></i> Export to Excel')
@@ -184,6 +200,9 @@ JS;
 function (e, dt, node, config) {
     var url = '{$exportUrl}';
     url += '?log_type=' + (window.selectedLogType || 'build');
+    if (window.selectedCustomerId) {
+        url += '&customer_id=' + window.selectedCustomerId;
+    }
     window.location.href = url;
 }
 JS)
