@@ -2,38 +2,155 @@
 
 namespace App\DataTables;
 
-use App\Models\Dcn;
+use App\Models\DocumentRegistrationEntry;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class DcnsDataTable extends DataTable
 {
+    protected string $logType = 'build';
+
+    public function setLogType(string $logType): self
+    {
+        $this->logType = $logType === 'mechatronics' ? 'mechatronics' : 'build';
+        return $this;
+    }
+
     /**
      * Build the DataTable class.
      *
-     * @param QueryBuilder<Dcn> $query Results from query() method.
+     * @param QueryBuilder<DocumentRegistrationEntry> $query Results from query() method.
      */
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
-            ->addColumn('action', 'dcns.action')
+            ->filter(function (QueryBuilder $query) {
+                $request = $this->request();
+
+                // Global search
+                $searchPayload = $request->input('search');
+                $globalSearch = is_array($searchPayload)
+                    ? trim($searchPayload['value'] ?? '')
+                    : trim((string) $searchPayload);
+
+                if ($globalSearch !== '') {
+                    $query->where(function ($q) use ($globalSearch) {
+                        $q->where('dcn_no', 'like', "%{$globalSearch}%")
+                            ->orWhere('document_no', 'like', "%{$globalSearch}%")
+                            ->orWhere('document_title', 'like', "%{$globalSearch}%")
+                            ->orWhere('device_name', 'like', "%{$globalSearch}%")
+                            ->orWhere('revision_no', 'like', "%{$globalSearch}%")
+                            ->orWhere('originator_name', 'like', "%{$globalSearch}%")
+                            ->orWhereHas('submittedBy', fn($sq) =>
+                                $sq->where('firstname', 'like', "%{$globalSearch}%")
+                                   ->orWhere('lastname', 'like', "%{$globalSearch}%")
+                            )
+                            ->orWhereHas('customer', fn($cust) =>
+                                $cust->where('name', 'like', "%{$globalSearch}%")
+                            )
+                            ->orWhereHas('category', fn($cat) =>
+                                $cat->where('name', 'like', "%{$globalSearch}%")
+                                    ->orWhere('code', 'like', "%{$globalSearch}%")
+                            )
+                            ->orWhereHas('status', fn($sq) =>
+                                $sq->where('name', 'like', "%{$globalSearch}%")
+                            );
+                    });
+                }
+            }, false)
+            ->addColumn('dcn_no_badge', function (DocumentRegistrationEntry $entry) {
+                return $entry->dcn_no
+                    ? '<span class="badge bg-success"><i class="bx bx-check"></i> ' . e($entry->dcn_no) . '</span>'
+                    : '<span class="badge bg-warning text-dark"><i class="bx bx-time"></i> Not Assigned</span>';
+            })
+            ->addColumn('status_badge', function (DocumentRegistrationEntry $entry) {
+                $status = $entry->status->name ?? 'Unknown';
+                return match ($status) {
+                    'Pending' => '<span class="badge bg-warning text-dark"><i class="bx bx-time"></i> ' . e($status) . '</span>',
+                    'Implemented' => '<span class="badge bg-success text-white"><i class="bx bx-check"></i> ' . e($status) . '</span>',
+                    default => '<span class="badge bg-danger text-white"><i class="bx bx-x"></i> ' . e($status) . '</span>',
+                };
+            })
+            ->addColumn('originator', fn(DocumentRegistrationEntry $entry) =>
+                e($entry->submittedBy?->name ?? $entry->originator_name ?? '-')
+            )
+            ->addColumn('registration_date', function (DocumentRegistrationEntry $entry) {
+                if (!$entry->submitted_at) {
+                    return '-';
+                }
+                return '<small><i class="bx bx-calendar"></i> ' .
+                    e($entry->submitted_at->format('m/d/Y')) .
+                    '<br><small class="text-muted">' .
+                    e($entry->submitted_at->format('g:i A')) .
+                    '</small></small>';
+            })
+            ->addColumn('effective_date', function (DocumentRegistrationEntry $entry) {
+                if (!$entry->implemented_at) {
+                    return '-';
+                }
+                return '<small><i class="bx bx-calendar"></i> ' .
+                    e($entry->implemented_at->format('m/d/Y')) .
+                    '<br><small class="text-muted">' .
+                    e($entry->implemented_at->format('g:i A')) .
+                    '</small></small>';
+            })
+            ->addColumn('document_no', fn(DocumentRegistrationEntry $entry) =>
+                e($entry->document_no ?? '-')
+            )
+            ->addColumn('revision_no', fn(DocumentRegistrationEntry $entry) =>
+                e($entry->revision_no ?? '-')
+            )
+            ->addColumn('device_name', fn(DocumentRegistrationEntry $entry) =>
+                e($entry->device_name ?? 'N/A')
+            )
+            ->addColumn('document_title', fn(DocumentRegistrationEntry $entry) =>
+                '<strong>' . e($entry->document_title ?? '-') . '</strong>'
+            )
+            ->addColumn('customer_display', function (DocumentRegistrationEntry $entry) {
+                return e($entry->customer->name ?? '-');
+            })
+            ->addColumn('action', function (DocumentRegistrationEntry $entry) {
+                $viewUrl = route('dcn.show', $entry);
+
+                return '
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bx bx-cog"></i> Manage
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="' . $viewUrl . '">
+                                <i class="bx bx-show me-2"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                ';
+            })
+            ->rawColumns(['dcn_no_badge', 'status_badge', 'registration_date', 'effective_date', 'document_title', 'action'])
             ->setRowId('id');
     }
 
     /**
      * Get the query source of dataTable.
      *
-     * @return QueryBuilder<Dcn>
+     * @return QueryBuilder<DocumentRegistrationEntry>
      */
-    public function query(Dcn $model): QueryBuilder
+    public function query(DocumentRegistrationEntry $model): QueryBuilder
     {
-        return $model->newQuery();
+        $query = $model->newQuery()
+            ->with(['customer', 'category', 'submittedBy', 'status'])
+            ->whereDoesntHave('status', fn($q) => $q->where('name', 'Cancelled'));
+
+        if ($this->logType === 'mechatronics') {
+            $query->whereHas('submittedBy', fn($q) => $q->where('organization_id', 1));
+        } else {
+            $query->whereHas('submittedBy', fn($q) => $q->where('organization_id', '!=', 1)->orWhereNull('organization_id'));
+        }
+
+        return $query->orderByDesc('submitted_at')->orderByDesc('id');
     }
 
     /**
@@ -41,20 +158,36 @@ class DcnsDataTable extends DataTable
      */
     public function html(): HtmlBuilder
     {
+        $ajaxData = <<<'JS'
+function (d) {
+    d.log_type = window.selectedLogType || 'build';
+}
+JS;
+
+        $exportUrl = route('dcn.export');
+
         return $this->builder()
-                    ->setTableId('dcns-table')
-                    ->columns($this->getColumns())
-                    ->minifiedAjax()
-                    ->orderBy(1)
-                    ->selectStyleSingle()
-                    ->buttons([
-                        Button::make('excel'),
-            Button::make('csv'),
-            Button::make('pdf'),
-            Button::make('print'),
-            Button::make('reset'),
-            Button::make('reload')
-                    ]);
+            ->setTableId('logTable')
+            ->columns($this->getColumns())
+            ->minifiedAjax()
+            ->ajax(['data' => $ajaxData])
+            ->orderBy(3, 'desc')
+            ->selectStyleSingle()
+            ->dom('Blfrtip')
+            ->lengthMenu([[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']])
+            ->pageLength(10)
+            ->buttons([
+                Button::make('excel')
+                    ->text('<i class="bx bx-download"></i> Export to Excel')
+                    ->className('btn btn-success btn-sm dt-export-btn')
+                    ->action(<<<JS
+function (e, dt, node, config) {
+    var url = '{$exportUrl}';
+    url += '?log_type=' + (window.selectedLogType || 'build');
+    window.location.href = url;
+}
+JS)
+            ]);
     }
 
     /**
@@ -63,15 +196,21 @@ class DcnsDataTable extends DataTable
     public function getColumns(): array
     {
         return [
+            Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
+            Column::make('status_badge')->title('Status')->orderable(false)->searchable(false),
+            Column::make('originator')->title('Originator'),
+            Column::make('registration_date')->title('Registration Date')->name('submitted_at')->searchable(false),
+            Column::make('effective_date')->title('Effective Date')->name('implemented_at')->searchable(false),
+            Column::make('document_no')->title('Document No.'),
+            Column::make('revision_no')->title('Rev.'),
+            Column::make('device_name')->title('Device Name / Part Number'),
+            Column::make('document_title')->title('Document Title'),
+            Column::make('customer_display')->title('Customer')->orderable(false)->searchable(false),
             Column::computed('action')
-                  ->exportable(false)
-                  ->printable(false)
-                  ->width(60)
-                  ->addClass('text-center'),
-            Column::make('id'),
-            Column::make('add your columns'),
-            Column::make('created_at'),
-            Column::make('updated_at'),
+                ->exportable(false)
+                ->printable(false)
+                ->width(80)
+                ->addClass('text-center'),
         ];
     }
 

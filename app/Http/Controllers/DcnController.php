@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTables\DcnsDataTable;
 use App\Exports\DcnFilteredExport;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\Customer;
@@ -539,5 +540,19 @@ class DcnController extends Controller
         );
     }
 
+    public function listLog(Request $request, DcnsDataTable $dataTable)
+    {
+        $dataTable->setLogType($request->input('log_type', 'build'));
 
+        $customers = Customer::where('is_active', true)->orderBy('name')->get();
+        $categories = SubCategory::where('is_active', true)->orderBy('name')->get();
+
+        return $dataTable->render('dcn_control.list', compact('customers', 'categories'));
+    }
+
+    public function listLogData(Request $request, DcnsDataTable $dataTable)
+    {
+        $logType = $request->input('log_type', 'build');
+        return $dataTable->setLogType($logType)->ajax();
+    }
 }
