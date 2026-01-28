@@ -12,7 +12,7 @@
                             <span id="logTitleLabel">Document Registration Logs</span>
                         </h3>
                         <button class="btn btn-secondary btn-sm" id="changeLogBtn">
-                            <i class="bx bx-repeat"></i> Change Log Type
+                            <i class="bx bx-repeat"></i> Change Category
                         </button>
                     </div>
                     <div class="card-body">
@@ -47,7 +47,7 @@
                                     @if($customers->isEmpty())
                                         <div class="alert alert-warning">
                                             <i class='bx bx-info-circle'></i>
-                                            No customers have registrations in this log type. Change the log type to see customer tabs.
+                                            No customers have registrations in this category. Change the category to see customer tabs.
                                         </div>
                                     @endif
                                     <div class="table-responsive">
@@ -349,10 +349,16 @@
 
 @push('scripts')
 <script>
-    // Initialize from URL or default
     const urlParams = new URLSearchParams(window.location.search);
-    window.selectedLogType = urlParams.get('log_type') || 'build';
+    window.selectedSubcategoryId = urlParams.get('subcategory_id') || '';
     window.selectedCustomerId = '';
+    const mainCategories = @json($mainCategories ?? []);
+    const subcategoryIndex = {};
+    mainCategories.forEach(mc => {
+        (mc.subcategories || []).forEach(sc => {
+            subcategoryIndex[sc.id] = {...sc, main_category: {id: mc.id, name: mc.name}};
+        });
+    });
 </script>
 {!! $dataTable->scripts() !!}
 <script>
@@ -363,127 +369,125 @@ document.addEventListener('DOMContentLoaded', function () {
     const getDt = () => window.LaravelDataTables && window.LaravelDataTables['logTable'];
     const customerTabs = document.querySelectorAll('#customerTabs button[data-bs-toggle="tab"]');
 
-    // Check if log type is already in URL (page reload after selection)
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasLogType = urlParams.has('log_type');
-
-    // Only show wizard if no log type is set
-    if (!hasLogType) {
-        showLogWizard();
+    const hasSubcategory = (new URLSearchParams(window.location.search)).has('subcategory_id');
+    if (!hasSubcategory) {
+        showCategoryWizard();
     } else {
-        // Log type already selected, just update UI
         updateLogUI();
     }
 
-    changeBtn.addEventListener('click', showLogWizard);
+    changeBtn.addEventListener('click', showCategoryWizard);
 
-    // Handle customer tab switching
     customerTabs.forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function (e) {
-            const customerId = this.getAttribute('data-customer-id');
-            window.selectedCustomerId = customerId || '';
-
-            // Move table to active tab pane
+        tab.addEventListener('shown.bs.tab', function () {
+            window.selectedCustomerId = this.getAttribute('data-customer-id') || '';
             const targetPane = document.querySelector(this.getAttribute('data-bs-target'));
             const targetTableContainer = targetPane.querySelector('.table-responsive');
             const tableElement = document.querySelector('#logTable_wrapper');
-
             if (targetTableContainer && tableElement && !targetTableContainer.contains(tableElement)) {
                 targetTableContainer.appendChild(tableElement);
             }
-
-            // Reload DataTable with new customer filter
             const dt = getDt();
-            if (dt) {
-                dt.ajax.reload();
-            }
+            if (dt) dt.ajax.reload();
         });
     });
 
+    function escapeHtml(v){return (v??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+    function formatCategoryLabel(cat){return cat ? (cat.main_category?.name ? `${cat.name} (${cat.main_category.name})` : cat.name) : ''; }
+
     function updateLogUI() {
-        const label = window.selectedLogType === 'mechatronics'
-            ? 'Mechatronics Registration Log'
-            : 'Build Sheet Registration Log';
-        titleEl.textContent = label;
+        const selected = subcategoryIndex[window.selectedSubcategoryId];
+        if (!selected) return;
+        const label = formatCategoryLabel(selected);
+        titleEl.textContent = `${label} - Registration Log`;
         alertEl.style.display = 'block';
-        alertEl.innerHTML = window.selectedLogType === 'mechatronics'
-            ? "<i class='bx bx-info-circle'></i> Showing entries for the Mechatronics registration log."
-            : "<i class='bx bx-info-circle'></i> Showing entries for the Build Sheet registration log.";
+        alertEl.innerHTML = `<i class='bx bx-info-circle'></i> Showing entries for: <strong>${escapeHtml(label)}</strong>`;
     }
 
-    function showLogWizard() {
-        const wizardHtml = `
-            <div class="category-groups">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="category-option p-3 border rounded hover-shadow" data-log="build" style="cursor:pointer; transition:all 0.2s;">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3"><i class="bx bx-wrench fs-3 text-primary"></i></div>
-                                <div>
-                                    <h6 class="mb-1">Build Sheet Registration Log</h6>
-                                    <small class="text-muted">Entries submitted by Normal team members.</small>
+    function showCategoryWizard() {
+        let sectionsRendered = 0;
+        let optionsHtml = '<div class="category-groups">';
+        mainCategories.forEach(mc => {
+            const subs = Array.isArray(mc.subcategories) ? mc.subcategories : [];
+            if (!subs.length) return;
+            sectionsRendered++;
+            optionsHtml += `
+                <div class="category-section mb-4">
+                    <h5 class="section-title mb-3">
+                        <i class="bx bx-folder text-primary"></i> ${escapeHtml(mc.name || 'Main Category')}
+                    </h5>
+                    <div class="row">
+                        ${subs.map(sc => {
+                            const codeLabel = sc.code ? `Code: ${escapeHtml(String(sc.code).toUpperCase())}` : 'Code not set';
+                            return `
+                                <div class="col-md-6 mb-3">
+                                    <div class="category-option p-3 border rounded hover-shadow" data-subcategory-id="${sc.id}" style="cursor:pointer; transition:all 0.2s;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="category-icon me-3">
+                                                <i class="bx bx-category-alt fs-4 text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">${escapeHtml(sc.name || 'Subcategory')}</h6>
+                                                <small class="text-muted">${codeLabel}</small>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            `;
+                        }).join('')}
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="category-option p-3 border rounded hover-shadow" data-log="mechatronics" style="cursor:pointer; transition:all 0.2s;">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3"><i class="bx bx-cog fs-3 text-info"></i></div>
-                                <div>
-                                    <h6 class="mb-1">Mechatronics Registration Log</h6>
-                                    <small class="text-muted">Entries submitted by Mechatronics team members.</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="alert alert-warning mt-3 mb-0">
-                    <i class="bx bx-info-circle"></i>
-                    <strong>Required:</strong> Please choose a log to continue.
-                </div>
+                </div>`;
+        });
+
+        if (!sectionsRendered) {
+            optionsHtml += `
+                <div class="alert alert-warning mb-0">
+                    <i class="bx bx-info-circle"></i> No active subcategories are available. Please contact your administrator.
+                </div>`;
+        }
+        optionsHtml += `
+            <div class="alert alert-warning mt-3 mb-0">
+                <i class="bx bx-info-circle"></i>
+                <strong>Required:</strong> Please choose a category to continue.
             </div>
-        `;
+        </div>`;
 
         Swal.fire({
-            title: '<i class="bx bx-list-ul"></i> Select Registration Log',
-            html: wizardHtml,
-            width: '750px',
+            title: '<i class="bx bx-category"></i> Select Document Category',
+            html: optionsHtml,
+            width: '850px',
             showCancelButton: false,
             showConfirmButton: false,
             allowOutsideClick: false,
             allowEscapeKey: false,
-            customClass: { htmlContainer: 'text-start' },
+            customClass: { htmlContainer: 'text-start', popup: 'category-selection-popup' },
             didOpen: () => {
-                const options = Swal.getPopup().querySelectorAll('.category-option');
-                options.forEach(opt => {
-                    opt.addEventListener('mouseenter', function () {
-                        this.style.backgroundColor = '#f8f9fa';
-                        this.style.borderColor = '#007bff';
-                        this.style.transform = 'translateY(-2px)';
-                        this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                    });
-                    opt.addEventListener('mouseleave', function () {
-                        this.style.backgroundColor = '';
-                        this.style.borderColor = '';
-                        this.style.transform = '';
-                        this.style.boxShadow = '';
-                    });
-                    opt.addEventListener('click', function () {
-                        window.selectedLogType = this.getAttribute('data-log') || 'build';
+                const popup = Swal.getPopup();
+                if (!popup) return;
+                const opts = popup.querySelectorAll('.category-option');
+                opts.forEach(opt => {
+                    opt.addEventListener('mouseenter', function(){this.style.backgroundColor='#f8f9fa';this.style.borderColor='#007bff';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)';});
+                    opt.addEventListener('mouseleave', function(){this.style.backgroundColor='';this.style.borderColor='';this.style.transform='';this.style.boxShadow='';});
+                    opt.addEventListener('click', function(){
+                        const sid = this.getAttribute('data-subcategory-id');
+                        const sel = subcategoryIndex[sid];
+                        if (!sel) return;
+                        opts.forEach(o=>{o.style.backgroundColor='';o.style.borderColor='';});
+                        this.style.backgroundColor='#e3f2fd';
+                        this.style.borderColor='#2196f3';
                         Swal.close();
-                        onLogSelected();
+                        onCategorySelected(sid);
                     });
                 });
             }
         });
     }
 
-    function onLogSelected() {
-        // Reset to "All Customers" tab and reload page to refresh customer tabs
+    function onCategorySelected(subcategoryId) {
+        window.selectedSubcategoryId = subcategoryId;
         window.selectedCustomerId = '';
         const url = new URL(window.location.href);
-        url.searchParams.set('log_type', window.selectedLogType);
+        url.searchParams.set('subcategory_id', subcategoryId);
         window.location.href = url.toString();
     }
 });

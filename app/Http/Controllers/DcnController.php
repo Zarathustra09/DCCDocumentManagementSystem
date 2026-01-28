@@ -7,6 +7,7 @@ use App\Exports\DcnFilteredExport;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\Customer;
 use App\Models\SubCategory;
+use App\Models\MainCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -542,46 +543,36 @@ class DcnController extends Controller
 
     public function listLog(Request $request, DcnsDataTable $dataTable)
     {
-        $logType = $request->input('log_type', 'build');
-        $dataTable->setLogType($logType);
+        $subcategoryId = $request->input('subcategory_id');
+        $dataTable->setSubcategoryId($subcategoryId);
 
-        // Get only customers that have registrations in the current log type
         $customers = Customer::where('is_active', true)
-            ->whereHas('documentRegistrationEntries', function ($q) use ($logType) {
-                // Exclude cancelled entries
+            ->whereHas('documentRegistrationEntries', function ($q) use ($subcategoryId) {
                 $q->whereDoesntHave('status', fn($sq) => $sq->where('name', 'Cancelled'));
-
-                // Apply log type filter
-                if ($logType === 'mechatronics') {
-                    $q->whereHas('submittedBy', fn($sq) => $sq->where('organization_id', 1));
-                } else {
-                    $q->whereHas('submittedBy', fn($sq) =>
-                        $sq->where('organization_id', '!=', 1)->orWhereNull('organization_id')
-                    );
+                if ($subcategoryId) {
+                    $q->where('category_id', $subcategoryId);
                 }
             })
-            ->withCount(['documentRegistrationEntries' => function ($q) use ($logType) {
+            ->withCount(['documentRegistrationEntries' => function ($q) use ($subcategoryId) {
                 $q->whereDoesntHave('status', fn($sq) => $sq->where('name', 'Cancelled'));
-
-                if ($logType === 'mechatronics') {
-                    $q->whereHas('submittedBy', fn($sq) => $sq->where('organization_id', 1));
-                } else {
-                    $q->whereHas('submittedBy', fn($sq) =>
-                        $sq->where('organization_id', '!=', 1)->orWhereNull('organization_id')
-                    );
+                if ($subcategoryId) {
+                    $q->where('category_id', $subcategoryId);
                 }
             }])
             ->orderBy('name')
             ->get();
 
         $categories = SubCategory::where('is_active', true)->orderBy('name')->get();
+        $mainCategories = MainCategory::with(['subcategories' => fn($q) => $q->where('is_active', true)->orderBy('name')])
+            ->orderBy('name')
+            ->get();
 
-        return $dataTable->render('dcn_control.list', compact('customers', 'categories'));
+        return $dataTable->render('dcn_control.list', compact('customers', 'categories', 'mainCategories'));
     }
 
     public function listLogData(Request $request, DcnsDataTable $dataTable)
     {
-        $logType = $request->input('log_type', 'build');
-        return $dataTable->setLogType($logType)->ajax();
+        $subcategoryId = $request->input('subcategory_id');
+        return $dataTable->setSubcategoryId($subcategoryId)->ajax();
     }
 }

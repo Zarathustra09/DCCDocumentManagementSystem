@@ -13,10 +13,17 @@ use Yajra\DataTables\Services\DataTable;
 class DcnsDataTable extends DataTable
 {
     protected string $logType = 'build';
+    protected $subcategoryId = null;
 
     public function setLogType(string $logType): self
     {
         $this->logType = $logType === 'mechatronics' ? 'mechatronics' : 'build';
+        return $this;
+    }
+
+    public function setSubcategoryId($subcategoryId)
+    {
+        $this->subcategoryId = $subcategoryId;
         return $this;
     }
 
@@ -32,7 +39,7 @@ class DcnsDataTable extends DataTable
                 $request = $this->request();
 
                 // Apply customer filter from tab selection
-                if ($request->filled('customer_id')) {
+                if ($request->filled('customer_id') && $request->input('customer_id') !== '') {
                     $query->where('customer_id', $request->input('customer_id'));
                 }
 
@@ -162,10 +169,14 @@ class DcnsDataTable extends DataTable
             ->with(['customer', 'category', 'submittedBy', 'status'])
             ->whereDoesntHave('status', fn($q) => $q->where('name', 'Cancelled'));
 
-        if ($this->logType === 'mechatronics') {
-            $query->whereHas('submittedBy', fn($q) => $q->where('organization_id', 1));
-        } else {
-            $query->whereHas('submittedBy', fn($q) => $q->where('organization_id', '!=', 1)->orWhereNull('organization_id'));
+        // Filter by subcategory if set
+        if ($this->subcategoryId) {
+            $query->where('category_id', $this->subcategoryId);
+        }
+
+        // Filter by customer only when a non-empty value is provided
+        if (request()->filled('customer_id') && request('customer_id') !== '') {
+            $query->where('customer_id', request('customer_id'));
         }
 
         return $query->orderByDesc('submitted_at')->orderByDesc('id');
@@ -176,20 +187,24 @@ class DcnsDataTable extends DataTable
      */
     public function html(): HtmlBuilder
     {
-        $ajaxData = <<<'JS'
-function (d) {
-    d.log_type = window.selectedLogType || 'build';
-    d.customer_id = window.selectedCustomerId || '';
-}
-JS;
-
         $exportUrl = route('dcn.export');
 
         return $this->builder()
             ->setTableId('logTable')
             ->columns($this->getColumns())
-            ->minifiedAjax()
-            ->ajax(['data' => $ajaxData])
+            ->ajax([
+                'url' => route('dcn.list.data'),
+                'data' => <<<'JS'
+function (d) {
+    d.subcategory_id = window.selectedSubcategoryId || '';
+    if (window.selectedCustomerId) {
+        d.customer_id = window.selectedCustomerId;
+    } else {
+        delete d.customer_id;
+    }
+}
+JS
+            ])
             ->orderBy(3, 'desc')
             ->selectStyleSingle()
             ->buttons([
@@ -199,7 +214,7 @@ JS;
                     ->action(<<<JS
 function (e, dt, node, config) {
     var url = '{$exportUrl}';
-    url += '?log_type=' + (window.selectedLogType || 'build');
+    url += '?subcategory_id=' + (window.selectedSubcategoryId || '');
     if (window.selectedCustomerId) {
         url += '&customer_id=' + window.selectedCustomerId;
     }
