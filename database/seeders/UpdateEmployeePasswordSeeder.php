@@ -11,8 +11,8 @@ class UpdateEmployeePasswordSeeder extends Seeder
     public function run(): void
     {
         // ...existing code...
-        $employeeNo  = 239;
-        $plainSecret = 'Smartprobe.2026';
+        $employeeNo  = 390;
+        $plainSecret = 'alsdashdajshdkjasdhkas';
 
         $user = User::where('employee_no', $employeeNo)->first();
 

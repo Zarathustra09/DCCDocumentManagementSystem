@@ -29,7 +29,7 @@
 
 
       @can('approve document registration')
-       <li class="menu-item {{ Route::is('document-registry.list') || Route::is('dcn.index') ? 'active' : '' }}">
+       <li class="menu-item {{ Route::is('document-registry.list') || Route::is('dcn.list') ? 'active' : '' }}">
               <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons bx bx-folder-open"></i> {{-- changed from bx-archive --}}
                   <div data-i18n="Patient Records">Registry Management</div>
@@ -41,8 +41,8 @@
                           <div data-i18n="Tracking Registration">Registration Tracking</div>
                       </a>
                   </li>
-                  <li class="menu-item {{ Route::is('dcn.index') ? 'active' : '' }}">
-                      <a href="{{route('dcn.index')}}" class="menu-link">
+                  <li class="menu-item {{ Route::is('dcn.list') ? 'active' : '' }}">
+                      <a href="{{route('dcn.list')}}" class="menu-link">
                           <i class="menu-icon tf-icons bx bx-barcode"></i> {{-- changed from bx-cog --}}
                           <div data-i18n="DCN Control">Assign DCN</div>
                       </a>

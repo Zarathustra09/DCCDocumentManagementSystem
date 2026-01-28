@@ -87,19 +87,36 @@
                                     @enderror
                                 </div>
 
-                                <!-- Document Number (Read-only) -->
+                                <!-- Document Number (Editable based on permission) -->
                                 <div class="col-md-6 mb-3">
                                     <label for="document_no" class="form-label">
                                         <i class='bx bx-hash'></i> Document Number (Optional)
                                     </label>
+
+                                    @php
+                                        $canEditDocNo = Auth::user()->can('edit document registration details');
+                                    @endphp
+
                                     <input type="text"
-                                           class="form-control"
+                                           class="form-control @error('document_no') is-invalid @enderror"
                                            id="document_no"
-                                           value="{{ $documentRegistrationEntry->document_no ?: 'Not specified' }}"
-                                           readonly>
-                                    <small class="form-text text-muted">
-                                        <i class='bx bx-info-circle'></i> Document number cannot be changed
-                                    </small>
+                                           name="document_no"
+                                           value="{{ old('document_no', $documentRegistrationEntry->document_no) }}"
+                                           placeholder="Enter document number (optional)"
+                                           @unless($canEditDocNo) readonly @endunless>
+                                    @error('document_no')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+
+                                    @unless($canEditDocNo)
+                                        <small class="form-text text-muted">
+                                            <i class='bx bx-lock'></i> You don't have permission to edit the document number.
+                                        </small>
+                                    @else
+                                        <small class="form-text text-muted">
+                                            <i class='bx bx-info-circle'></i> You have permission to edit the document number.
+                                        </small>
+                                    @endunless
                                 </div>
 
                                 <!-- Revision Number -->
@@ -172,7 +189,7 @@
                             <div class="alert alert-info">
                                 <i class='bx bx-info-circle'></i>
                                 <strong>Note:</strong> Only certain fields can be edited while the document is in pending status.
-                                The document number cannot be changed after creation.
+                                The document number can be changed only by users with the <code>edit document registration details</code> permission.
                             </div>
 
                             <!-- Form Actions -->

@@ -38,10 +38,10 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'birthdate' => 'date',
-        'datehired' => 'date',
-        'created_on' => 'date',
-        'separationdate' => 'date',
+        'birthdate' => 'datetime',
+        'datehired' => 'datetime',
+        'created_on' => 'datetime',
+        'separationdate' => 'datetime',
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];

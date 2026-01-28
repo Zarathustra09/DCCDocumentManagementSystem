@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTables\DcnsDataTable;
 use App\Exports\DcnFilteredExport;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\Customer;
-use App\Models\Category;
+use App\Models\SubCategory;
+use App\Models\MainCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class DcnController extends Controller
@@ -59,17 +62,38 @@ class DcnController extends Controller
 
         $entries = $query->orderBy('id', 'desc')->get();
 
+        Log::info('DCN index loaded', [
+            'filters' => $request->only(['dcn_status', 'customer_id', 'category_id', 'search', 'date_from', 'date_to']),
+            'total' => $entries->count(),
+            'with_dcn' => $entries->whereNotNull('dcn_no')->count(),
+            'without_dcn' => $entries->whereNull('dcn_no')->count(),
+            'sample' => $entries->take(5)->map(fn($e) => [
+                'id' => $e->id,
+                'dcn_no' => $e->dcn_no,
+                'status' => $e->status->name ?? null,
+                'customer_id' => $e->customer_id,
+                'category_id' => $e->category_id,
+            ])->toArray(),
+        ]);
 
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $categories = SubCategory::where('is_active', true)->orderBy('name')->get();
 
         return view('dcn_control.index', compact('entries', 'customers', 'categories'));
     }
 
     public function updateDcnNumber(Request $request, DocumentRegistrationEntry $entry)
     {
-        // Check if manual mode
         $isManual = $request->boolean('is_manual');
+        $action = $entry->dcn_no ? 'update' : 'assign';
+
+        Log::info('DCN change requested', [
+            'entry_id' => $entry->id,
+            'action' => $action,
+            'mode' => $isManual ? 'manual' : 'auto',
+            'current_dcn' => $entry->dcn_no,
+            'request' => $request->only(['category_id', 'customer_id', 'dcn_suffix', 'manual_dcn', 'is_manual']),
+        ]);
 
         if ($isManual) {
             // Manual DCN override - minimal validation
@@ -85,6 +109,12 @@ class DcnController extends Controller
                 ->first();
 
             if ($existingEntry) {
+                Log::warning('DCN manual duplicate', [
+                    'entry_id' => $entry->id,
+                    'action' => $action,
+                    'attempted_dcn' => $dcnNumber,
+                    'duplicate_entry_id' => $existingEntry->id,
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'This DCN number already exists in the system.',
@@ -103,6 +133,12 @@ class DcnController extends Controller
 
                 DB::commit();
 
+                Log::info('DCN manual saved', [
+                    'entry_id' => $entry->id,
+                    'action' => $action,
+                    'new_dcn' => $dcnNumber,
+                ]);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'DCN number saved successfully (Manual Override).',
@@ -111,6 +147,11 @@ class DcnController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollback();
+                Log::error('DCN manual failed', [
+                    'entry_id' => $entry->id,
+                    'action' => $action,
+                    'error' => $e->getMessage(),
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'An error occurred while saving the DCN number.',
@@ -121,7 +162,7 @@ class DcnController extends Controller
         } else {
             // Auto-generated mode - standard validation
             $request->validate([
-                'category_id' => 'required|exists:categories,id',
+                'category_id' => 'required|exists:subcategories,id',
                 'customer_id' => 'required|exists:customers,id',
                 'dcn_suffix' => 'required|string|size:3|regex:/^[0-9]{3}$/',
             ]);
@@ -130,7 +171,7 @@ class DcnController extends Controller
 
             try {
                 // Get category and customer codes
-                $category = Category::findOrFail($request->category_id);
+                $category = SubCategory::findOrFail($request->category_id);
                 $customer = Customer::findOrFail($request->customer_id);
                 $currentYear = date('y'); // 2-digit year (e.g., 25 for 2025)
 
@@ -144,6 +185,12 @@ class DcnController extends Controller
                     ->first();
 
                 if ($existingEntry) {
+                    Log::warning('DCN auto duplicate', [
+                        'entry_id' => $entry->id,
+                        'action' => $action,
+                        'attempted_dcn' => $dcnNumber,
+                        'duplicate_entry_id' => $existingEntry->id,
+                    ]);
                     return response()->json([
                         'success' => false,
                         'message' => 'This DCN number already exists. Please use a different 3-digit suffix.',
@@ -160,6 +207,12 @@ class DcnController extends Controller
 
                 DB::commit();
 
+                Log::info('DCN auto saved', [
+                    'entry_id' => $entry->id,
+                    'action' => $action,
+                    'new_dcn' => $dcnNumber,
+                ]);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'DCN number updated successfully.',
@@ -168,6 +221,11 @@ class DcnController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollback();
+                Log::error('DCN auto failed', [
+                    'entry_id' => $entry->id,
+                    'action' => $action,
+                    'error' => $e->getMessage(),
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'An error occurred while updating the DCN number.',
@@ -180,14 +238,14 @@ class DcnController extends Controller
     public function generateDcnPreview(Request $request)
     {
         $request->validate([
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'required|exists:subcategories,id',
             'customer_id' => 'required|exists:customers,id',
             'dcn_suffix' => 'required|string|size:3|regex:/^[0-9]{3}$/',
             'entry_id' => 'nullable|exists:document_registration_entries,id',
         ]);
 
         try {
-            $category = Category::findOrFail($request->category_id);
+            $category = SubCategory::findOrFail($request->category_id);
             $customer = Customer::findOrFail($request->customer_id);
             $currentYear = date('y'); // 2-digit year
 
@@ -230,7 +288,7 @@ class DcnController extends Controller
         $request->validate([
             'entries' => 'required|array',
             'entries.*.id' => 'required|exists:document_registration_entries,id',
-            'entries.*.category_id' => 'required|exists:categories,id',
+            'entries.*.category_id' => 'required|exists:subcategories,id',
             'entries.*.customer_id' => 'required|exists:customers,id',
             'entries.*.dcn_suffix' => 'required|string|size:3|regex:/^[0-9]{3}$/',
         ]);
@@ -243,7 +301,7 @@ class DcnController extends Controller
         try {
             foreach ($request->entries as $entryData) {
                 $entry = DocumentRegistrationEntry::findOrFail($entryData['id']);
-                $category = Category::findOrFail($entryData['category_id']);
+                $category = SubCategory::findOrFail($entryData['category_id']);
                 $customer = Customer::findOrFail($entryData['customer_id']);
                 $currentYear = date('y');
 
@@ -308,6 +366,11 @@ class DcnController extends Controller
     public function clearDcnNumber(DocumentRegistrationEntry $entry)
     {
         try {
+            Log::info('Clearing DCN', [
+                'entry_id' => $entry->id,
+                'previous_dcn' => $entry->dcn_no,
+            ]);
+
             $entry->update(['dcn_no' => null]);
 
             return response()->json([
@@ -316,6 +379,10 @@ class DcnController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Clear DCN failed', [
+                'entry_id' => $entry->id,
+                'error' => $e->getMessage(),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while clearing the DCN number.',
@@ -382,7 +449,7 @@ class DcnController extends Controller
     private function generateNextSuffix($categoryId, $customerId, $excludeEntryId = null)
     {
         try {
-            $category = Category::findOrFail($categoryId);
+            $category = SubCategory::findOrFail($categoryId);
             $customer = Customer::findOrFail($customerId);
             $currentYear = date('y');
 
@@ -474,5 +541,38 @@ class DcnController extends Controller
         );
     }
 
+    public function listLog(Request $request, DcnsDataTable $dataTable)
+    {
+        $subcategoryId = $request->input('subcategory_id');
+        $dataTable->setSubcategoryId($subcategoryId);
 
+        $customers = Customer::where('is_active', true)
+            ->whereHas('documentRegistrationEntries', function ($q) use ($subcategoryId) {
+                $q->whereDoesntHave('status', fn($sq) => $sq->where('name', 'Cancelled'));
+                if ($subcategoryId) {
+                    $q->where('category_id', $subcategoryId);
+                }
+            })
+            ->withCount(['documentRegistrationEntries' => function ($q) use ($subcategoryId) {
+                $q->whereDoesntHave('status', fn($sq) => $sq->where('name', 'Cancelled'));
+                if ($subcategoryId) {
+                    $q->where('category_id', $subcategoryId);
+                }
+            }])
+            ->orderBy('name')
+            ->get();
+
+        $categories = SubCategory::where('is_active', true)->orderBy('name')->get();
+        $mainCategories = MainCategory::with(['subcategories' => fn($q) => $q->where('is_active', true)->orderBy('name')])
+            ->orderBy('name')
+            ->get();
+
+        return $dataTable->render('dcn_control.list', compact('customers', 'categories', 'mainCategories'));
+    }
+
+    public function listLogData(Request $request, DcnsDataTable $dataTable)
+    {
+        $subcategoryId = $request->input('subcategory_id');
+        return $dataTable->setSubcategoryId($subcategoryId)->ajax();
+    }
 }

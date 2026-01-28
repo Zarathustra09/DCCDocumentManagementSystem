@@ -6,7 +6,6 @@ use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Log Channel
@@ -51,7 +50,6 @@ return [
     */
 
     'channels' => [
-
         'stack' => [
             'driver' => 'stack',
             'channels' => explode(',', env('LOG_STACK', 'single')),
@@ -127,6 +125,16 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
-    ],
+        'spears24sync' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/spears24sync.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
 
+        'queue_processing' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/queue-processing.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+    ],
 ];

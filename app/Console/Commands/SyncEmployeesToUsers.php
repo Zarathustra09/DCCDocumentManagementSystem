@@ -4,35 +4,105 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use App\Jobs\SyncEmployeesToUsersJob;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Jobs\SyncSingleEmployeeToUserJob;
+use App\Jobs\SyncCreateEmployeeUserJob;
+use Carbon\Carbon;
 
 class SyncEmployeesToUsers extends Command
 {
-    protected $signature = 'employees:sync-users';
-    protected $description = 'Dispatch a queued job to sync data from employees table into users (upsert by employee_no)';
+    protected $signature = 'employees:sync-users {--source= : source DB connection name} {--target= : target DB connection name}';
+    protected $description = 'Dispatch a queued job to sync employees into users (employee_no ascending, compare before update)';
+
+    private function normalizeDateTime($value): ?string
+    {
+        $value = is_null($value) ? null : trim((string) $value);
+        if ($value === '' || $value === '0000-00-00' || $value === '0000-00-00 00:00:00') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
 
     public function handle(): int
     {
-        $sourceDb = env('SPEARS_DB', config('database.connections.mysql.database'));
-        if (! $sourceDb) {
-            $this->error('SPEARS_DB is not set.');
+        // default source connection name -> db_spears if present, otherwise use env or fallback
+        $sourceConn = $this->option('source') ?: (array_key_exists('db_spears', config('database.connections')) ? 'db_spears' : config('database.default'));
+        if (! $sourceConn) {
+            $this->error('No source DB connection configured.');
+            Log::channel('spears24sync')->error('No source DB connection configured.');
             return 1;
         }
 
-        $targetDb = config('database.connections.mysql.database');
+        // default target connection name -> app default connection
+        $targetConn = $this->option('target') ?: config('database.default');
+        if (! $targetConn) {
+            $this->error('No target DB connection configured.');
+            Log::channel('spears24sync')->error('No target DB connection configured.');
+            return 1;
+        }
 
-        $lockKey = 'employees_sync_lock';
+        $lockKey = "employees_sync_lock:{$sourceConn}:{$targetConn}";
 
         // Prevent duplicate dispatches (keeps command fast)
         if (! Cache::add($lockKey, true, 3600)) {
             $this->info('Sync already scheduled or running.');
+            Log::channel('spears24sync')->info('Sync already scheduled or running, skipping dispatch.');
             return 0;
         }
 
-        // Dispatch queued job (job will release the lock)
-        SyncEmployeesToUsersJob::dispatch($sourceDb, $targetDb, $lockKey)->onQueue('default');
+        $existingEmpNos = array_fill_keys(
+            DB::connection($targetConn)
+                ->table('users')
+                ->pluck('employee_no')
+                ->map(fn ($no) => trim((string) $no))
+                ->filter()
+                ->unique()
+                ->all(),
+            true
+        );
 
-        $this->info("Sync job dispatched for source: {$sourceDb}.employees -> target: {$targetDb}.users");
+        DB::connection($sourceConn)
+            ->table('employees')
+            ->orderBy('employee_no')
+            ->chunk(200, function ($employees) use ($sourceConn, $targetConn, &$existingEmpNos) {
+                foreach ($employees as $e) {
+                    $empNo = trim((string) ($e->employee_no ?? ''));
+                    if ($empNo === '' || $empNo === '0') {
+                        continue;
+                    }
+
+                    $payload = (array) $e;
+                    $payload['employee_no'] = $empNo;
+                    $payload['__plainSecret'] = 'welcome123#';
+
+                    foreach (['birthdate', 'datehired', 'created_on', 'separationdate'] as $dateField) {
+                        $payload[$dateField] = $this->normalizeDateTime($payload[$dateField] ?? null);
+                    }
+
+                    if (isset($existingEmpNos[$empNo])) {
+                        SyncSingleEmployeeToUserJob::dispatch($sourceConn, $targetConn, $payload)->onQueue('default');
+                        Log::channel('spears24sync')->info("Queued sync job for employee_no={$empNo}");
+                    } else {
+                        $existingEmpNos[$empNo] = true; // prevent duplicate inserts in this run
+                        SyncCreateEmployeeUserJob::dispatch($targetConn, $payload)->onQueue('default');
+                        Log::channel('spears24sync')->info("Queued create job for new employee_no={$empNo}");
+                    }
+                }
+            });
+
+        Cache::forget($lockKey);
+
+        $msg = "Sync job dispatched for source connection: {$sourceConn}.employees -> target connection: {$targetConn}.users";
+        $this->info($msg);
+        Log::channel('spears24sync')->info($msg);
+        Log::channel('spears24sync')->info('All sync jobs have been queued successfully.');
+
         return 0;
     }
 }
