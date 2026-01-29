@@ -9,7 +9,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            <h3 class="card-title mb-0"><i class='bx bx-folder-open'></i>Tracking of Registered Documents</h3>
+                            <h3 class="card-title mb-0"><i class='bx bx-folder-open'></i>Registration Tracking Records</h3>
                         </div>
                         <div class="d-flex align-items-center">
                             {{-- Visible export button that uses the same export route as the DataTable button --}}
