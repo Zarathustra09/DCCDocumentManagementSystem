@@ -95,30 +95,30 @@ class RegistrationsDataTable extends DataTable
                 }
             })
             ->addColumn('control_no', fn(DocumentRegistrationEntry $entry) =>
-                '<strong>' . e($entry->control_no ?? '-') . '</strong>'
+                '<strong>' . e($entry->control_no ?? 'N/A') . '</strong>'
             )
             ->addColumn('document_title', fn(DocumentRegistrationEntry $entry) =>
-                '<strong>' . e($entry->document_title ?? '-') . '</strong>'
+                '<strong>' . e($entry->document_title ?? 'N/A') . '</strong>'
             )
             ->addColumn('category', fn(DocumentRegistrationEntry $entry) =>
                 $entry->category
                     ? '<small>' . e($entry->category->name) . '</small>'
-                    : '-'
+                    : 'N/A'
             )
             ->addColumn('device_name', fn(DocumentRegistrationEntry $entry) =>
                 e($entry->device_name ?? 'N/A')
             )
             ->addColumn('document_no', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->document_no ?? '-')
+                e($entry->document_no ?? 'N/A')
             )
             ->addColumn('revision_no', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->revision_no ?? '-')
+                e($entry->revision_no ?? 'N/A')
             )
             ->addColumn('originator_name', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->originator_name ?? '-')
+                e($entry->originator_name ?? 'N/A')
             )
             ->addColumn('customer', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->customer->name ?? '-')
+                e($entry->customer->name ?? 'N/A')
             )
             ->addColumn('status', function (DocumentRegistrationEntry $entry) {
                 $name = $entry->status->name ?? 'Unknown';
@@ -130,7 +130,7 @@ class RegistrationsDataTable extends DataTable
             })
             ->addColumn('submitted_at', function (DocumentRegistrationEntry $entry) {
                 if (!$entry->submitted_at) {
-                    return '-';
+                    return 'N/A';
                 }
 
                 return '<small><i class="bx bx-calendar"></i> ' .
