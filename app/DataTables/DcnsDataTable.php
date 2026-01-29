@@ -39,8 +39,14 @@ class DcnsDataTable extends DataTable
                 $request = $this->request();
 
                 // Apply customer filter from tab selection
-                if ($request->filled('customer_id') && $request->input('customer_id') !== '') {
-                    $query->where('customer_id', $request->input('customer_id'));
+                // Support special marker '__no_customer__' => customer_id IS NULL
+                if ($request->has('customer_id')) {
+                    $cid = $request->input('customer_id');
+                    if ($cid === '__no_customer__') {
+                        $query->whereNull('customer_id');
+                    } elseif ($cid !== '') {
+                        $query->where('customer_id', $cid);
+                    }
                 }
 
                 // Global search
@@ -180,9 +186,14 @@ class DcnsDataTable extends DataTable
             $query->where('category_id', $this->subcategoryId);
         }
 
-        // Filter by customer only when a non-empty value is provided
-        if (request()->filled('customer_id') && request('customer_id') !== '') {
-            $query->where('customer_id', request('customer_id'));
+        // Filter by customer: support '__no_customer__' => customer IS NULL
+        if (request()->has('customer_id')) {
+            $cid = request('customer_id');
+            if ($cid === '__no_customer__') {
+                $query->whereNull('customer_id');
+            } elseif ($cid !== '') {
+                $query->where('customer_id', $cid);
+            }
         }
 
         return $query->orderByDesc('submitted_at')->orderByDesc('id');

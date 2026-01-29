@@ -25,7 +25,7 @@ class DcnController extends Controller
             });
 
         // Apply filters based on request parameters
-        if ($request->filled('dcn_status')) {
+        if ($request->has('dcn_status')) {
             if ($request->dcn_status === 'with_dcn') {
                 $query->whereNotNull('dcn_no');
             } elseif ($request->dcn_status === 'without_dcn') {
@@ -33,8 +33,13 @@ class DcnController extends Controller
             }
         }
 
-        if ($request->filled('customer_id')) {
-            $query->where('customer_id', $request->customer_id);
+        // Customer filter: support special '__no_customer__' marker for NULL customer
+        if ($request->has('customer_id')) {
+            if ($request->customer_id === '__no_customer__') {
+                $query->whereNull('customer_id');
+            } elseif ($request->filled('customer_id')) {
+                $query->where('customer_id', $request->customer_id);
+            }
         }
 
         if ($request->filled('category_id')) {
@@ -503,6 +508,7 @@ class DcnController extends Controller
         $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy', 'status']);
 
         // Apply filters (same as index)
+
         if ($request->filled('dcn_status')) {
             if ($request->dcn_status === 'with_dcn') {
                 $query->whereNotNull('dcn_no');
@@ -510,9 +516,16 @@ class DcnController extends Controller
                 $query->whereNull('dcn_no');
             }
         }
-        if ($request->filled('customer_id')) {
-            $query->where('customer_id', $request->customer_id);
+
+        // Support __no_customer__ marker for NULL
+        if ($request->has('customer_id')) {
+            if ($request->customer_id === '__no_customer__') {
+                $query->whereNull('customer_id');
+            } elseif ($request->filled('customer_id')) {
+                $query->where('customer_id', $request->customer_id);
+            }
         }
+
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
@@ -562,12 +575,20 @@ class DcnController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Count entries that have no customer (customer_id IS NULL) for the selected subcategory
+        $noCustomerQuery = DocumentRegistrationEntry::whereNull('customer_id')
+            ->whereDoesntHave('status', fn($sq) => $sq->where('name', 'Cancelled'));
+        if ($subcategoryId) {
+            $noCustomerQuery->where('category_id', $subcategoryId);
+        }
+        $noCustomerCount = $noCustomerQuery->count();
+
         $categories = SubCategory::where('is_active', true)->orderBy('name')->get();
         $mainCategories = MainCategory::with(['subcategories' => fn($q) => $q->where('is_active', true)->orderBy('name')])
             ->orderBy('name')
             ->get();
 
-        return $dataTable->render('dcn_control.list', compact('customers', 'categories', 'mainCategories'));
+        return $dataTable->render('dcn_control.list', compact('customers', 'categories', 'mainCategories', 'noCustomerCount'));
     }
 
     public function listLogData(Request $request, DcnsDataTable $dataTable)
