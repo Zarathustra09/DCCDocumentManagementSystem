@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const selected = subcategoryIndex[window.selectedSubcategoryId];
         if (!selected) return;
         const label = formatCategoryLabel(selected);
-        titleEl.textContent = `${label} - Registration Log`;
+        titleEl.textContent = `${label} - Registration Logsheet`;
         alertEl.style.display = 'block';
         alertEl.innerHTML = `<i class='bx bx-info-circle'></i> Showing entries for: <strong>${escapeHtml(label)}</strong>`;
     }

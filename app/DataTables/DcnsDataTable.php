@@ -3,6 +3,7 @@
 namespace App\DataTables;
 
 use App\Models\DocumentRegistrationEntry;
+use App\Models\SubCategory; // <-- added import
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -246,6 +247,27 @@ JS)
      */
     public function getColumns(): array
     {
+        // If a subcategory is selected and its code is 'S' (case-insensitive)
+        // return the minimal set required: DCN, Originator, Dept, Reg-Date, Expiration, Title of Doc, Remarks.
+        if ($this->subcategoryId) {
+            try {
+                $sc = SubCategory::find($this->subcategoryId);
+                if ($sc && strcasecmp($sc->code ?? '', 'S') === 0) {
+                    return [
+                        Column::make('dcn_no_badge')->title('DCN')->orderable(false)->searchable(false),
+                        Column::make('originator')->title('Originator'),
+                        Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
+                        Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
+                        Column::make('effective_date')->title('Expiration')->name('implemented_at')->searchable(false),
+                        Column::make('document_title')->title('Title of Doc'),
+                        Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // If anything goes wrong fetching the subcategory, fall back to default columns
+            }
+        }
+
         return [
             Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
             Column::make('originator')->title('Originator'),
