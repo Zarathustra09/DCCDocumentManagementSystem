@@ -3,6 +3,7 @@
 namespace App\DataTables;
 
 use App\Models\DocumentRegistrationEntry;
+use App\Models\SubCategory; // <-- added import
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -39,8 +40,14 @@ class DcnsDataTable extends DataTable
                 $request = $this->request();
 
                 // Apply customer filter from tab selection
-                if ($request->filled('customer_id') && $request->input('customer_id') !== '') {
-                    $query->where('customer_id', $request->input('customer_id'));
+                // Support special marker '__no_customer__' => customer_id IS NULL
+                if ($request->has('customer_id')) {
+                    $cid = $request->input('customer_id');
+                    if ($cid === '__no_customer__') {
+                        $query->whereNull('customer_id');
+                    } elseif ($cid !== '') {
+                        $query->where('customer_id', $cid);
+                    }
                 }
 
                 // Global search
@@ -61,6 +68,11 @@ class DcnsDataTable extends DataTable
                                 $sq->where('firstname', 'like', "%{$globalSearch}%")
                                    ->orWhere('lastname', 'like', "%{$globalSearch}%")
                             )
+                            // include organization fields in search via submittedBy.organization
+                            ->orWhereHas('submittedBy.organization', fn($org) =>
+                                $org->where('organization', 'like', "%{$globalSearch}%")
+                                    ->orWhere('orgcode', 'like', "%{$globalSearch}%")
+                            )
                             ->orWhereHas('customer', fn($cust) =>
                                 $cust->where('name', 'like', "%{$globalSearch}%")
                             )
@@ -79,20 +91,23 @@ class DcnsDataTable extends DataTable
                     ? '<span class="badge bg-success"><i class="bx bx-check"></i> ' . e($entry->dcn_no) . '</span>'
                     : '<span class="badge bg-warning text-dark"><i class="bx bx-time"></i> Not Assigned</span>';
             })
-            ->addColumn('status_badge', function (DocumentRegistrationEntry $entry) {
-                $status = $entry->status->name ?? 'Unknown';
-                return match ($status) {
-                    'Pending' => '<span class="badge bg-warning text-dark"><i class="bx bx-time"></i> ' . e($status) . '</span>',
-                    'Implemented' => '<span class="badge bg-success text-white"><i class="bx bx-check"></i> ' . e($status) . '</span>',
-                    default => '<span class="badge bg-danger text-white"><i class="bx bx-x"></i> ' . e($status) . '</span>',
-                };
-            })
             ->addColumn('originator', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->submittedBy?->name ?? $entry->originator_name ?? '-')
+                e($entry->submittedBy?->name ?? $entry->originator_name ?? 'N/A')
             )
+            ->addColumn('dept', function (DocumentRegistrationEntry $entry) {
+                return e(
+
+                     $entry->submittedBy?->organization?->orgcode
+                    ?? $entry->submittedBy?->organization?->organization
+                    ?? $entry->submittedBy?->department?->name
+                    ?? $entry->submittedBy?->department_name
+                    ?? $entry->department_name
+                    ?? 'N/A'
+                );
+            })
             ->addColumn('registration_date', function (DocumentRegistrationEntry $entry) {
                 if (!$entry->submitted_at) {
-                    return '-';
+                    return 'N/A';
                 }
                 return '<small><i class="bx bx-calendar"></i> ' .
                     e($entry->submitted_at->format('m/d/Y')) .
@@ -101,30 +116,27 @@ class DcnsDataTable extends DataTable
                     '</small></small>';
             })
             ->addColumn('effective_date', function (DocumentRegistrationEntry $entry) {
-                if (!$entry->implemented_at) {
-                    return '-';
+                if (!$entry->expiration_date) {
+                    return 'N/A';
                 }
                 return '<small><i class="bx bx-calendar"></i> ' .
-                    e($entry->implemented_at->format('m/d/Y')) .
+                    e($entry->expiration_date->format('m/d/Y')) .
                     '<br><small class="text-muted">' .
-                    e($entry->implemented_at->format('g:i A')) .
+                    e($entry->expiration_date->format('g:i A')) .
                     '</small></small>';
             })
             ->addColumn('document_no', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->document_no ?? '-')
+                e($entry->document_no ?? 'N/A')
             )
             ->addColumn('revision_no', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->revision_no ?? '-')
-            )
-            ->addColumn('device_name', fn(DocumentRegistrationEntry $entry) =>
-                e($entry->device_name ?? 'N/A')
+                e($entry->revision_no ?? 'N/A')
             )
             ->addColumn('document_title', fn(DocumentRegistrationEntry $entry) =>
-                '<strong>' . e($entry->document_title ?? '-') . '</strong>'
+                '<strong>' . e($entry->document_title ?? 'N/A') . '</strong>'
             )
-            ->addColumn('customer_display', function (DocumentRegistrationEntry $entry) {
-                return e($entry->customer->name ?? '-');
-            })
+            ->addColumn('remarks', fn(DocumentRegistrationEntry $entry) =>
+                e($entry->remarks ?? 'N/A')
+            )
             ->addColumn('action', function (DocumentRegistrationEntry $entry) {
                 $dropdown = '
                     <div class="dropdown">
@@ -154,7 +166,7 @@ class DcnsDataTable extends DataTable
 
                 return $dropdown;
             })
-            ->rawColumns(['dcn_no_badge', 'status_badge', 'registration_date', 'effective_date', 'document_title', 'action'])
+            ->rawColumns(['dcn_no_badge', 'registration_date', 'effective_date', 'document_title', 'action'])
             ->setRowId('id');
     }
 
@@ -166,7 +178,8 @@ class DcnsDataTable extends DataTable
     public function query(DocumentRegistrationEntry $model): QueryBuilder
     {
         $query = $model->newQuery()
-            ->with(['customer', 'category', 'submittedBy', 'status'])
+            // eager-load submittedBy.organization
+            ->with(['customer', 'category', 'submittedBy.organization', 'status'])
             ->whereDoesntHave('status', fn($q) => $q->where('name', 'Cancelled'));
 
         // Filter by subcategory if set
@@ -174,9 +187,14 @@ class DcnsDataTable extends DataTable
             $query->where('category_id', $this->subcategoryId);
         }
 
-        // Filter by customer only when a non-empty value is provided
-        if (request()->filled('customer_id') && request('customer_id') !== '') {
-            $query->where('customer_id', request('customer_id'));
+        // Filter by customer: support '__no_customer__' => customer IS NULL
+        if (request()->has('customer_id')) {
+            $cid = request('customer_id');
+            if ($cid === '__no_customer__') {
+                $query->whereNull('customer_id');
+            } elseif ($cid !== '') {
+                $query->where('customer_id', $cid);
+            }
         }
 
         return $query->orderByDesc('submitted_at')->orderByDesc('id');
@@ -229,17 +247,36 @@ JS)
      */
     public function getColumns(): array
     {
+        // If a subcategory is selected and its code is 'S' (case-insensitive)
+        // return the minimal set required: DCN, Originator, Dept, Reg-Date, Expiration, Title of Doc, Remarks.
+        if ($this->subcategoryId) {
+            try {
+                $sc = SubCategory::find($this->subcategoryId);
+                if ($sc && strcasecmp($sc->code ?? '', 'S') === 0) {
+                    return [
+                        Column::make('dcn_no_badge')->title('DCN')->orderable(false)->searchable(false),
+                        Column::make('originator')->title('Originator'),
+                        Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
+                        Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
+                        Column::make('effective_date')->title('Expiration')->name('expiration_date')->searchable(false),
+                        Column::make('document_title')->title('Title of Doc'),
+                        Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // If anything goes wrong fetching the subcategory, fall back to default columns
+            }
+        }
+
         return [
             Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
-            Column::make('status_badge')->title('Status')->orderable(false)->searchable(false),
             Column::make('originator')->title('Originator'),
-            Column::make('registration_date')->title('Registration Date')->name('submitted_at')->searchable(false),
-            Column::make('effective_date')->title('Effective Date')->name('implemented_at')->searchable(false),
+            Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
+            Column::make('effective_date')->title('Date Registered')->name('expiration_date')->searchable(false),
             Column::make('document_no')->title('Document No.'),
-            Column::make('revision_no')->title('Rev.'),
-            Column::make('device_name')->title('Device Name / Part Number'),
-            Column::make('document_title')->title('Document Title'),
-            Column::make('customer_display')->title('Customer')->orderable(false)->searchable(false),
+            Column::make('revision_no')->title('Rev No.'),
+            Column::make('document_title')->title('Title'),
+            Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)

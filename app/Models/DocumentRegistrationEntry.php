@@ -26,6 +26,7 @@ class DocumentRegistrationEntry extends Model
         'implemented_by',
         'submitted_at',
         'implemented_at',
+        'expiration_date',
         'rejection_reason',
         'category_id',
         'customer_id',
@@ -36,6 +37,7 @@ class DocumentRegistrationEntry extends Model
     protected $casts = [
         'submitted_at' => 'datetime',
         'implemented_at' => 'datetime',
+        'expiration_date' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -133,6 +135,12 @@ class DocumentRegistrationEntry extends Model
         static::creating(function ($model) {
             if (empty($model->control_no)) {
                 $model->control_no = static::generateControlNumber();
+            }
+        });
+
+        static::saving(function ($model) {
+            if ($model->isDirty('implemented_at') && $model->implemented_at) {
+                $model->expiration_date = $model->implemented_at->copy()->addMonth();
             }
         });
     }

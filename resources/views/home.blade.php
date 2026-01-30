@@ -39,65 +39,65 @@
             </div>
         </div>
 
-        @if($canApprove && $pendingCount > 0)
+        @if(isset($pendingTable) || isset($noDcnTable))
             <div class="row">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h4 class="card-title mb-0">
                                 <i class='bx bx-time-five text-warning'></i>
-                                Pending Document Registrations
-                                <span class="badge bg-warning text-dark">{{ $pendingCount }}</span>
+                                Registrations Requiring Attention
                             </h4>
-                            <a href="{{ route('document-registry.list') }}" class="btn btn-outline-primary btn-sm">
-                                <i class='bx bx-show'></i> View All Pending
+                            <a href="{{ route('document-registry.list') }}" class="btn btn-outline-primary btn-sm" id="view-all-link">
+                                <i class='bx bx-show'></i> <span id="view-all-text">View All Pending Registrations</span>
                             </a>
                         </div>
-
                         <div class="card-body">
-                            <div class="table-responsive">
-                                @if(isset($dataTable))
-                                    {!! $dataTable->table(['class' => 'table table-hover table-striped'], true) !!}
-                                @else
-                                    <table class="table table-hover" id="documentRegistry">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Control No.</th>
-                                                <th>Document Details</th>
-                                                <th>Originator</th>
-                                                <th>Device Name</th>
-                                                <th>Submitted By</th>
-                                                <th>Status</th>
-                                                <th class="text-center">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                @endif
+                            <div class="nav-align-top mb-3">
+                                <ul class="nav nav-tabs" role="tablist" id="homeTabs">
+                                    <li class="nav-item">
+                                        <button type="button" class="nav-link active" role="tab"
+                                                data-bs-toggle="tab" data-bs-target="#tab-pending-registrations"
+                                                aria-selected="true"
+                                                data-view-route="{{ route('document-registry.list') }}"
+                                                data-view-text="View All Pending Registrations">
+                                            <i class='bx bx-time'></i> Pending Registrations
+                                            <span class="badge bg-warning text-dark ms-1">{{ $pendingCount }}</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button type="button" class="nav-link" role="tab"
+                                                data-bs-toggle="tab" data-bs-target="#tab-no-dcn"
+                                                aria-selected="false"
+                                                data-view-route="{{ route('dcn.list') }}"
+                                                data-view-text="View All DCN Assignments">
+                                            <i class='bx bx-barcode'></i> No DCN Assigned
+                                            <span class="badge bg-primary ms-1">{{ $noDcnCount }}</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="tab-pending-registrations" role="tabpanel">
+                                        <div class="table-responsive">
+                                            @isset($pendingTable)
+                                                {!! $pendingTable->table(['class' => 'table table-hover table-striped w-100'], true) !!}
+                                            @endisset
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="tab-no-dcn" role="tabpanel">
+                                        <div class="table-responsive">
+                                            @isset($noDcnTable)
+                                                {!! $noDcnTable->table(['class' => 'table table-hover table-striped w-100'], true) !!}
+                                            @endisset
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-
-                            @if($pendingCount >= 10)
-                                <div class="text-center mt-3">
-                                    <a href="{{ route('document-registry.list')}}" class="btn btn-primary">
-                                        <i class='bx bx-show'></i> View All Pending Registrations
-                                    </a>
+                            @if($pendingCount == 0 && $noDcnCount == 0)
+                                <div class="alert alert-success text-center mb-0">
+                                    <i class='bx bx-check-circle'></i> No pending or unassigned registrations.
                                 </div>
                             @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @elseif($canApprove)
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body text-center py-5">
-                            <i class='bx bx-check-circle text-success' style="font-size: 4rem;"></i>
-                            <h4 class="mt-3">No Pending Registrations</h4>
-                            <p class="text-muted">All document registrations have been processed.</p>
-                            <a href="{{ route('document-registry.index') }}" class="btn btn-primary">
-                                <i class='bx bx-file-find'></i> View My Registrations
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -109,12 +109,41 @@
 @endsection
 
 @push('scripts')
-    {{-- remove manual DataTable init; use Yajra scripts when available --}}
-    @if(isset($dataTable))
-        {!! $dataTable->scripts() !!}
-    @endif
+    @isset($pendingTable)
+        {!! $pendingTable->scripts() !!}
+    @endisset
+    @isset($noDcnTable)
+        {!! $noDcnTable->scripts() !!}
+    @endisset
 
-    {{-- keep other page scripts (driverjs etc.) --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabButtons = document.querySelectorAll('#homeTabs button[data-bs-toggle="tab"]');
+            const viewAllLink = document.getElementById('view-all-link');
+            const viewAllText = document.getElementById('view-all-text');
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener('shown.bs.tab', function () {
+                    const target = this.getAttribute('data-bs-target');
+                    const id = target === '#tab-no-dcn' ? 'noDcnRegistrationsTable' : 'pendingRegistrationsTable';
+                    const dt = window.LaravelDataTables ? window.LaravelDataTables[id] : null;
+                    if (dt) dt.columns.adjust().draw(false);
+
+                    // Update "View All" link and text
+                    const viewRoute = this.getAttribute('data-view-route');
+                    const viewText = this.getAttribute('data-view-text');
+                    if (viewAllLink && viewRoute) {
+                        viewAllLink.href = viewRoute;
+                    }
+                    if (viewAllText && viewText) {
+                        viewAllText.textContent = viewText;
+                    }
+                });
+            });
+        });
+    </script>
+
+    {{-- keep existing driverjs tour --}}
     <script>
         window.addEventListener('start-driverjs-tour', function() {
             const driver = window.driver.js.driver;

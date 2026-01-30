@@ -29,6 +29,20 @@
                                         <i class='bx bx-group'></i> All Customers
                                     </button>
                                 </li>
+
+                                <!-- No Customer tab (entries with customer_id IS NULL) -->
+                                @if(isset($noCustomerCount) && $noCustomerCount > 0)
+                                    <li class="nav-item">
+                                        <button type="button" class="nav-link" role="tab"
+                                                data-bs-toggle="tab" data-bs-target="#tab-no-customer"
+                                                aria-controls="tab-no-customer" aria-selected="false"
+                                                data-customer-id="__no_customer__">
+                                            <i class='bx bx-user-x'></i> No Customer
+                                            <span class="badge bg-primary ms-1">{{ $noCustomerCount }}</span>
+                                        </button>
+                                    </li>
+                                @endif
+
                                 @forelse($customers as $customer)
                                     <li class="nav-item">
                                         <button type="button" class="nav-link" role="tab"
@@ -54,6 +68,16 @@
                                         {!! $dataTable->table(['class' => 'table table-striped table-hover'], true) !!}
                                     </div>
                                 </div>
+
+                                <!-- No Customer tab-pane -->
+                                @if(isset($noCustomerCount) && $noCustomerCount > 0)
+                                    <div class="tab-pane fade" id="tab-no-customer" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <!-- Table will be moved here dynamically -->
+                                        </div>
+                                    </div>
+                                @endif
+
                                 @foreach($customers as $customer)
                                     <div class="tab-pane fade" id="tab-customer-{{ $customer->id }}" role="tabpanel">
                                         <div class="table-responsive">
@@ -393,13 +417,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function escapeHtml(v){return (v??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
-    function formatCategoryLabel(cat){return cat ? (cat.main_category?.name ? `${cat.name} (${cat.main_category.name})` : cat.name) : ''; }
+    function formatCategoryLabel(cat){
+        // return only the subcategory name (do not include main category)
+        return cat ? (cat.name ?? '') : '';
+    }
 
     function updateLogUI() {
         const selected = subcategoryIndex[window.selectedSubcategoryId];
         if (!selected) return;
         const label = formatCategoryLabel(selected);
-        titleEl.textContent = `${label} - Registration Log`;
+        titleEl.textContent = `${label} - Registration Logsheet`;
         alertEl.style.display = 'block';
         alertEl.innerHTML = `<i class='bx bx-info-circle'></i> Showing entries for: <strong>${escapeHtml(label)}</strong>`;
     }
