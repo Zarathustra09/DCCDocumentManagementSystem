@@ -417,7 +417,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function escapeHtml(v){return (v??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
-    function formatCategoryLabel(cat){return cat ? (cat.main_category?.name ? `${cat.name} (${cat.main_category.name})` : cat.name) : ''; }
+    function formatCategoryLabel(cat){
+        // return only the subcategory name (do not include main category)
+        return cat ? (cat.name ?? '') : '';
+    }
 
     function updateLogUI() {
         const selected = subcategoryIndex[window.selectedSubcategoryId];
