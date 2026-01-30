@@ -12,6 +12,9 @@ use Yajra\DataTables\Services\DataTable;
 
 class HomeDataTable extends DataTable
 {
+    protected string $mode = 'pending';
+    protected string $tableId = 'documentRegistry';
+
     /**
      * Build the DataTable class.
      *
@@ -38,27 +41,38 @@ class HomeDataTable extends DataTable
 
         $dt->addColumn('status_label', function ($row) {
             $statusName = $row->status ? e($row->status->name) : '-';
-            return '<span class="badge bg-warning text-dark"><i class="bx bx-time"></i> ' . $statusName . '</span>';
+            $style = match (strtolower($row->status->name ?? '')) {
+                'approved' => 'bg-success',
+                'rejected', 'cancelled', 'returned' => 'bg-danger',
+                default => 'bg-warning text-dark',
+            };
+            return '<span class="badge ' . $style . '"><i class="bx bx-time"></i> ' . $statusName . '</span>';
         });
 
         $dt->addColumn('action', function ($row) {
-            $viewUrl = route('document-registry.show', $row);
+            // Different view URL based on mode
+            if ($this->mode === 'no_dcn') {
+                $viewUrl = route('dcn.list', ['subcategory_id' => $row->category_id]);
+            } else {
+                $viewUrl = route('document-registry.show', $row);
+            }
+
             $html = '<div class="dropdown">';
             $html .= '<button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">';
             $html .= '<i class="bx bx-cog"></i> Manage</button>';
             $html .= '<div class="dropdown-menu">';
             $html .= '<a class="dropdown-item" href="' . $viewUrl . '"><i class="bx bx-show me-2"></i> View Details</a>';
 
-            // Edit button (server-side permissions)
-            if ($row->status && $row->status->name === 'Pending' &&
+            // Edit button (server-side permissions) - only for pending mode
+            if ($this->mode === 'pending' && $row->status && $row->status->name === 'Pending' &&
                 $row->submitted_by === auth()->id() &&
                 auth()->user()->can('edit document registration details')) {
                 $editUrl = route('document-registry.edit', $row);
                 $html .= '<a class="dropdown-item" href="' . $editUrl . '"><i class="bx bx-edit-alt me-2"></i> Edit</a>';
             }
 
-            // Withdraw form
-            if ($row->status && $row->status->name === 'Pending' &&
+            // Withdraw form - only for pending mode
+            if ($this->mode === 'pending' && $row->status && $row->status->name === 'Pending' &&
                 $row->submitted_by === auth()->id() &&
                 auth()->user()->can('withdraw document submission')) {
                 $withdrawUrl = route('document-registry.withdraw', $row);
@@ -85,12 +99,16 @@ class HomeDataTable extends DataTable
      */
     public function query(DocumentRegistrationEntry $model): QueryBuilder
     {
-        return $model->newQuery()
-            ->with(['submittedBy', 'status', 'customer'])
-            ->whereHas('status', function ($q) {
-                $q->where('name', 'Pending');
-            })
-            ->latest('submitted_at');
+        $base = $model->newQuery()->with(['submittedBy', 'status', 'customer']);
+        if ($this->mode === 'no_dcn') {
+            return $base->whereNull('dcn_no')
+                ->where('status_id', '!=', 3)
+                ->whereHas('status', function($q) {
+                    $q->where('name', '!=', 'Cancelled');
+                })
+                ->latest('submitted_at');
+        }
+        return $base->where('status_id', 1)->latest('submitted_at');
     }
 
     /**
@@ -98,10 +116,18 @@ class HomeDataTable extends DataTable
      */
     public function html(): HtmlBuilder
     {
+        $mode = $this->mode;
         return $this->builder()
-            ->setTableId('documentRegistry')
+            ->setTableId($this->tableId)
             ->columns($this->getColumns())
-            ->minifiedAjax()
+            ->ajax([
+                'url' => url()->current(),
+                'data' => <<<JS
+function (d) {
+    d.mode = '{$mode}';
+}
+JS
+            ])
             ->orderBy(2, 'desc')
             ->pageLength(10)
             ->buttons([
@@ -140,5 +166,17 @@ class HomeDataTable extends DataTable
     protected function filename(): string
     {
         return 'Home_' . date('YmdHis');
+    }
+
+    public function setMode(string $mode): self
+    {
+        $this->mode = $mode === 'no_dcn' ? 'no_dcn' : 'pending';
+        return $this;
+    }
+
+    public function setTableId(string $tableId): self
+    {
+        $this->tableId = $tableId;
+        return $this;
     }
 }
