@@ -272,7 +272,7 @@ JS)
             Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
             Column::make('originator')->title('Originator'),
             Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
-            Column::make('effective_date')->title('Date Registered')->name('expiration_date')->searchable(false),
+            Column::make('registration_date')->title('Date Registered')->name('submitted_at')->searchable(false),
             Column::make('document_no')->title('Document No.'),
             Column::make('revision_no')->title('Rev No.'),
             Column::make('document_title')->title('Title'),
