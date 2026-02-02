@@ -3,12 +3,13 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Models\DocumentRegistrationEntryFile;
 use App\Models\User;
 
-class DocumentRegistryFileCreated extends Notification
+class DocumentRegistryFileCreated extends Notification implements ShouldQueue
 {
     use Queueable;
 
