@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
    })
     ->withCommands([
        \App\Console\Commands\SyncEmployeesToUsers::class,
+        \App\Console\Commands\ProcessQueue::class,
    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
