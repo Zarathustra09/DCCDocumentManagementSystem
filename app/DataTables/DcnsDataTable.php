@@ -261,6 +261,12 @@ JS)
                         Column::make('effective_date')->title('Expiration')->name('expiration_date')->searchable(false),
                         Column::make('document_title')->title('Title of Doc'),
                         Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
+                        // Added action column for 'S' category so Manage dropdown appears
+                        Column::computed('action')
+                            ->exportable(false)
+                            ->printable(false)
+                            ->width(80)
+                            ->addClass('text-center'),
                     ];
                 }
             } catch (\Throwable $e) {
