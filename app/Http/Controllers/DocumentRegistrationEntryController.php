@@ -62,7 +62,8 @@ class DocumentRegistrationEntryController extends Controller
             'device_name' => 'nullable|string|max:255',
             'originator_name' => 'required|string|max:255',
             'remarks' => 'nullable|string',
-            'document_file' => 'required|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:10240'
+            // increased max from 10240 KB (10MB) to 20480 KB (20MB)
+            'document_file' => 'required|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:20480'
         ];
 
 
@@ -564,7 +565,8 @@ class DocumentRegistrationEntryController extends Controller
                 ], 404);
             }
             $fileSize = filesize($filePath);
-            if ($fileSize > 10 * 1024 * 1024) {
+            // allow up to 20MB for preview (was 10MB)
+            if ($fileSize > 20 * 1024 * 1024) {
                 return response()->json([
                     'success' => false,
                     'message' => 'File too large for preview. Please download to view.'

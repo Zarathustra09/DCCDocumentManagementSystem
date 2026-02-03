@@ -15,6 +15,7 @@ class DcnsDataTable extends DataTable
 {
     protected string $logType = 'build';
     protected $subcategoryId = null;
+    protected ?string $cachedSubcategoryName = null;
 
     public function setLogType(string $logType): self
     {
@@ -25,7 +26,21 @@ class DcnsDataTable extends DataTable
     public function setSubcategoryId($subcategoryId)
     {
         $this->subcategoryId = $subcategoryId;
+        $this->cachedSubcategoryName = null;
         return $this;
+    }
+
+    private function resolveSubcategoryName(): ?string
+    {
+        if (!$this->subcategoryId) {
+            return null;
+        }
+
+        if ($this->cachedSubcategoryName !== null) {
+            return $this->cachedSubcategoryName;
+        }
+
+        return $this->cachedSubcategoryName = SubCategory::find($this->subcategoryId)?->name;
     }
 
     /**
@@ -131,6 +146,12 @@ class DcnsDataTable extends DataTable
             ->addColumn('revision_no', fn(DocumentRegistrationEntry $entry) =>
                 e($entry->revision_no ?? 'N/A')
             )
+            ->addColumn('device_name', fn(DocumentRegistrationEntry $entry) =>
+                e($entry->device_name ?? 'N/A')
+            )
+            ->addColumn('customer', fn(DocumentRegistrationEntry $entry) =>
+                e($entry->customer?->name ?? 'N/A')
+            )
             ->addColumn('document_title', fn(DocumentRegistrationEntry $entry) =>
                 '<strong>' . e($entry->document_title ?? 'N/A') . '</strong>'
             )
@@ -197,7 +218,7 @@ class DcnsDataTable extends DataTable
             }
         }
 
-        return $query->orderByDesc('submitted_at')->orderByDesc('id');
+        return $query->orderBy('id', 'asc');
     }
 
     /**
@@ -247,35 +268,54 @@ JS)
      */
     public function getColumns(): array
     {
-        // If a subcategory is selected and its code is 'S' (case-insensitive)
-        // return the minimal set required: DCN, Originator, Dept, Reg-Date, Expiration, Title of Doc, Remarks.
-        if ($this->subcategoryId) {
-            try {
-                $sc = SubCategory::find($this->subcategoryId);
-                if ($sc && strcasecmp($sc->code ?? '', 'S') === 0) {
-                    return [
-                        Column::make('dcn_no_badge')->title('DCN')->orderable(false)->searchable(false),
-                        Column::make('originator')->title('Originator'),
-                        Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
-                        Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
-                        Column::make('effective_date')->title('Expiration')->name('expiration_date')->searchable(false),
-                        Column::make('document_title')->title('Title of Doc'),
-                        Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
-                    ];
-                }
-            } catch (\Throwable $e) {
-                // If anything goes wrong fetching the subcategory, fall back to default columns
-            }
+        $subcategoryName = $this->resolveSubcategoryName();
+
+        if ($subcategoryName && strcasecmp($subcategoryName, 'Document Special Instruction') === 0) {
+            return [
+                Column::make('dcn_no_badge')->title('DCN')->orderable(false)->searchable(false),
+                Column::make('originator')->title('Originator'),
+                Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
+                Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
+                Column::make('effective_date')->title('Expiration')->name('expiration_date')->searchable(false),
+                Column::make('document_title')->title('Title of Doc'),
+                Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
+                Column::computed('action')
+                    ->exportable(false)
+                    ->printable(false)
+                    ->width(80)
+                    ->addClass('text-center'),
+            ];
+        }
+
+        if ($subcategoryName && strcasecmp($subcategoryName, 'SPI In-House Specification') === 0) {
+            return [
+                Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
+                Column::make('originator')->title('Originator'),
+                Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
+                Column::make('registration_date')->title('Date Registered')->name('submitted_at')->searchable(false),
+                Column::make('document_no')->title('Document No.'),
+                Column::make('revision_no')->title('Rev No.'),
+                Column::make('document_title')->title('Title'),
+                Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
+                Column::computed('action')
+                    ->exportable(false)
+                    ->printable(false)
+                    ->width(80)
+                    ->addClass('text-center'),
+            ];
         }
 
         return [
             Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
             Column::make('originator')->title('Originator'),
             Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
-            Column::make('effective_date')->title('Date Registered')->name('expiration_date')->searchable(false),
-            Column::make('document_no')->title('Document No.'),
-            Column::make('revision_no')->title('Rev No.'),
+            Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
+            Column::make('effective_date')->title('Expiration')->name('expiration_date')->searchable(false),
+            Column::make('document_no')->title('Document No. / Part No.'),
+            Column::make('revision_no')->title('Rev'),
+            Column::make('device_name')->title('Device Name'),
             Column::make('document_title')->title('Title'),
+            Column::make('customer')->title('Customer'),
             Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
             Column::computed('action')
                 ->exportable(false)

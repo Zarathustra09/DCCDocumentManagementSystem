@@ -183,7 +183,7 @@
                                            required>
                                     <div class="form-text">
                                         <i class='bx bx-info-circle'></i>
-                                        Accepted formats: PDF, Word, Excel, PowerPoint, Text files. Maximum size: 10MB
+                                        Accepted formats: PDF, Word, Excel, PowerPoint, Text files. Maximum size: 20MB
                                     </div>
                                     @error('document_file')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -477,12 +477,12 @@ document.addEventListener('DOMContentLoaded', function() {
     fileInput.addEventListener('change', function() {
         const file = this.files[0];
         if (file) {
-            const maxSize = 10 * 1024 * 1024; // 10MB
+            const maxSize = 20 * 1024 * 1024; // 20MB (was 10MB)
             if (file.size > maxSize) {
                 Swal.fire({
                     icon: 'error',
                     title: 'File Too Large',
-                    text: 'File size must be less than 10MB',
+                    text: 'File size must be less than 20MB',
                     confirmButtonColor: '#d33'
                 });
                 this.value = '';
@@ -658,7 +658,7 @@ window.addEventListener('start-driverjs-tour', function() {
                 element: '#document_file',
                 popover: {
                     title: 'Document File Upload',
-                    description: 'Upload your document file here. Accepted formats include PDF, Word, Excel, PowerPoint, and Text files. The maximum file size is 10MB. For example, upload "IT Equipment Preventive Maintenance Procedure.pdf".',
+                    description: 'Upload your document file here. Accepted formats include PDF, Word, Excel, PowerPoint, and Text files. The maximum file size is 20MB. For example, upload "IT Equipment Preventive Maintenance Procedure.pdf".',
                     side: 'bottom',
                     align: 'start'
                 }
