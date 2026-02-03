@@ -218,7 +218,7 @@ class DcnsDataTable extends DataTable
             }
         }
 
-        return $query->orderByDesc('submitted_at')->orderByDesc('id');
+        return $query->orderBy('id', 'asc');
     }
 
     /**
