@@ -198,7 +198,22 @@ class DcnsDataTable extends DataTable
      */
     public function query(DocumentRegistrationEntry $model): QueryBuilder
     {
+        $yearExpr   = "CAST(RIGHT(SUBSTRING_INDEX(dcn_no, '-', 1), 2) AS UNSIGNED)";
+        $suffixExpr = "CAST(SUBSTRING_INDEX(dcn_no, '-', -1) AS UNSIGNED)";
+        $sortExpr   = "
+            CASE
+                WHEN dcn_no IS NULL OR dcn_no = '' THEN '9999-9999'
+                ELSE CONCAT(
+                    LPAD($yearExpr, 4, '0'),
+                    '-',
+                    LPAD($suffixExpr, 4, '0')
+                )
+            END
+        ";
+
         $query = $model->newQuery()
+            ->select('*')
+            ->selectRaw("$sortExpr AS dcn_no_sort")
             // eager-load submittedBy.organization
             ->with(['customer', 'category', 'submittedBy.organization', 'status'])
             ->whereDoesntHave('status', fn($q) => $q->where('name', 'Cancelled'));
@@ -218,7 +233,9 @@ class DcnsDataTable extends DataTable
             }
         }
 
-        return $query->orderBy('id', 'asc');
+        return $query
+            ->orderBy('dcn_no_sort', 'asc')
+            ->orderBy('id', 'asc');
     }
 
     /**
@@ -244,7 +261,7 @@ function (d) {
 }
 JS
             ])
-            ->orderBy(3, 'desc')
+            ->orderBy(0, 'asc')
             ->selectStyleSingle()
             ->buttons([
                 Button::make('excel')
@@ -272,7 +289,7 @@ JS)
 
         if ($subcategoryName && strcasecmp($subcategoryName, 'Document Special Instruction') === 0) {
             return [
-                Column::make('dcn_no_badge')->title('DCN')->orderable(false)->searchable(false),
+                Column::make('dcn_no_badge')->title('DCN')->orderable(true)->searchable(false)->name('dcn_no_sort'),
                 Column::make('originator')->title('Originator'),
                 Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
                 Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
@@ -289,7 +306,7 @@ JS)
 
         if ($subcategoryName && strcasecmp($subcategoryName, 'SPI In-House Specification') === 0) {
             return [
-                Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
+                Column::make('dcn_no_badge')->title('DCN No.')->orderable(true)->searchable(false)->name('dcn_no_sort'),
                 Column::make('originator')->title('Originator'),
                 Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
                 Column::make('registration_date')->title('Date Registered')->name('submitted_at')->searchable(false),
@@ -306,7 +323,7 @@ JS)
         }
 
         return [
-            Column::make('dcn_no_badge')->title('DCN No.')->orderable(false)->searchable(false),
+            Column::make('dcn_no_badge')->title('DCN No.')->orderable(true)->searchable(false)->name('dcn_no_sort'),
             Column::make('originator')->title('Originator'),
             Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
             Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
