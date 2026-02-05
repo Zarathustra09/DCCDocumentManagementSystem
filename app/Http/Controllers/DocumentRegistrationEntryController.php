@@ -4,15 +4,14 @@ namespace App\Http\Controllers;
 
 use App\DataTables\RegistrationsDataTable;
 use App\DataTables\UserRegistrationsDataTable;
+use App\Interfaces\DocumentRegistryServiceInterface;
 use App\Models\Category;
+use App\Models\DocumentRegistrationEntryStatus;
 use App\Models\SubCategory;
 use App\Models\Customer;
 use App\Models\DocumentRegistrationEntry;
-use App\Models\DocumentRegistrationEntryFile;
-use App\Models\DocumentRegistrationEntryStatus;
 use App\Models\MainCategory;
 use App\Models\User;
-use App\Notifications\DocumentRegistryEntryCreated;
 use App\Notifications\DocumentRegistryEntryStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,10 +19,16 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Exports\DocumentRegistryExport;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\DB; // added DB facade
 
 class DocumentRegistrationEntryController extends Controller
 {
+    protected DocumentRegistryServiceInterface $documentRegistryService;
+
+    public function __construct(DocumentRegistryServiceInterface $documentRegistryService)
+    {
+        $this->documentRegistryService = $documentRegistryService;
+    }
+
     public function index(UserRegistrationsDataTable $dataTable)
     {
         $categories = Category::where('is_active', true)->orderBy('name')->get();
@@ -33,9 +38,8 @@ class DocumentRegistrationEntryController extends Controller
 
     public function create()
     {
-        if (!Auth::user()->can('submit document for approval')) {
-            abort(403, 'You do not have permission to submit documents for approval.');
-        }
+        // use policy instead of inline Spatie check
+        $this->authorize('create', DocumentRegistrationEntry::class);
 
         $mainCategories = MainCategory::with(['subcategories' => function ($query) {
             $query->where('is_active', true)->orderBy('name');
@@ -47,76 +51,15 @@ class DocumentRegistrationEntryController extends Controller
 
     public function store(Request $request)
     {
-        if (!Auth::user()->can('submit document for approval')) {
-            abort(403);
-        }
+        // use policy instead of inline Spatie check
+        $this->authorize('create', DocumentRegistrationEntry::class);
 
-        // Basic rules (customer rule set conditionally below)
-        $rules = [
-            'document_no' => 'nullable|string|max:100',
-            'document_title' => 'required|string|max:255',
-            'category_id' => 'required|exists:subcategories,id',
-            'customer_id' => 'nullable|exists:customers,id',
-            'revision_no' => 'nullable|string|max:50',
-            'device_name' => 'nullable|string|max:255',
-            'originator_name' => 'required|string|max:255',
-            'remarks' => 'nullable|string',
-            // increased max from 10240 KB (10MB) to 20480 KB (20MB)
-            'document_file' => 'required|file|mimes:pdf,doc,docx,txt,xls,xlsx,csv|max:20480'
-        ];
-
-
-        $request->validate($rules);
-
-        $pendingStatus = DocumentRegistrationEntryStatus::where('name', 'Pending')->first();
-
-        DB::beginTransaction();
         try {
-            $entry = DocumentRegistrationEntry::create([
-                'document_no' => $request->document_no,
-                'document_title' => $request->document_title,
-                'category_id' => $request->category_id,
-                'customer_id' => $request->customer_id,
-                'revision_no' => $request->revision_no,
-                'device_name' => $request->device_name,
-                'originator_name' => $request->originator_name,
-//            'customer' => $request->customer,
-                'remarks' => $request->remarks,
-                'status_id' => $pendingStatus->id,
-                'submitted_by' => Auth::id(),
-                'submitted_at' => now(),
-            ]);
-
-            if ($request->hasFile('document_file')) {
-                $file = $request->file('document_file');
-                $pendingFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Pending')->first();
-
-                DocumentRegistrationEntryFile::create([
-                    'entry_id' => $entry->id,
-                    'file_path' => $file->store('document_registrations', 'local'),
-                    'original_filename' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getMimeType(),
-                    'file_size' => $file->getSize(),
-                    'status_id' => $pendingFileStatus->id,
-                ]);
-            }
-
-            // Refresh the entry to ensure all data is loaded
-            $entry->refresh();
-
-            DB::commit();
-
-            // Send notification (make sure this doesn't interfere with routing)
-            try {
-                DocumentRegistryEntryCreated::sendToAdmins($entry);
-            } catch (\Exception $e) {
-                Log::error('Failed to send notification: ' . $e->getMessage());
-            }
+            $entry = $this->documentRegistryService->create($request);
 
             return redirect()->route('document-registry.show', ['documentRegistrationEntry' => $entry->id])
                 ->with('success', 'Document registration submitted successfully and is pending approval.');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Failed to create document registration entry: ' . $e->getMessage());
             return back()->with('error', 'Failed to submit document registration. Please try again.');
         }
@@ -124,18 +67,17 @@ class DocumentRegistrationEntryController extends Controller
 
     public function show(DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!$this->canViewEntry($documentRegistrationEntry)) {
-            abort(403, 'You do not have permission to view this document registration.');
-        }
+        // delegate permission to policy
+        $this->authorize('view', $documentRegistrationEntry);
+
         $documentRegistrationEntry->load(['submittedBy', 'approvedBy', 'documents', 'files.status', 'status', 'category']);
         return view('document-registry.show', compact('documentRegistrationEntry'));
     }
 
     public function edit(DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!$this->canEditEntry($documentRegistrationEntry)) {
-            abort(403);
-        }
+        // use policy authorization (delegates to DocumentRegistrationEntryPolicy@update)
+        $this->authorize('update', $documentRegistrationEntry);
 
         $mainCategories = MainCategory::with(['subcategories' => function ($query) {
             $query->where('is_active', true)->orderBy('name');
@@ -150,44 +92,13 @@ class DocumentRegistrationEntryController extends Controller
 
     public function approve(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!Auth::user()->can('approve document registration') ||
-            $documentRegistrationEntry->status->name !== 'Pending') {
-            abort(403);
-        }
+        // use policy authorization (delegates to DocumentRegistrationEntryPolicy@approve)
+        $this->authorize('approve', $documentRegistrationEntry);
 
-        $implementedStatus = DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
-        $implementedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
-
-        DB::beginTransaction();
         try {
-            $documentRegistrationEntry->update([
-                'status_id' => $implementedStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => null,
-                'revision_notes' => null,
-            ]);
-
-            $documentRegistrationEntry->files()->update([
-                'status_id' => $implementedFileStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => null,
-            ]);
-
-            $documentRegistrationEntry->refresh();
-
-            DB::commit();
-
-            $user = $documentRegistrationEntry->submittedBy;
-            if ($user) {
-                $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status));
-            }
-
-
+            $this->documentRegistryService->approve($request, $documentRegistrationEntry);
             return back()->with('success', 'Document registration approved successfully.');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Approval failed: ' . $e->getMessage());
             return back()->with('error', 'Failed to approve document registration. Please try again.');
         }
@@ -195,47 +106,13 @@ class DocumentRegistrationEntryController extends Controller
 
     public function reject(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!Auth::user()->can('reject document registration') ||
-            $documentRegistrationEntry->status->name !== 'Pending') {
-            abort(403);
-        }
-        $request->validate([
-            'rejection_reason' => 'required|string'
-        ]);
+        // use policy authorization (delegates to DocumentRegistrationEntryPolicy@reject)
+        $this->authorize('reject', $documentRegistrationEntry);
 
-        $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
-        $returnedFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Returned')->first();
-
-        DB::beginTransaction();
         try {
-            $documentRegistrationEntry->update([
-                'status_id' => $cancelledStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => $request->rejection_reason,
-                'revision_notes' => null,
-            ]);
-
-            // Return all existing files for this entry
-            $documentRegistrationEntry->files()->update([
-                'status_id' => $returnedFileStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => $request->rejection_reason,
-            ]);
-
-            $documentRegistrationEntry->refresh();
-
-            DB::commit();
-
-            $user = $documentRegistrationEntry->submittedBy;
-            if ($user) {
-                $user->notify(new DocumentRegistryEntryStatusUpdated($documentRegistrationEntry, $documentRegistrationEntry->status));
-            }
-
+            $this->documentRegistryService->reject($request, $documentRegistrationEntry);
             return back()->with('success', 'Document registration rejected.');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Rejection failed: ' . $e->getMessage());
             return back()->with('error', 'Failed to reject document registration. Please try again.');
         }
@@ -243,32 +120,17 @@ class DocumentRegistrationEntryController extends Controller
 
     public function update(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!$this->canEditEntry($documentRegistrationEntry)) {
-            abort(403);
-        }
+        // use policy authorization (delegates to DocumentRegistrationEntryPolicy@update)
+        $this->authorize('update', $documentRegistrationEntry);
 
-        // Detect if this is a minimal update (only category/customer from DCN modal)
         $isMinimalUpdate = $request->filled('category_id') &&
                           $request->filled('customer_id') &&
                           !$request->filled('document_title');
 
         if ($isMinimalUpdate) {
-            // Minimal validation for category/customer updates from DCN modal
-            $request->validate([
-                'category_id' => 'required|exists:subcategories,id',
-                'customer_id' => 'required|exists:customers,id',
-            ]);
-
-            DB::beginTransaction();
             try {
-                $documentRegistrationEntry->update([
-                    'category_id' => $request->category_id,
-                    'customer_id' => $request->customer_id,
-                ]);
+                $this->documentRegistryService->updateMinimal($request, $documentRegistrationEntry);
 
-                DB::commit();
-
-                // Return JSON response for AJAX requests
                 if ($request->wantsJson() || $request->ajax()) {
                     $documentRegistrationEntry->load(['category', 'customer']);
                     return response()->json([
@@ -295,7 +157,6 @@ class DocumentRegistrationEntryController extends Controller
                 return redirect()->route('document-registry.show', $documentRegistrationEntry)
                     ->with('success', 'Category and customer updated successfully.');
             } catch (\Exception $e) {
-                DB::rollBack();
                 Log::error('Minimal update failed: ' . $e->getMessage());
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
@@ -307,40 +168,12 @@ class DocumentRegistrationEntryController extends Controller
             }
         }
 
-        // Full update validation
-        $request->validate([
-            'document_title' => 'required|string|max:255',
-            'category_id' => 'required|exists:subcategories,id',
-            'customer_id' => 'nullable|exists:customers,id',
-            'revision_no' => 'nullable|string|max:50',
-            'device_name' => 'nullable|string|max:255',
-            'document_no' => 'nullable|string|max:100',
-            'originator_name' => 'required|string|max:255',
-            'remarks' => 'nullable|string',
-        ]);
-
-        DB::beginTransaction();
         try {
-            // Determine whether current user may update the document number
-            $canEditDocNo = Auth::user()->can('edit document registration details');
-
-            $allowedFields = [
-                'document_title', 'category_id', 'customer_id', 'revision_no', 'device_name', 'document_no',
-                'originator_name', 'remarks'
-            ];
-
-            if (! $canEditDocNo) {
-                $allowedFields = array_diff($allowedFields, ['document_no']);
-            }
-
-            $documentRegistrationEntry->update($request->only($allowedFields));
-
-            DB::commit();
+            $this->documentRegistryService->updateFull($request, $documentRegistrationEntry);
 
             return redirect()->route('document-registry.show', $documentRegistrationEntry)
                 ->with('success', 'Document registration updated successfully.');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Full update failed: ' . $e->getMessage());
             return back()->with('error', 'Failed to update document registration. Please try again.');
         }
@@ -420,65 +253,23 @@ class DocumentRegistrationEntryController extends Controller
 
     public function requireRevision(Request $request, DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!Auth::user()->can('require revision for document') ||
-            $documentRegistrationEntry->status->name !== 'Pending') {
-            abort(403);
-        }
-        $request->validate([
-            'revision_notes' => 'required|string'
-        ]);
+        // use policy authorization (delegates to DocumentRegistrationEntryPolicy@requireRevision)
+        $this->authorize('requireRevision', $documentRegistrationEntry);
 
-        $cancelledStatus = DocumentRegistrationEntryStatus::where('name', 'Cancelled')->first();
-        $cancelledFileStatus = \App\Models\DocumentRegistrationEntryFileStatus::where('name', 'Cancelled')->first();
-
-        DB::beginTransaction();
         try {
-            $documentRegistrationEntry->update([
-                'status_id' => $cancelledStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'revision_notes' => $request->revision_notes,
-                'rejection_reason' => 'Revision required. Please see revision notes.',
-            ]);
-
-            $documentRegistrationEntry->files()->update([
-                'status_id' => $cancelledFileStatus->id,
-                'implemented_by' => Auth::id(),
-                'implemented_at' => now(),
-                'rejection_reason' => 'Revision required. Please see revision notes.',
-            ]);
-
-            $documentRegistrationEntry->refresh();
-
-            DB::commit();
-
+            $this->documentRegistryService->requireRevision($request, $documentRegistrationEntry);
             return back()->with('success', 'Revision requested for document registration.');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Require revision failed: ' . $e->getMessage());
             return back()->with('error', 'Failed to request revision. Please try again.');
         }
     }
 
 
-    private function canViewEntry(DocumentRegistrationEntry $entry)
-    {
-        return Auth::user()->can('view all document registrations')
-            || (Auth::user()->can('view own document registrations') && $entry->submitted_by === Auth::id())
-            || ($entry->submitted_by === Auth::id());
-    }
-
-    private function canEditEntry(DocumentRegistrationEntry $entry)
-    {
-        return (Auth::user()->can('edit document registration details') || $entry->submitted_by === Auth::id() && $entry->status->name === 'Pending')
-            || ($entry->submitted_by === Auth::id() && $entry->status->name === 'Pending');
-    }
-
     public function download(DocumentRegistrationEntry $documentRegistrationEntry)
     {
-        if (!$this->canViewEntry($documentRegistrationEntry)) {
-            abort(403, 'You do not have permission to download this file.');
-        }
+        // delegate permission to policy
+        $this->authorize('view', $documentRegistrationEntry);
 
         $fileId = request('file_id');
         $file = $documentRegistrationEntry->files()->find($fileId);
