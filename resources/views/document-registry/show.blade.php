@@ -614,8 +614,8 @@
             previewCard.scrollIntoView({ behavior: 'smooth' });
 
             const entryId = '{{ $documentRegistrationEntry->id }}';
-            const previewUrl = '{{ route("document-registry.preview", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
-            const previewApiUrl = '{{ route("document-registry.preview-api", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
+            const previewUrl = '{{ route("document-registry.preview-entry", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
+            const previewApiUrl = '{{ route("document-registry.preview-entry-api", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
             const downloadUrl = '{{ route("document-registry.download", $documentRegistrationEntry) }}' + '?file_id=' + fileId;
 
             previewContent.innerHTML = `

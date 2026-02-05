@@ -14,6 +14,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\LogsController;
+use App\Http\Controllers\PreviewController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -137,12 +138,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/document-registry/{documentRegistrationEntry}/download', [DocumentRegistrationEntryController::class, 'download'])
         ->name('document-registry.download');
 
+    Route::get('/document-registry/{documentRegistrationEntry}/preview', [PreviewController::class, 'preview'])
+        ->name('document-registry.preview-entry');
 
-    Route::get('/document-registry/{documentRegistrationEntry}/preview', [DocumentRegistrationEntryController::class, 'preview'])
-        ->name('document-registry.preview');
-
-    Route::get('/document-registry/{documentRegistrationEntry}/preview-api', [DocumentRegistrationEntryController::class, 'previewApi'])
-        ->name('document-registry.preview-api');
+    Route::get('/document-registry/{documentRegistrationEntry}/preview-api', [PreviewController::class, 'previewApi'])
+        ->name('document-registry.preview-entry-api');
 
 
     Route::prefix('document-registry')->name('document-registry.')->group(function () {
