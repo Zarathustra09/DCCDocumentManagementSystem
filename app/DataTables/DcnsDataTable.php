@@ -261,8 +261,8 @@ function (d) {
 }
 JS
             ])
-            ->orderBy(0, 'asc')
-            ->selectStyleSingle()
+            ->orderBy(0, 'desc')
+             ->selectStyleSingle()
             ->buttons([
                 Button::make('excel')
                     ->text('<i class="bx bx-download"></i> Export to Excel')
