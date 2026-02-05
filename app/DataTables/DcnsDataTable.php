@@ -234,8 +234,8 @@ class DcnsDataTable extends DataTable
         }
 
         return $query
-            ->orderBy('dcn_no_sort', 'asc')
-            ->orderBy('id', 'asc');
+            ->orderBy('dcn_no_sort', 'desc')
+            ->orderBy('id', 'desc');
     }
 
     /**
