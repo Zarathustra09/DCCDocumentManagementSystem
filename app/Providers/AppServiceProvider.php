@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Interfaces\CustomerInterface;
+use App\Services\CustomerService;
 use App\Interfaces\DocumentRegistryFileServiceInterface;
 use App\Interfaces\DocumentRegistryServiceInterface;
 use App\Services\DocumentFileService;
@@ -15,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(CustomerInterface::class, CustomerService::class);
         $this->app->bind(DocumentRegistryServiceInterface::class, DocumentRegistryService::class);
         $this->app->bind(DocumentRegistryFileServiceInterface::class, DocumentFileService::class);
     }

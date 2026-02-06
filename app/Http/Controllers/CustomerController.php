@@ -4,16 +4,25 @@ namespace App\Http\Controllers;
 
 use App\DataTables\CustomersDataTable;
 use App\Models\Customer;
+use App\Interfaces\CustomerInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class CustomerController extends Controller
 {
+    private CustomerInterface $customerService;
+
+    public function __construct(CustomerInterface $customerService)
+    {
+        $this->customerService = $customerService;
+    }
+
     public function index(CustomersDataTable $dataTable)
     {
-        $this->authorize('view customer');
+        // authorize via policy
+        $this->authorize('viewCustomer', Customer::class);
+
         try {
             return $dataTable->render('customer.index');
         } catch (\Exception $e) {
@@ -23,16 +32,12 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('create customer');
+        // authorize via policy (class-level)
+        $this->authorize('createCustomer', Customer::class);
 
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                 'code' => 'required|string|max:3',
-                'is_active' => 'boolean'
-            ]);
-
-            Customer::create($validated);
+            // delegate creation to service
+            $this->customerService->create($request);
 
             return response()->json(['success' => true, 'message' => 'Customer created successfully']);
         } catch (ValidationException $e) {
@@ -49,16 +54,12 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
-        $this->authorize('edit customer');
+        // authorize via policy (instance-level)
+        $this->authorize('editCustomer', $customer);
 
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'code' => 'required|string|max:3',
-                'is_active' => 'boolean'
-            ]);
-
-            $customer->update($validated);
+            // delegate update to service
+            $this->customerService->update($request, $customer);
 
             return response()->json(['success' => true, 'message' => 'Customer updated successfully']);
         } catch (ValidationException $e) {
@@ -78,10 +79,12 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
-        $this->authorize('delete customer');
+        // authorize via policy (instance-level)
+        $this->authorize('deleteCustomer', $customer);
 
         try {
-            $customer->delete();
+            // delegate delete to service
+            $this->customerService->delete($customer);
             return response()->json(['success' => true, 'message' => 'Customer deleted successfully']);
         } catch (\Exception $e) {
             Log::error('Failed to delete customer', [
