@@ -4,6 +4,13 @@ namespace App\Services;
 
 use App\Interfaces\DocumentRegistryFileServiceInterface;
 use App\Models\DocumentRegistrationEntry;
+use App\Models\DocumentRegistrationEntryFile;
+use App\Models\DocumentRegistrationEntryFileStatus;
+use App\Models\DocumentRegistrationEntryStatus;
+use App\Notifications\DocumentRegistryEntryStatusUpdated;
+use App\Notifications\DocumentRegistryFileCreated;
+use App\Notifications\DocumentRegistryFileStatusUpdated;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -22,227 +29,69 @@ class DocumentFileService implements DocumentRegistryFileServiceInterface
             $file->original_filename
         );
     }
-
-    public function preview(DocumentRegistrationEntry $entry, $fileId)
+    public function approve(DocumentRegistrationEntryFile $file)
     {
-        $file = $entry->files()->find($fileId);
-        if (!$file || !Storage::disk('local')->exists($file->file_path)) {
-            abort(404, 'File not found.');
-        }
+        $implementedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Implemented')->first();
+        $entryImplementedStatus = DocumentRegistrationEntryStatus::where('name', 'Implemented')->first();
 
-        $filePath = Storage::disk('local')->path($file->file_path);
-        if (str_contains($file->mime_type, 'pdf') || str_contains($file->mime_type, 'image')) {
-            return response()->file($filePath, [
-                'Content-Type' => $file->mime_type,
-                'Content-Disposition' => 'inline; filename="' . $file->original_filename . '"'
-            ]);
-        }
+        $file->update([
+            'status_id' => $implementedStatus->id,
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
+            'rejection_reason' => null,
+        ]);
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Preview not available for this file type'
-        ], 400);
-    }
+        $file->registrationEntry->update([
+            'status_id' => $entryImplementedStatus->id,
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
+        ]);
 
-    public function previewApi(DocumentRegistrationEntry $entry, $fileId)
-    {
-        $file = $entry->files()->find($fileId);
-        if (!$file) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No file attached'
-            ], 404);
-        }
-
-        try {
-            $filePath = Storage::disk('local')->path($file->file_path);
-            if (!file_exists($filePath)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'File not found'
-                ], 404);
-            }
-
-            $fileSize = filesize($filePath);
-            if ($fileSize > 20 * 1024 * 1024) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'File too large for preview. Please download to view.'
-                ], 400);
-            }
-
-            $extension = strtolower(pathinfo($file->original_filename, PATHINFO_EXTENSION));
-            $mimeType = $file->mime_type;
-
-            if (in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word')) {
-                return $this->previewWordDocument($filePath);
-            }
-            if (in_array($extension, ['xls', 'xlsx', 'csv']) || str_contains($mimeType, 'spreadsheet') || str_contains($mimeType, 'excel')) {
-                return $this->previewSpreadsheet($filePath);
-            }
-            if (in_array($extension, ['txt', 'csv']) || str_contains($mimeType, 'text')) {
-                return $this->previewTextFile($filePath);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Preview not available for this file type'
-            ], 400);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while generating the preview'
-            ], 500);
+        $user = $file->registrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
+            $user->notify(new DocumentRegistryEntryStatusUpdated($file->registrationEntry, $file->registrationEntry->status));
         }
     }
 
-    private function previewWordDocument($filePath)
+    public function reject(DocumentRegistrationEntryFile $file, string $reason)
     {
-        try {
-            $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
-        } catch (\PhpOffice\PhpWord\Exception\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Document appears to be corrupted or uses an unsupported format'
-            ], 400);
+        $returnedStatus = DocumentRegistrationEntryFileStatus::where('name', 'Returned')->first();
+        if (!$returnedStatus) {
+            throw new \RuntimeException('File status "Returned" not found. Please contact administrator.');
         }
 
-        try {
-            $htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
-            $tempFile = tempnam(sys_get_temp_dir(), 'phpword_preview_');
-            $htmlWriter->save($tempFile);
-            $htmlContent = file_get_contents($tempFile);
-            unlink($tempFile);
+        $file->update([
+            'status_id' => $returnedStatus->id,
+            'implemented_by' => auth()->id(),
+            'implemented_at' => now(),
+            'rejection_reason' => $reason,
+        ]);
 
-            if (empty($htmlContent)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Document appears to be empty'
-                ], 400);
-            }
-
-            $htmlContent = $this->cleanWordHtml($htmlContent);
-            return response()->json([
-                'success' => true,
-                'content' => $htmlContent,
-                'content_type' => 'word'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error converting document to preview format'
-            ], 500);
+        $user = $file->registrationEntry->submittedBy;
+        if ($user) {
+            $user->notify(new DocumentRegistryFileStatusUpdated($file, $file->status->name));
         }
     }
 
-    private function previewSpreadsheet($filePath)
+    public function uploadFile(DocumentRegistrationEntry $entry, UploadedFile $documentFile)
     {
-        try {
-            $spreadsheet = IOFactory::load($filePath);
-            $worksheet = $spreadsheet->getActiveSheet();
-            $highestRow = $worksheet->getHighestRow();
-            $highestColumn = $worksheet->getHighestColumn();
-            $maxColumn = min(20, \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn));
-            $limitedHighestColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($maxColumn);
-            $data = $worksheet->rangeToArray('A1:' . $limitedHighestColumn . min(100, $highestRow), null, true, true);
-
-            if (empty($data)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Spreadsheet appears to be empty'
-                ], 400);
-            }
-
-            $headings = array_shift($data);
-            $html = $this->generateSpreadsheetHtml($headings, $data, $highestRow);
-
-            return response()->json([
-                'success' => true,
-                'content' => $html,
-                'content_type' => 'spreadsheet'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error reading spreadsheet file'
-            ], 500);
+        $pendingStatus = DocumentRegistrationEntryFileStatus::where('name', 'Pending')->first();
+        if (!$pendingStatus) {
+            throw new \RuntimeException('File status "Pending" not found. Please contact administrator.');
         }
-    }
 
-    private function previewTextFile($filePath)
-    {
-        try {
-            $content = file_get_contents($filePath);
-            if ($content === false) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unable to read text file'
-                ], 500);
-            }
+        $file = DocumentRegistrationEntryFile::create([
+            'entry_id' => $entry->id,
+            'file_path' => $documentFile->store('document_registrations', 'local'),
+            'original_filename' => $documentFile->getClientOriginalName(),
+            'mime_type' => $documentFile->getMimeType(),
+            'file_size' => $documentFile->getSize(),
+            'status_id' => $pendingStatus->id,
+        ]);
 
-            if (strlen($content) > 50000) {
-                $content = substr($content, 0, 50000) . "\n\n... (content truncated for preview)";
-            }
+        DocumentRegistryFileCreated::sendToAdmins($file);
 
-            $html = '<div class="text-preview-content">' . htmlspecialchars($content) . '</div>';
-            return response()->json([
-                'success' => true,
-                'content' => $html,
-                'content_type' => 'text'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error reading text file'
-            ], 500);
-        }
-    }
-
-    private function generateSpreadsheetHtml($headings, $data, $totalRows)
-    {
-        $html = '<div class="spreadsheet-preview">';
-        $html .= '<div class="table-responsive">';
-        $html .= '<table class="table table-bordered table-sm">';
-        if (!empty($headings)) {
-            $html .= '<thead><tr>';
-            foreach ($headings as $heading) {
-                $html .= '<th>' . htmlspecialchars($heading ?? '') . '</th>';
-            }
-            $html .= '</tr></thead>';
-        }
-        $html .= '<tbody>';
-        foreach ($data as $row) {
-            $html .= '<tr>';
-            foreach ($row as $cell) {
-                $html .= '<td>' . htmlspecialchars($cell ?? '') . '</td>';
-            }
-            $html .= '</tr>';
-        }
-        $html .= '</tbody>';
-        $html .= '</table>';
-        $html .= '</div>';
-        if ($totalRows > 100) {
-            $html .= '<div class="alert alert-info mt-2 mb-0">';
-            $html .= '<small><i class="bx bx-info-circle"></i> Showing first 100 rows of ' . $totalRows . ' total rows. Download the file to view all data.</small>';
-            $html .= '</div>';
-        }
-        $html .= '</div>';
-        return $html;
-    }
-
-    private function cleanWordHtml($html)
-    {
-        $html = preg_replace('/<\?xml[^>]*>/', '', $html);
-        $html = preg_replace('/<!DOCTYPE[^>]*>/', '', $html);
-        $html = preg_replace('/<html[^>]*>/', '<div class="word-document">', $html);
-        $html = str_replace('</html>', '</div>', $html);
-        $html = preg_replace('/<head[^>]*>.*?<\/head>/s', '', $html);
-        $html = preg_replace('/<body[^>]*>/', '', $html);
-        $html = str_replace('</body>', '', $html);
-        $html = preg_replace('/style="[^"]*?(font-family|color|text-align|font-weight|font-style)[^"]*?"/', '', $html);
-        $html = preg_replace('/\s+/', ' ', $html);
-        $html = str_replace('> <', '><', $html);
-        $html = str_replace('<p></p>', '', $html);
-        return trim($html);
+        return $file;
     }
 }
