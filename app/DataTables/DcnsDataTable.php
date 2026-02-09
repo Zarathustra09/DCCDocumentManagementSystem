@@ -131,6 +131,16 @@ class DcnsDataTable extends DataTable
                     '</small></small>';
             })
             ->addColumn('effective_date', function (DocumentRegistrationEntry $entry) {
+                if (!$entry->implemented_at) {
+                    return 'N/A';
+                }
+                return '<small><i class="bx bx-calendar"></i> ' .
+                    e($entry->implemented_at->format('m/d/Y')) .
+                    '<br><small class="text-muted">' .
+                    e($entry->implemented_at->format('g:i A')) .
+                    '</small></small>';
+            })
+            ->addColumn('expiration_date', function (DocumentRegistrationEntry $entry) {
                 if (!$entry->expiration_date) {
                     return 'N/A';
                 }
@@ -187,7 +197,7 @@ class DcnsDataTable extends DataTable
 
                 return $dropdown;
             })
-            ->rawColumns(['dcn_no_badge', 'registration_date', 'effective_date', 'document_title', 'action'])
+            ->rawColumns(['dcn_no_badge', 'registration_date', 'effective_date', 'expiration_date', 'document_title', 'action'])
             ->setRowId('id');
     }
 
@@ -293,7 +303,7 @@ JS)
                 Column::make('originator')->title('Originator'),
                 Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
                 Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
-                Column::make('effective_date')->title('Expiration')->name('expiration_date')->searchable(false),
+                Column::make('expiration_date')->title('EXPIRATION DATE')->name('expiration_date')->searchable(false),
                 Column::make('document_title')->title('Title of Doc'),
                 Column::make('remarks')->title('Remarks')->orderable(false)->searchable(false),
                 Column::computed('action')
@@ -327,7 +337,7 @@ JS)
             Column::make('originator')->title('Originator'),
             Column::make('dept')->title('Dept.')->orderable(false)->searchable(false),
             Column::make('registration_date')->title('Reg-Date')->name('submitted_at')->searchable(false),
-            Column::make('effective_date')->title('Expiration')->name('expiration_date')->searchable(false),
+            Column::make('effective_date')->title('EFFECTIVE DATE')->name('implemented_at')->searchable(false),
             Column::make('document_no')->title('Document No. / Part No.'),
             Column::make('revision_no')->title('Rev'),
             Column::make('device_name')->title('Device Name'),
