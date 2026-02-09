@@ -7,9 +7,18 @@ use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
+use App\Interfaces\CategoryInterface;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
+    protected CategoryInterface $categoryService;
+
+    public function __construct(CategoryInterface $categoryService)
+    {
+        $this->categoryService = $categoryService;
+    }
+
     public function index()
     {
         $this->authorize('view category');
@@ -28,21 +37,14 @@ class CategoryController extends Controller
     {
         $this->authorize('create category');
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'code' => 'required|string|max:3|unique:subcategories,code',
-                'is_active' => 'boolean',
-                'main_category_id' => 'required|exists:main_categories,id',
-            ]);
-
-            SubCategory::create([
-                'name' => $validated['name'],
-                'code' => strtoupper($validated['code']),
-                'is_active' => $request->boolean('is_active'),
-                'main_category_id' => $validated['main_category_id'],
-            ]);
+            $this->categoryService->createSubCategory($request);
 
             return response()->json(['success' => true, 'message' => 'Subcategory created successfully']);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to create subcategory.'], 500);
         }
@@ -52,27 +54,10 @@ class CategoryController extends Controller
     {
         $this->authorize('edit category');
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'code' => [
-                    'required',
-                    'string',
-                    'max:3',
-                    Rule::unique('subcategories', 'code')->ignore($subcategory->id),
-                ],
-                'is_active' => 'boolean',
-                'main_category_id' => 'required|exists:main_categories,id',
-            ]);
-
-            $subcategory->update([
-                'name' => $validated['name'],
-                'code' => strtoupper($validated['code']),
-                'is_active' => $request->boolean('is_active'),
-                'main_category_id' => $validated['main_category_id'],
-            ]);
+            $this->categoryService->updateSubCategory($request, $subcategory);
 
             return response()->json(['success' => true, 'message' => 'Subcategory updated successfully']);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all())
@@ -96,7 +81,8 @@ class CategoryController extends Controller
                 ], 422);
             }
 
-            $subcategory->delete();
+            $this->categoryService->deleteSubCategory($subcategory);
+
             return response()->json(['success' => true, 'message' => 'Subcategory deleted successfully']);
         } catch (\Exception $e) {
             Log::error('Failed to delete subcategory: ' . $e->getMessage(), [
@@ -111,14 +97,10 @@ class CategoryController extends Controller
     {
         $this->authorize('create category');
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:main_categories,name',
-            ]);
-
-            MainCategory::create($validated);
+            $this->categoryService->createMainCategory($request);
 
             return response()->json(['success' => true, 'message' => 'Main category created successfully']);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all())
@@ -133,19 +115,10 @@ class CategoryController extends Controller
     {
         $this->authorize('edit category');
         try {
-            $validated = $request->validate([
-                'name' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    Rule::unique('main_categories', 'name')->ignore($mainCategory->id),
-                ],
-            ]);
-
-            $mainCategory->update($validated);
+            $this->categoryService->updateMainCategory($request, $mainCategory);
 
             return response()->json(['success' => true, 'message' => 'Main category updated successfully']);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all())
@@ -169,7 +142,7 @@ class CategoryController extends Controller
                 ], 422);
             }
 
-            $mainCategory->delete();
+            $this->categoryService->deleteMainCategory($mainCategory);
 
             return response()->json(['success' => true, 'message' => 'Main category deleted successfully']);
         } catch (\Exception $e) {
