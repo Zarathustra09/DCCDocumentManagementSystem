@@ -3,7 +3,7 @@ version: '3.9'
 services:
     app:
         build: .
-        container_name: laravel-app
+        container_name: dcc-app
         ports:
             - "80:80"
         volumes:
@@ -20,7 +20,7 @@ services:
 
     queue:
         build: .
-        container_name: laravel-queue
+        container_name: dcc-queue
         depends_on:
             - db
         volumes:
@@ -36,7 +36,7 @@ services:
 
     db:
         image: mysql:8.0
-        container_name: laravel-db
+        container_name: dcc-db
         restart: unless-stopped
         environment:
             MYSQL_ROOT_PASSWORD: secret
