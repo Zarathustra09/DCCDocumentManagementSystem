@@ -81,8 +81,8 @@ class ExportReadyNotification extends Notification implements ShouldQueue
 The ' . config('app.name') . ' Team')
             ->withSymfonyMessage(function ($message) {
                 $host = parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost';
-                $messageId = '<' . $this->export->control_no . '-' . uniqid() . '@' . $host . '>';
-                $message->getHeaders()->addTextHeader('Message-ID', $messageId);
+                $messageId = $this->export->control_no . '-' . uniqid() . '@' . $host;
+                $message->getHeaders()->addIdHeader('Message-ID', $messageId);
                 $message->getHeaders()->remove('In-Reply-To');
                 $message->getHeaders()->remove('References');
                 $message->getHeaders()->addTextHeader('X-Export-Control-No', $this->export->control_no);
