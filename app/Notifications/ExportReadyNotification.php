@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class ExportReadyNotification extends Notification implements ShouldQueue
 {
@@ -35,7 +36,7 @@ class ExportReadyNotification extends Notification implements ShouldQueue
 
     public function toDatabase($notifiable): array
     {
-        $url = route('exports.download', $this->export);
+        $url = URL::signedRoute('exports.download', $this->export);
 
         Log::info('Export notification: database payload', [
             'export_id' => $this->export->id,
@@ -57,7 +58,7 @@ class ExportReadyNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        $url = route('exports.download', $this->export);
+        $url = URL::signedRoute('exports.download', $this->export);
         $fileName = basename($this->export->file_name);
 
         Log::info('Export notification: mail payload', [
@@ -75,6 +76,8 @@ class ExportReadyNotification extends Notification implements ShouldQueue
             ->line('**File:** ' . $fileName)
             ->line('**Completed:** ' . ($this->export->completed_at?->format('F d, Y \a\t h:i A') ?? 'Just now'))
             ->action('Download Export', $url)
+            ->line('If the download button is blocked, copy and paste this link into your browser:')
+            ->line($url)
             ->line('Click the button above to download your export file. The download link will remain active for your convenience.')
             ->line('If you have any questions or need assistance, please contact support.')
             ->salutation('Best regards,
