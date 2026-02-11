@@ -24,17 +24,40 @@ class ExportController extends Controller
         ]);
     }
 
-    public function download(Export $export)
+    public function download(Request $request, Export $export)
     {
         $this->authorizeExport($export);
+
+        $disk = $export->disk;
+        $path = $export->file_name;
 
         Log::info('Export download requested', [
             'export_id' => $export->id,
             'employee_no' => $export->employee_no,
-            'file_name' => $export->file_name,
+            'file_name' => $path,
+            'disk' => $disk,
+            'request_ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'user_id' => Auth::id(),
         ]);
 
-        return Storage::disk($export->disk)->download($export->file_name);
+        if (!Storage::disk($disk)->exists($path)) {
+            Log::warning('Export file missing on download', [
+                'export_id' => $export->id,
+                'employee_no' => $export->employee_no,
+                'file_name' => $path,
+                'disk' => $disk,
+            ]);
+            abort(404, 'Export file not found.');
+        }
+
+        Log::info('Export download started', [
+            'export_id' => $export->id,
+            'file_name' => $path,
+            'disk' => $disk,
+        ]);
+
+        return Storage::disk($disk)->download($path);
     }
 
     private function authorizeExport(Export $export): void
