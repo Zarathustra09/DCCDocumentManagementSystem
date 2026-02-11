@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\DataTables\DcnsDataTable;
-use App\Exports\DcnFilteredExport;
+use App\Exports\DcnExport;
 use App\Models\DocumentRegistrationEntry;
 use App\Models\Customer;
 use App\Models\SubCategory;
 use App\Models\MainCategory;
+use App\Models\Export;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -503,55 +504,37 @@ class DcnController extends Controller
 
     public function export(Request $request)
     {
+        Log::info('Queueing DCN export', ['request' => $request->all()]);
 
-        \Log::info('Exporting DCN filtered data', ['request' => $request->all()]);
-        $query = DocumentRegistrationEntry::with(['customer', 'category', 'submittedBy', 'status']);
+        // Require subcategory selection
+        $request->validate([
+            'subcategory_id' => 'required|exists:subcategories,id',
+        ]);
 
-        // Apply filters (same as index)
+        $subcategory = SubCategory::findOrFail($request->input('subcategory_id'));
 
-        if ($request->filled('dcn_status')) {
-            if ($request->dcn_status === 'with_dcn') {
-                $query->whereNotNull('dcn_no');
-            } elseif ($request->dcn_status === 'without_dcn') {
-                $query->whereNull('dcn_no');
-            }
-        }
+        $subcategoryName = $subcategory->name;
 
-        // Support __no_customer__ marker for NULL
-        if ($request->has('customer_id')) {
-            if ($request->customer_id === '__no_customer__') {
-                $query->whereNull('customer_id');
-            } elseif ($request->filled('customer_id')) {
-                $query->where('customer_id', $request->customer_id);
-            }
-        }
+        $fileName = 'exports/dcn_logs_' . now()->format('Ymd_His') . '.xlsx';
 
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('document_title', 'like', "%{$search}%")
-                    ->orWhere('document_no', 'like', "%{$search}%")
-                    ->orWhere('dcn_no', 'like', "%{$search}%")
-                    ->orWhere('originator_name', 'like', "%{$search}%")
-                    ->orWhere('device_name', 'like', "%{$search}%");
-            });
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('submitted_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('submitted_at', '<=', $request->date_to);
-        }
+        $export = Export::create([
+            'employee_no' => Auth::user()?->employee_no,
+            'file_name' => $fileName,
+            'disk' => 'public',
+            'status' => 'processing',
+        ]);
 
-        $entries = $query->orderBy('submitted_at', 'desc')->orderBy('created_at', 'desc')->get();
+        Log::info('DCN export record created', [
+            'export_id' => $export->id,
+            'employee_no' => $export->employee_no,
+            'file_name' => $export->file_name,
+        ]);
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\DcnFilteredExport($entries),
-            'dcn_filtered.xlsx'
-        );
+        $subcategoryId = $subcategory->id;
+
+        Excel::queue(new DcnExport($export->id, $subcategoryName, $subcategoryId), $fileName, $export->disk);
+
+        return back()->with('status', 'Export started successfully. You will receive a notification when it\'s ready for download.');
     }
 
     public function listLog(Request $request, DcnsDataTable $dataTable)

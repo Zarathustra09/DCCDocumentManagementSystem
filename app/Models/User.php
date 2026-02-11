@@ -61,4 +61,9 @@ class User extends Authenticatable
         return $this->belongsTo(Organization::class, 'organization_id');
     }
 
+    public function export()
+    {
+        return $this->hasMany(Export::class, 'employee_no', 'employee_no');
+    }
+
 }

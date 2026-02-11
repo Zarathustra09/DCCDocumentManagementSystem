@@ -11,9 +11,14 @@
                             <i class='bx bx-list-ul'></i>
                             <span id="logTitleLabel">Document Registration Logs</span>
                         </h3>
-                        <button class="btn btn-secondary btn-sm" id="changeLogBtn">
-                            <i class="bx bx-repeat"></i> Change Category
-                        </button>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-success btn-sm disabled" id="exportBtn" href="#" aria-disabled="true">
+                                <i class="bx bx-download"></i> Export
+                            </a>
+                            <button class="btn btn-secondary btn-sm" id="changeLogBtn">
+                                <i class="bx bx-repeat"></i> Change Category
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="alert alert-info mb-3" id="logInfoAlert" style="display:none;"></div>
@@ -376,6 +381,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     window.selectedSubcategoryId = urlParams.get('subcategory_id') || '';
     window.selectedCustomerId = '';
+    const exportBaseUrl = @json(route('dcn.export'));
     const mainCategories = @json($mainCategories ?? []);
     const subcategoryIndex = {};
     mainCategories.forEach(mc => {
@@ -390,14 +396,31 @@ document.addEventListener('DOMContentLoaded', function () {
     const titleEl = document.getElementById('logTitleLabel');
     const alertEl = document.getElementById('logInfoAlert');
     const changeBtn = document.getElementById('changeLogBtn');
+    const exportBtn = document.getElementById('exportBtn');
     const getDt = () => window.LaravelDataTables && window.LaravelDataTables['logTable'];
     const customerTabs = document.querySelectorAll('#customerTabs button[data-bs-toggle="tab"]');
+
+    function updateExportLink() {
+        if (!exportBtn) return;
+        if (!window.selectedSubcategoryId) {
+            exportBtn.classList.add('disabled');
+            exportBtn.setAttribute('aria-disabled', 'true');
+            exportBtn.setAttribute('href', '#');
+            return;
+        }
+        const url = new URL(exportBaseUrl, window.location.origin);
+        url.searchParams.set('subcategory_id', window.selectedSubcategoryId);
+        exportBtn.classList.remove('disabled');
+        exportBtn.setAttribute('aria-disabled', 'false');
+        exportBtn.setAttribute('href', url.toString());
+    }
 
     const hasSubcategory = (new URLSearchParams(window.location.search)).has('subcategory_id');
     if (!hasSubcategory) {
         showCategoryWizard();
     } else {
         updateLogUI();
+        updateExportLink();
     }
 
     changeBtn.addEventListener('click', showCategoryWizard);
@@ -429,6 +452,7 @@ document.addEventListener('DOMContentLoaded', function () {
         titleEl.textContent = `${label} - Registration Logsheet`;
         alertEl.style.display = 'block';
         alertEl.innerHTML = `<i class='bx bx-info-circle'></i> Showing entries for: <strong>${escapeHtml(label)}</strong>`;
+        updateExportLink();
     }
 
     function showCategoryWizard() {

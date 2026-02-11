@@ -15,6 +15,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\LogsController;
 use App\Http\Controllers\PreviewController;
+use App\Http\Controllers\ExportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +51,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.updatePassword');
+
+    Route::get('/exports/{export}', [ExportController::class, 'show'])->name('exports.show');
+    Route::get('/exports/{export}/download', [ExportController::class, 'download'])->name('exports.download');
 
     Route::middleware(['permission:manage users|manage roles'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [PermissionController::class, 'index'])->name('users.index');
