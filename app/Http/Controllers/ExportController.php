@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class ExportController extends Controller
 {
@@ -14,13 +15,11 @@ class ExportController extends Controller
     {
         $this->authorizeExport($export);
 
-        $downloadUrl = route('exports.download', $export);
+        $downloadUrl = URL::signedRoute('exports.download', $export);
 
-        return response()->json([
-            'id' => $export->id,
-            'status' => $export->status,
-            'completed_at' => $export->completed_at,
-            'download_url' => $downloadUrl,
+        return view('export.show', [
+            'export' => $export,
+            'downloadUrl' => $downloadUrl,
         ]);
     }
 
@@ -41,14 +40,31 @@ class ExportController extends Controller
             'user_id' => Auth::id(),
         ]);
 
-        if (!Storage::disk($disk)->exists($path)) {
-            Log::warning('Export file missing on download', [
+        if (empty($disk)) {
+            Log::error('Export download: missing disk configuration', [
                 'export_id' => $export->id,
-                'employee_no' => $export->employee_no,
-                'file_name' => $path,
                 'disk' => $disk,
+                'path' => $path,
             ]);
             abort(404, 'Export file not found.');
+        }
+
+        try {
+            if (!Storage::disk($disk)->exists($path)) {
+                Log::warning('Export file missing on download', [
+                    'export_id' => $export->id,
+                    'employee_no' => $export->employee_no,
+                    'file_name' => $path,
+                    'disk' => $disk,
+                ]);
+                abort(404, 'Export file not found.');
+            }
+        } catch (\Throwable $e) {
+            Log::error('Export download: storage check failed', [
+                'export_id' => $export->id,
+                'error' => $e->getMessage(),
+            ]);
+            abort(500, 'Unable to access export storage.');
         }
 
         Log::info('Export download started', [
@@ -57,7 +73,15 @@ class ExportController extends Controller
             'disk' => $disk,
         ]);
 
-        return Storage::disk($disk)->download($path);
+        try {
+            return Storage::disk($disk)->download($path);
+        } catch (\Throwable $e) {
+            Log::error('Export download failed', [
+                'export_id' => $export->id,
+                'error' => $e->getMessage(),
+            ]);
+            abort(500, 'Unable to download export file.');
+        }
     }
 
     private function authorizeExport(Export $export): void

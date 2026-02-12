@@ -53,7 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.updatePassword');
 
     Route::get('/exports/{export}', [ExportController::class, 'show'])->name('exports.show');
-    Route::get('/exports/{export}/download', [ExportController::class, 'download'])->name('exports.download');
+    Route::get('/exports/{export}/download', [ExportController::class, 'download'])->middleware('signed')->name('exports.download');
 
     Route::middleware(['permission:manage users|manage roles'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [PermissionController::class, 'index'])->name('users.index');
