@@ -182,7 +182,6 @@ class DcnCustomerSheet implements FromQuery, WithHeadings, WithMapping, WithTitl
                 'DCN',
                 'Originator',
                 'Dept.',
-                'Reg-Date',
                 'EXPIRATION DATE',
                 'Title of Doc',
                 'Remarks',
@@ -193,8 +192,7 @@ class DcnCustomerSheet implements FromQuery, WithHeadings, WithMapping, WithTitl
             return [
                 'DCN No.',
                 'Originator',
-                'Dept.',
-                'Date Registered',
+                'Dept',
                 'Document No.',
                 'Rev No.',
                 'Title',
@@ -206,8 +204,6 @@ class DcnCustomerSheet implements FromQuery, WithHeadings, WithMapping, WithTitl
             'DCN No.',
             'Originator',
             'Dept.',
-            'Reg-Date',
-            'EFFECTIVE DATE',
             'Document No. / Part No.',
             'Rev',
             'Device Name',
@@ -223,8 +219,8 @@ class DcnCustomerSheet implements FromQuery, WithHeadings, WithMapping, WithTitl
             return [
                 $entry->dcn_no,
                 $entry->originator_name,
-                $entry->dept ?? null,
-                $entry->submitted_at,
+                // use organization->orgcode when available, fallback to dept
+                $entry->organization->orgcode ?? $entry->dept ?? null,
                 $entry->expiration_date ?? null,
                 $entry->document_title,
                 $entry->remarks ?? null,
@@ -235,8 +231,7 @@ class DcnCustomerSheet implements FromQuery, WithHeadings, WithMapping, WithTitl
             return [
                 $entry->dcn_no,
                 $entry->originator_name,
-                $entry->dept ?? null,
-                $entry->submitted_at,
+                $entry->organization->orgcode ?? $entry->dept ?? null,
                 $entry->document_no,
                 $entry->revision_no,
                 $entry->document_title,
@@ -247,9 +242,7 @@ class DcnCustomerSheet implements FromQuery, WithHeadings, WithMapping, WithTitl
         return [
             $entry->dcn_no,
             $entry->originator_name,
-            $entry->dept ?? null,
-            $entry->submitted_at,
-            $entry->implemented_at,
+            $entry->organization->orgcode ?? $entry->dept ?? null,
             $entry->document_no,
             $entry->revision_no,
             $entry->device_name,
