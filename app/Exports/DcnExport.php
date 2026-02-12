@@ -159,8 +159,8 @@ class DcnCustomerSheet implements FromQuery, WithHeadings, WithMapping, WithTitl
     {
         $query = DocumentRegistrationEntry::query()
             ->with(['customer', 'category', 'submittedBy', 'status'])
-            ->orderBy('submitted_at', 'desc')
-            ->orderBy('created_at', 'desc');
+            ->orderBy('submitted_at', 'asc') // Changed to ascending (oldest first)
+            ->orderBy('id', 'asc'); // Added id as tiebreaker
 
         if ($this->subcategoryId) {
             $query->where('category_id', $this->subcategoryId);

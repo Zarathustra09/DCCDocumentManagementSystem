@@ -515,7 +515,7 @@ class DcnController extends Controller
 
         $subcategoryName = $subcategory->name;
 
-        $fileName = 'exports/dcn_logs_' . now()->format('Ymd_His') . '.xlsx';
+        $fileName = 'exports/dcn_export_' . now()->format('Ymd_His') . '.xlsx';
 
         $export = Export::create([
             'employee_no' => Auth::user()?->employee_no,

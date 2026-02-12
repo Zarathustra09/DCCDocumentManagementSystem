@@ -82,7 +82,8 @@ class ExcelExportController extends Controller
             }
         }
 
-        $entries = $query->orderByDesc('id')->get();
+        // Changed to oldest first by submitted_at, with id as a deterministic tiebreaker
+        $entries = $query->orderBy('submitted_at', 'asc')->orderBy('id', 'asc')->get();
 
         $filename = 'document_registry_export_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
 
